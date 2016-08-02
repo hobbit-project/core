@@ -7,7 +7,7 @@ package org.hobbit.core.components;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public interface GeneratedDataReceivingComponent {
+public interface GeneratedDataReceivingComponent extends Component {
 
 	/**
 	 * This method is called if data is received from a data generator.

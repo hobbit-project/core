@@ -19,6 +19,8 @@ import com.rabbitmq.client.MessageProperties;
  * This abstract class implements basic functions that can be used to implement
  * a task generator.
  * 
+ * FIXME Implement me!!!!
+ * 
  * <p>
  * The following environment variables are expected:
  * <ul>
@@ -30,8 +32,8 @@ import com.rabbitmq.client.MessageProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent implements
-		GeneratedDataReceivingComponent {
+public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent implements
+		ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
 	/**
 	 * Default value of the {@link #maxParallelProcessedMsgs} attribute.
