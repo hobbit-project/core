@@ -20,4 +20,10 @@ public final class Commands {
 	public static final byte DATA_GENERATOR_START_SIGNAL = 7;
 
 	public static final byte TASK_GENERATOR_START_SIGNAL = 8;
+
+	public static final byte EVAL_MODULE_FINISHED_SIGNAL = 9;
+	
+	public static final byte EVAL_STORAGE_TERMINATE = 10;
+	
+	public static final byte BENCHMARK_FINISHED_SIGNAL = 11;
 }

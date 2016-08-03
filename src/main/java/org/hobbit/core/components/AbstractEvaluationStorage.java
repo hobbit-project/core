@@ -34,6 +34,8 @@ import com.rabbitmq.client.MessageProperties;
  */
 public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent implements
 		ResponseReceivingComponent, ExpectedResponseReceivingComponent {
+	
+	public static final int NEW_ITERATOR_ID = -1;
 
 	/**
 	 * Default value of the {@link #maxParallelProcessedMsgs} attribute.
@@ -41,10 +43,9 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 	private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
 
 	/**
-	 * Mutex used to wait for the start signal after the component has been
-	 * started and initialized.
+	 * Mutex used to wait for the termination signal.
 	 */
-	private Semaphore startTaskGenMutex = new Semaphore(0);
+	private Semaphore terminationMutex = new Semaphore(0);
 	/**
 	 * Semaphore used to control the number of messages that can be processed in
 	 * parallel.
@@ -157,16 +158,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 	public void run() throws Exception {
 		boolean terminate = false;
 		sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
-		// Wait for the start message
-		startTaskGenMutex.acquire();
-
-		while ((!terminate) || (dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName) > 0)) {
-			Thread.sleep(1000);
-		}
-		// Collect all open mutex counts to make sure that there is no message
-		// that is still processed
-		Thread.sleep(1000);
-		currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
+		terminationMutex.acquire();
 	}
 
 	/**

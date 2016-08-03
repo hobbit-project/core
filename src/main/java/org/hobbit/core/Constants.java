@@ -47,5 +47,9 @@ public final class Constants {
 	public static final String TASK_GEN_2_SYSTEM_QUEUE_NAME = "hobbit.taskgen-system";
 
 	public static final String TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.taskgen-evalstore";
+
+	public static final String EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.evalmod-evalstore";
+
+	public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME = "hobbit.evalstore-evalmod";
 	
 }
