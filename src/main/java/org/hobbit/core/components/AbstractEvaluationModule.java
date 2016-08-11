@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -21,156 +23,164 @@ import com.rabbitmq.client.QueueingConsumer;
  */
 public abstract class AbstractEvaluationModule extends AbstractCommandReceivingComponent {
 
-	/**
-	 * Name of the queue to the evaluation storage.
-	 */
-	protected String EvalModule2EvalStoreQueueName;
-	/**
-	 * Channel of the queue to the evaluation storage.
-	 */
-	protected Channel EvalModule2EvalStore;
-	/**
-	 * Name of the incoming queue from the evaluation storage.
-	 */
-	protected String EvalStore2EvalModuleQueueName;
-	/**
-	 * Channel of the incoming queue from the evaluation storage.
-	 */
-	protected Channel EvalStore2EvalModule;
-	/**
-	 * Consumer used to receive the responses from the evaluation storage.
-	 */
-	protected QueueingConsumer consumer;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
 
-	@Override
-	public void init() throws Exception {
-		super.init();
+    /**
+     * Name of the queue to the evaluation storage.
+     */
+    protected String EvalModule2EvalStoreQueueName;
+    /**
+     * Channel of the queue to the evaluation storage.
+     */
+    protected Channel EvalModule2EvalStore;
+    /**
+     * Name of the incoming queue from the evaluation storage.
+     */
+    protected String EvalStore2EvalModuleQueueName;
+    /**
+     * Channel of the incoming queue from the evaluation storage.
+     */
+    protected Channel EvalStore2EvalModule;
+    /**
+     * Consumer used to receive the responses from the evaluation storage.
+     */
+    protected QueueingConsumer consumer;
 
-		EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-		EvalModule2EvalStore = connection.createChannel();
-		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
+    @Override
+    public void init() throws Exception {
+        super.init();
 
-		EvalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
-		EvalStore2EvalModule = connection.createChannel();
-		EvalStore2EvalModule.queueDeclare(EvalStore2EvalModuleQueueName, false, false, true, null);
+        EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
+        EvalModule2EvalStore = connection.createChannel();
+        EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
 
-		consumer = new QueueingConsumer(EvalStore2EvalModule);
-		EvalStore2EvalModule.basicConsume(EvalStore2EvalModuleQueueName, consumer);
-	}
+        EvalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
+        EvalStore2EvalModule = connection.createChannel();
+        EvalStore2EvalModule.queueDeclare(EvalStore2EvalModuleQueueName, false, false, true, null);
 
-	@Override
-	public void run() throws Exception {
-		sendToCmdQueue(Commands.EVAL_MODULE_READY_SIGNAL);
-		collectResponses();
-		Model model = summarizeEvaluation();
-		sendResultModel(model);
-	}
+        consumer = new QueueingConsumer(EvalStore2EvalModule);
+        EvalStore2EvalModule.basicConsume(EvalStore2EvalModuleQueueName, consumer);
+    }
 
-	/**
-	 * This method communicates with the evaluation storage to collect all
-	 * response pairs. For every pair the
-	 * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
-	 * 
-	 * @throws Exception
-	 *             if a communication error occurs.
-	 */
-	protected void collectResponses() throws Exception {
-		byte[] expectedData;
-		byte[] receivedData;
-		long taskSentTimestamp;
-		long responseReceivedTimestamp;
+    @Override
+    public void run() throws Exception {
+        sendToCmdQueue(Commands.EVAL_MODULE_READY_SIGNAL);
+        collectResponses();
+        Model model = summarizeEvaluation();
+        sendResultModel(model);
+    }
 
-		String corrId;
-		BasicProperties props;
-		byte[] iteratorId = new byte[4];
-		ByteBuffer buffer = ByteBuffer.wrap(iteratorId);
-		buffer.putInt(AbstractEvaluationStorage.NEW_ITERATOR_ID);
+    /**
+     * This method communicates with the evaluation storage to collect all
+     * response pairs. For every pair the
+     * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
+     * 
+     * @throws Exception
+     *             if a communication error occurs.
+     */
+    protected void collectResponses() throws Exception {
+        byte[] expectedData;
+        byte[] receivedData;
+        long taskSentTimestamp;
+        long responseReceivedTimestamp;
 
-		int length;
-		while (true) {
-			// request next response pair
-			corrId = java.util.UUID.randomUUID().toString();
-			props = new BasicProperties.Builder().deliveryMode(2).correlationId(corrId)
-					.replyTo(EvalStore2EvalModuleQueueName).build();
-			EvalModule2EvalStore.basicPublish("", EvalModule2EvalStoreQueueName, props, iteratorId);
-			QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-			if (delivery.getProperties().getCorrelationId().equals(corrId)) {
-				// parse the response
-				buffer = ByteBuffer.wrap(delivery.getBody());
-				taskSentTimestamp = buffer.getLong();
-				length = buffer.getInt();
-				expectedData = new byte[length];
-				buffer.get(expectedData);
+        String corrId;
+        BasicProperties props;
+        byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
+        ByteBuffer buffer;
 
-				responseReceivedTimestamp = buffer.getLong();
-				length = buffer.getInt();
-				receivedData = new byte[length];
-				buffer.get(receivedData);
+        int length;
+        while (true) {
+            // request next response pair
+            corrId = java.util.UUID.randomUUID().toString();
+            props = new BasicProperties.Builder().deliveryMode(2).correlationId(corrId)
+                    .replyTo(EvalStore2EvalModuleQueueName).build();
+            EvalModule2EvalStore.basicPublish("", EvalModule2EvalStoreQueueName, props, requestBody);
+            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            if (delivery.getProperties().getCorrelationId().equals(corrId)) {
+                // parse the response
+                buffer = ByteBuffer.wrap(delivery.getBody());
+                // if the response is empty
+                if (buffer.remaining() == 0) {
+                    LOGGER.error("Got a completely empty response from the evaluation storage.");
+                    return;
+                }
+                requestBody[0] = buffer.get();
 
-				if (((expectedData != null) || (expectedData.length > 0))
-						&& ((receivedData != null) || (receivedData.length > 0))) {
-					return;
-				}
-				evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-			}
-		}
-	}
+                // if the response is empty
+                if (buffer.remaining() == 0) {
+                    return;
+                }
+                taskSentTimestamp = buffer.getLong();
+                length = buffer.getInt();
+                expectedData = new byte[length];
+                buffer.get(expectedData);
 
-	/**
-	 * Evaluates the given response pair.
-	 * 
-	 * @param expectedData
-	 *            the data that has been expected
-	 * @param receivedData
-	 *            the data that has been received from the system
-	 * @param taskSentTimestamp
-	 *            the time at which the task has been sent to the system
-	 * @param responseReceivedTimestamp
-	 *            the time at which the response has been received from the
-	 *            system
-	 * @throws Exception
-	 */
-	protected abstract void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
-			long responseReceivedTimestamp) throws Exception;
+                responseReceivedTimestamp = buffer.getLong();
+                length = buffer.getInt();
+                receivedData = new byte[length];
+                buffer.get(receivedData);
 
-	/**
-	 * Summarizes the evaluation and generates an RDF model containing the
-	 * evaluation results.
-	 * 
-	 * @return an RDF model containing the evaluation results
-	 * @throws Exception
-	 *             if a sever error occurs
-	 */
-	protected abstract Model summarizeEvaluation() throws Exception;
+                evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+            }
+        }
+    }
 
-	/**
-	 * Sends the model to the benchmark controller.
-	 * 
-	 * @param model
-	 *            the model that should be sent
-	 * @throws IOException
-	 *             if an error occurs during the commmunication
-	 */
-	private void sendResultModel(Model model) throws IOException {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		model.write(outputStream);
-		sendToCmdQueue(Commands.EVAL_MODULE_FINISHED_SIGNAL, outputStream.toByteArray());
-	}
+    /**
+     * Evaluates the given response pair.
+     * 
+     * @param expectedData
+     *            the data that has been expected
+     * @param receivedData
+     *            the data that has been received from the system
+     * @param taskSentTimestamp
+     *            the time at which the task has been sent to the system
+     * @param responseReceivedTimestamp
+     *            the time at which the response has been received from the
+     *            system
+     * @throws Exception
+     */
+    protected abstract void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
+            long responseReceivedTimestamp) throws Exception;
 
-	@Override
-	public void close() throws IOException {
-		if (EvalModule2EvalStore != null) {
-			try {
-				EvalModule2EvalStore.close();
-			} catch (Exception e) {
-			}
-		}
-		if (EvalStore2EvalModule != null) {
-			try {
-				EvalStore2EvalModule.close();
-			} catch (Exception e) {
-			}
-		}
-		super.close();
-	}
+    /**
+     * Summarizes the evaluation and generates an RDF model containing the
+     * evaluation results.
+     * 
+     * @return an RDF model containing the evaluation results
+     * @throws Exception
+     *             if a sever error occurs
+     */
+    protected abstract Model summarizeEvaluation() throws Exception;
+
+    /**
+     * Sends the model to the benchmark controller.
+     * 
+     * @param model
+     *            the model that should be sent
+     * @throws IOException
+     *             if an error occurs during the commmunication
+     */
+    private void sendResultModel(Model model) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        model.write(outputStream);
+        sendToCmdQueue(Commands.EVAL_MODULE_FINISHED_SIGNAL, outputStream.toByteArray());
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (EvalModule2EvalStore != null) {
+            try {
+                EvalModule2EvalStore.close();
+            } catch (Exception e) {
+            }
+        }
+        if (EvalStore2EvalModule != null) {
+            try {
+                EvalStore2EvalModule.close();
+            } catch (Exception e) {
+            }
+        }
+        super.close();
+    }
 }
