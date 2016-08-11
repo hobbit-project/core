@@ -34,10 +34,6 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 	 */
 	protected String EvalStore2EvalModuleQueueName;
 	/**
-	 * Channel of the incoming queue from the evaluation storage.
-	 */
-	protected Channel EvalStore2EvalModule;
-	/**
 	 * Consumer used to receive the responses from the evaluation storage.
 	 */
 	protected QueueingConsumer consumer;
@@ -51,11 +47,10 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
 
 		EvalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
-		EvalStore2EvalModule = connection.createChannel();
-		EvalStore2EvalModule.queueDeclare(EvalStore2EvalModuleQueueName, false, false, true, null);
+		EvalModule2EvalStore.queueDeclare(EvalStore2EvalModuleQueueName, false, false, true, null);
 
-		consumer = new QueueingConsumer(EvalStore2EvalModule);
-		EvalStore2EvalModule.basicConsume(EvalStore2EvalModuleQueueName, consumer);
+		consumer = new QueueingConsumer(EvalModule2EvalStore);
+		EvalModule2EvalStore.basicConsume(EvalStore2EvalModuleQueueName, consumer);
 	}
 
 	@Override
@@ -162,12 +157,6 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 		if (EvalModule2EvalStore != null) {
 			try {
 				EvalModule2EvalStore.close();
-			} catch (Exception e) {
-			}
-		}
-		if (EvalStore2EvalModule != null) {
-			try {
-				EvalStore2EvalModule.close();
 			} catch (Exception e) {
 			}
 		}
