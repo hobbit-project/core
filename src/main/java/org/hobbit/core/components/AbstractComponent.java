@@ -1,13 +1,12 @@
 package org.hobbit.core.components;
 
-import java.io.IOException;
-
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import org.hobbit.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import java.io.IOException;
 
 /**
  * This abstract class implements basic functionalities of a hobbit component.
@@ -35,7 +34,7 @@ public abstract class AbstractComponent implements Component {
 
 		if (System.getenv().containsKey(Constants.RABBIT_MQ_HOST_NAME_KEY)) {
 			ConnectionFactory factory = new ConnectionFactory();
-			factory.setHost(Constants.RABBIT_MQ_HOST_NAME_KEY);
+			factory.setHost(System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY));
 			connection = factory.newConnection();
 		} else {
 			LOGGER.warn("Couldn't get {} from the environment. This component won't be able to connect to RabbitMQ.",
