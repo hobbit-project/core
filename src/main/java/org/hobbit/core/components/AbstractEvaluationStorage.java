@@ -1,22 +1,21 @@
 package org.hobbit.core.components;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Semaphore;
-
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Semaphore;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -75,7 +74,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      */
     protected Channel EvalModule2EvalStore;
 
-    protected List<Iterator> resultPairIterators = new ArrayList<>();
+    protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
 
     @Override
     public void init() throws Exception {
@@ -133,10 +132,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                         byte iteratorId = buffer.get();
 
                         // get the iterator
-                        Iterator iterator = null;
+                        Iterator<ResultPair> iterator = null;
                         if (iteratorId == NEW_ITERATOR_ID) {
-                            // TODO create a new iterator, add it to the list of
-                            // iterators and set its id
+                            // create and save a new iterator
+                            resultPairIterators.add(iteratorId, iterator = createIterator());
                         } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
                             response = new byte[0];
                             LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
@@ -144,11 +143,20 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                         } else {
                             iterator = resultPairIterators.get(iteratorId);
                         }
-                        if (iterator != null) {
-                            // TODO get next response pair (iterator.next())
-                            // TODO set response (iteratorId,
+                        if (iterator != null && iterator.hasNext()) {
+                            ResultPair resultPair = iterator.next();
+                            // set response (iteratorId,
                             // taskSentTimestamp, expectedData,
                             // responseReceivedTimestamp, receivedData)
+                            response = ByteBuffer.allocate(1
+                                        + Long.SIZE / Byte.SIZE + resultPair.getExpected().getData().length
+                                        + Long.SIZE / Byte.SIZE + resultPair.getActual().getData().length)
+                                    .put(iteratorId)
+                                    .putLong(resultPair.getExpected().getSentTimestamp())
+                                    .put(resultPair.getExpected().getData())
+                                    .putLong(resultPair.getActual().getSentTimestamp())
+                                    .put(resultPair.getActual().getData())
+                                    .array();
                         }
                         getChannel().basicPublish("", properties.getReplyTo(), null, response);
                     }
@@ -192,4 +200,6 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         }
         super.close();
     }
+
+    protected abstract Iterator<ResultPair> createIterator();
 }
