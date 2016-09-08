@@ -166,6 +166,15 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 		Thread.sleep(1000);
 		currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
 	}
+	
+	@Override
+	public void receiveGeneratedData(byte[] data) {
+	    try {
+            generateTask(data);
+        } catch (Exception e) {
+            LOGGER.error("Exception while generating task");
+        }
+	}
 
 	/**
 	 * Generates a task from the given data, sends it to the system, takes the
