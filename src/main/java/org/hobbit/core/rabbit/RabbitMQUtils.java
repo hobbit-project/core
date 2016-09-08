@@ -22,7 +22,7 @@ public class RabbitMQUtils {
         if(data == null) {
             return null;
         } else {
-            return new String(byte[] data, Charsets.UTF_8);
+            return new String(data, Charsets.UTF_8);
         }
     }
 

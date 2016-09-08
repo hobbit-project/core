@@ -37,7 +37,7 @@ public final class Commands {
      * </code>
      * </p>
      */
-    public static final byte DOCKER_CONTAINER_START = 0;
+    public static final byte DOCKER_CONTAINER_START = 12;
     /**
      * Command used to ask a docker managing component to stop a certain
      * container.
@@ -49,5 +49,5 @@ public final class Commands {
      * </code>
      * </p>
      */
-    public static final byte DOCKER_CONTAINER_STOP = 1;
+    public static final byte DOCKER_CONTAINER_STOP = 13;
 }
