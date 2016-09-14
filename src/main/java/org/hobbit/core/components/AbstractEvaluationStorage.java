@@ -9,7 +9,10 @@ import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -36,8 +39,17 @@ import com.rabbitmq.client.Envelope;
 public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent implements
 		ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
-	public static final int NEW_ITERATOR_ID = -1;
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
 
+	/**
+	 * If a request contains this iterator ID, a new iterator is created and its
+	 * first result as well as its Id are returned.
+	 */
+	public static final byte NEW_ITERATOR_ID = -1;
+	/**
+	 * The empty response that is sent if an error occurs.
+	 */
+	private static final byte[] EMPTY_RESPONSE = new byte[0];
 
 	/**
 	 * Mutex used to wait for the termination signal.
@@ -68,7 +80,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 	 */
 	protected Channel EvalModule2EvalStore;
 
-	protected List<Iterator> resultPairIterators = new ArrayList<>();
+	protected List<Iterator<ResultPair>> resultPairIterators = new ArrayList<>();
 
 	@Override
 	public void init() throws Exception {
@@ -87,7 +99,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 				String taskId = RabbitMQUtils.readString(buffer);
 				long timestamp = buffer.getLong();
 				byte[] data = RabbitMQUtils.readByteArray(buffer);
-				expReceiver.receiveExpectedResonseData(taskId, timestamp, data);
+				expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
 			}
 		});
 
@@ -111,17 +123,47 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 		EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
 		EvalModule2EvalStore = connection.createChannel();
 		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
-		EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true, new DefaultConsumer(EvalModule2EvalStore) {
-			@Override
-			public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-					throws IOException {
-				// TODO get iterator id
-				// TODO if NEW_ITERATOR_ID -> create a new iterator
-				// TODO get next response pair
-				// TODO send response pair
-			}
-		});
+		EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
+				new DefaultConsumer(EvalModule2EvalStore) {
+					@Override
+					public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+							byte[] body) throws IOException {
+						byte response[] = EMPTY_RESPONSE;
+						// get iterator id
+						ByteBuffer buffer = ByteBuffer.wrap(body);
+						if (buffer.remaining() < 4) {
+							LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+						} else {
+							byte iteratorId = buffer.get();
+
+							// get the iterator
+							Iterator<ResultPair> iterator = null;
+							if (iteratorId == NEW_ITERATOR_ID) {
+								iterator = createIterator();
+							} else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+								LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+										+ "). Returning emtpy response.");
+							} else {
+								iterator = resultPairIterators.get(iteratorId);
+							}
+							if (iterator != null) {
+								// TODO get next response pair (iterator.next())
+								// TODO set response (iteratorId,
+								// taskSentTimestamp, expectedData,
+								// responseReceivedTimestamp, receivedData)
+							}
+						}
+						getChannel().basicPublish("", properties.getReplyTo(), null, response);
+					}
+				});
 	}
+
+	/**
+	 * Creates a new iterator that iterates over the response pairs.
+	 * 
+	 * @return a new iterator or null if an error occurred
+	 */
+	protected abstract Iterator<ResultPair> createIterator();
 
 	@Override
 	public void run() throws Exception {

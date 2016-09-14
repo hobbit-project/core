@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -20,6 +22,8 @@ import com.rabbitmq.client.QueueingConsumer;
  *
  */
 public abstract class AbstractEvaluationModule extends AbstractCommandReceivingComponent {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
 
 	/**
 	 * Name of the queue to the evaluation storage.
@@ -77,9 +81,8 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
 		String corrId;
 		BasicProperties props;
-		byte[] iteratorId = new byte[4];
-		ByteBuffer buffer = ByteBuffer.wrap(iteratorId);
-		buffer.putInt(AbstractEvaluationStorage.NEW_ITERATOR_ID);
+		byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
+		ByteBuffer buffer;
 
 		int length;
 		while (true) {
@@ -87,11 +90,22 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 			corrId = java.util.UUID.randomUUID().toString();
 			props = new BasicProperties.Builder().deliveryMode(2).correlationId(corrId)
 					.replyTo(EvalStore2EvalModuleQueueName).build();
-			EvalModule2EvalStore.basicPublish("", EvalModule2EvalStoreQueueName, props, iteratorId);
+			EvalModule2EvalStore.basicPublish("", EvalModule2EvalStoreQueueName, props, requestBody);
 			QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 			if (delivery.getProperties().getCorrelationId().equals(corrId)) {
 				// parse the response
 				buffer = ByteBuffer.wrap(delivery.getBody());
+				// if the response is empty
+				if (buffer.remaining() == 0) {
+					LOGGER.error("Got a completely empty response from the evaluation storage.");
+					return;
+				}
+				requestBody[0] = buffer.get();
+
+				// if the response is empty
+				if (buffer.remaining() == 0) {
+					return;
+				}
 				taskSentTimestamp = buffer.getLong();
 				length = buffer.getInt();
 				expectedData = new byte[length];
@@ -102,10 +116,6 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 				receivedData = new byte[length];
 				buffer.get(receivedData);
 
-				if (((expectedData != null) || (expectedData.length > 0))
-						&& ((receivedData != null) || (receivedData.length > 0))) {
-					return;
-				}
 				evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
 			}
 		}

@@ -20,6 +20,6 @@ public interface ExpectedResponseReceivingComponent extends Component {
 	 * @param data
 	 *            the data received from a task generator
 	 */
-	public void receiveExpectedResonseData(String taskId, long timestamp, byte[] data);
+	public void receiveExpectedResponseData(String taskId, long timestamp, byte[] data);
 
 }
