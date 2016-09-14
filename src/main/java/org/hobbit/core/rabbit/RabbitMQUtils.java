@@ -15,11 +15,12 @@ public class RabbitMQUtils {
     /**
      * Transforms the given byte data into a String using the UTF-8 encoding.
      * 
-     * @param data the byte array that should be transformed
+     * @param data
+     *            the byte array that should be transformed
      * @return the String or null if the given byte array is null
      */
     public static String readString(byte[] data) {
-        if(data == null) {
+        if (data == null) {
             return null;
         } else {
             return new String(data, Charsets.UTF_8);
@@ -61,4 +62,15 @@ public class RabbitMQUtils {
         }
     }
 
+    /**
+     * Creates a byte array representation of the given String using UTF-8
+     * encoding.
+     * 
+     * @param string
+     *            the String that should be transformed into a byte array
+     * @return the UTF-8 byte array of the given String
+     */
+    public static byte[] writeString(String string) {
+        return string.getBytes(Charsets.UTF_8);
+    }
 }
