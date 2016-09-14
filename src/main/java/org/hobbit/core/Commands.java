@@ -45,8 +45,7 @@ public final class Commands {
      * Command used to ask a docker managing component to start a certain
      * container.
      * <p>
-     * The command is followed by a String containing the following JSON data:
-     * <br>
+     * The command is followed by a String containing the following JSON data: <br>
      * <code>
      * {<br>"image": "image-to-run",<br> "type": "system|benchmark",<br> "parent":"parent-container-id"<br>}
      * </code>
@@ -57,8 +56,7 @@ public final class Commands {
      * Command used to ask a docker managing component to stop a certain
      * container.
      * <p>
-     * The command is followed by a String containing the following JSON data:
-     * <br>
+     * The command is followed by a String containing the following JSON data: <br>
      * <code>
      * {<br>"containerId": "container-to-stop"<br>}
      * </code>
@@ -69,6 +67,8 @@ public final class Commands {
     public static final byte DATA_GENERATION_FINISHED = 14;
 
     public static final byte TASK_GENERATION_FINISHED = 15;
-    
+
     public static final byte DOCKER_CONTAINER_TERMINATED = 16;
+
+    public static final byte START_BENCHMARK_SIGNAL = 17;
 }
