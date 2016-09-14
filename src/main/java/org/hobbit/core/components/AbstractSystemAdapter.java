@@ -19,28 +19,15 @@ import com.rabbitmq.client.MessageProperties;
 
 /**
  * This abstract class implements basic functions that can be used to implement
- * a task generator.
- * 
- * <p>
- * The following environment variables are expected:
- * <ul>
- * <li>{@link Constants#GENERATOR_ID_KEY}</li>
- * <li>{@link Constants#GENERATOR_COUNT_KEY}</li>
- * </ul>
- * </p>
+ * a system adapter.
  * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent
-        implements GeneratedDataReceivingComponent {
+public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent
+        implements GeneratedDataReceivingComponent, TaskReceivingComponent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskGenerator.class);
-
-    /**
-     * Default value of the {@link #maxParallelProcessedMsgs} attribute.
-     */
-    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSystemAdapter.class);
 
     /**
      * Mutex used to wait for the start signal after the component has been
@@ -65,11 +52,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      * generator.
      */
     private long nextTaskId;
-    /**
-     * The maximum number of incoming messages that are processed in parallel.
-     * Additional messages have to wait.
-     */
-    private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
     /**
      * Name of the incoming queue with which the task generator can receive data
      * from the data generators.
@@ -152,7 +134,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
             }
         });
 
-        currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
     }
 
     @Override
@@ -168,7 +149,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         // Collect all open mutex counts to make sure that there is no message
         // that is still processed
         Thread.sleep(1000);
-        currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
     }
 
     @Override
@@ -274,10 +254,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 
     public int getNumberOfGenerators() {
         return numberOfGenerators;
-    }
-
-    public void setMaxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
-        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
     }
 
     @Override

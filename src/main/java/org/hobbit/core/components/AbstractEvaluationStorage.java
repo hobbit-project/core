@@ -2,11 +2,11 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.data.ResultPair;
@@ -80,7 +80,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 	 */
 	protected Channel EvalModule2EvalStore;
 
-	protected List<Iterator<ResultPair>> resultPairIterators = new ArrayList<>();
+    protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
 
 	@Override
 	public void init() throws Exception {
@@ -125,37 +125,48 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
 		EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
 				new DefaultConsumer(EvalModule2EvalStore) {
-					@Override
-					public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-							byte[] body) throws IOException {
-						byte response[] = EMPTY_RESPONSE;
-						// get iterator id
-						ByteBuffer buffer = ByteBuffer.wrap(body);
-						if (buffer.remaining() < 4) {
-							LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-						} else {
-							byte iteratorId = buffer.get();
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                    byte[] body) throws IOException {
+                byte response[] = null;
+                // get iterator id
+                ByteBuffer buffer = ByteBuffer.wrap(body);
+                if (buffer.remaining() < 4) {
+                    response = EMPTY_RESPONSE;
+                    LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+                }
+                byte iteratorId = buffer.get();
 
-							// get the iterator
-							Iterator<ResultPair> iterator = null;
-							if (iteratorId == NEW_ITERATOR_ID) {
-								iterator = createIterator();
-							} else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-								LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-										+ "). Returning emtpy response.");
-							} else {
-								iterator = resultPairIterators.get(iteratorId);
-							}
-							if (iterator != null) {
-								// TODO get next response pair (iterator.next())
-								// TODO set response (iteratorId,
-								// taskSentTimestamp, expectedData,
-								// responseReceivedTimestamp, receivedData)
-							}
-						}
-						getChannel().basicPublish("", properties.getReplyTo(), null, response);
-					}
-				});
+                // get the iterator
+                Iterator<ResultPair> iterator = null;
+                if (iteratorId == NEW_ITERATOR_ID) {
+                    // create and save a new iterator
+                    resultPairIterators.add(iteratorId, iterator = createIterator());
+                } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                    response = EMPTY_RESPONSE;
+                    LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                            + "). Returning emtpy response.");
+                } else {
+                    iterator = resultPairIterators.get(iteratorId);
+                }
+                if (iterator != null && iterator.hasNext()) {
+                    ResultPair resultPair = iterator.next();
+                    // set response (iteratorId,
+                    // taskSentTimestamp, expectedData,
+                    // responseReceivedTimestamp, receivedData)
+                    response = ByteBuffer.allocate(1
+                                + Long.SIZE / Byte.SIZE + resultPair.getExpectedData().length
+                                + Long.SIZE / Byte.SIZE + resultPair.getReceivedData().length)
+                            .put(iteratorId)
+                            .putLong(resultPair.getTaskSentTimestamp())
+                            .put(resultPair.getExpectedData())
+                            .putLong(resultPair.getResponseReceivedTimestamp())
+                            .put(resultPair.getReceivedData())
+                            .array();
+                }
+                getChannel().basicPublish("", properties.getReplyTo(), null, response);
+            }
+        });
 	}
 
 	/**
