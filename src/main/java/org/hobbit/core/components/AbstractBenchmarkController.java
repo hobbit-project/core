@@ -105,6 +105,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     @Override
     public void run() throws Exception {
         sendToCmdQueue(Commands.BENCHMARK_READY_SIGNAL);
+        // wait for the start signal
         startBenchmarkMutex.acquire();
         executeBenchmark();
     }
