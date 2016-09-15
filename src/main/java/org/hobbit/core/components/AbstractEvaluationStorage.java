@@ -9,7 +9,8 @@ import java.util.concurrent.Semaphore;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.data.ResultPair;
+import org.hobbit.core.data.Result;
+import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,14 +155,16 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                     // set response (iteratorId,
                     // taskSentTimestamp, expectedData,
                     // responseReceivedTimestamp, receivedData)
+                    Result expected = resultPair.getExpected();
+                    Result actual = resultPair.getActual();
                     response = ByteBuffer.allocate(1
-                                + Long.SIZE / Byte.SIZE + resultPair.getExpectedData().length
-                                + Long.SIZE / Byte.SIZE + resultPair.getReceivedData().length)
+                                + Long.SIZE / Byte.SIZE + expected.getData().length
+                                + Long.SIZE / Byte.SIZE + actual.getData().length)
                             .put(iteratorId)
-                            .putLong(resultPair.getTaskSentTimestamp())
-                            .put(resultPair.getExpectedData())
-                            .putLong(resultPair.getResponseReceivedTimestamp())
-                            .put(resultPair.getReceivedData())
+                            .putLong(expected.getSentTimestamp())
+                            .put(expected.getData())
+                            .putLong(actual.getSentTimestamp())
+                            .put(actual.getData())
                             .array();
                 }
                 getChannel().basicPublish("", properties.getReplyTo(), null, response);

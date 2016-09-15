@@ -7,7 +7,7 @@ package org.hobbit.core.components;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public interface CommandReceivingComponent {
+public interface CommandReceivingComponent extends Component {
 
 	/**
 	 * This method is called if a command is received and might be interesting

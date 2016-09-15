@@ -1,4 +1,4 @@
-package org.hobbit.core.components;
+package org.hobbit.core.data;
 
 /**
  * Wrapper for an expected an actual result.
