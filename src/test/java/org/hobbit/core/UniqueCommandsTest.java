@@ -24,7 +24,7 @@ public class UniqueCommandsTest {
     @Test
     public void testControllerApiCommands() throws IllegalArgumentException, IllegalAccessException {
         String[] definedCommands = new String[256];
-        Class<ControllerApiCommands> clazz = ControllerApiCommands.class;
+        Class<FrontEndApiCommands> clazz = FrontEndApiCommands.class;
         Field[] fields = clazz.getFields();
         int commandId;
         for (int i = 0; i < fields.length; ++i) {

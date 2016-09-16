@@ -21,13 +21,11 @@ import com.rabbitmq.client.MessageProperties;
  * This abstract class implements basic functions that can be used to implement
  * a task generator.
  * 
- * <p>
  * The following environment variables are expected:
  * <ul>
  * <li>{@link Constants#GENERATOR_ID_KEY}</li>
  * <li>{@link Constants#GENERATOR_COUNT_KEY}</li>
  * </ul>
- * </p>
  * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
@@ -47,6 +45,10 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      * started and initialized.
      */
     private Semaphore startTaskGenMutex = new Semaphore(0);
+    /**
+     * Mutex used to wait for the terminate signal.
+     */
+    private Semaphore terminateMutex = new Semaphore(0);
     /**
      * Semaphore used to control the number of messages that can be processed in
      * parallel.
@@ -157,12 +159,13 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 
     @Override
     public void run() throws Exception {
-        boolean terminate = false;
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
-
-        while ((!terminate) || (dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName) > 0)) {
+        
+        terminateMutex.acquire();
+        // wait until all messages have been read from the queue
+        while (dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName) > 0) {
             Thread.sleep(1000);
         }
         // Collect all open mutex counts to make sure that there is no message
@@ -210,6 +213,9 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
             // release the mutex
             startTaskGenMutex.release();
+        } else if (command == Commands.DATA_GENERATION_FINISHED) {
+            // release the mutex
+            terminateMutex.release();
         }
     }
 
@@ -242,7 +248,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         buffer.putLong(timestamp);
         buffer.putInt(data.length);
         buffer.put(data);
-        taskGen2EvalStore.basicPublish("", taskGen2SystemQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
+        taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
     }
 
     /**
@@ -265,7 +271,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         buffer.put(taskIdBytes);
         buffer.putInt(data.length);
         buffer.put(data);
-        taskGen2System.basicPublish("", taskGen2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
+        taskGen2System.basicPublish("", taskGen2SystemQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
     }
 
     public int getGeneratorId() {
@@ -274,10 +280,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 
     public int getNumberOfGenerators() {
         return numberOfGenerators;
-    }
-
-    public void setMaxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
-        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
     }
 
     @Override

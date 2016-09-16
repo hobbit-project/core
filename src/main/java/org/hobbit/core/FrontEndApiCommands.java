@@ -7,7 +7,7 @@ package org.hobbit.core;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public class ControllerApiCommands {
+public class FrontEndApiCommands {
 
     /**
      * This command requests
@@ -30,6 +30,9 @@ public class ControllerApiCommands {
      */
     public static final byte GET_BENCHMARK_DETAILS = 2;
 
+    /**
+     * This command adds the given benchmark system combination to the queue.
+     */
     public static final byte ADD_EXPERIMENT_CONFIGURATION = 3;
 
 }

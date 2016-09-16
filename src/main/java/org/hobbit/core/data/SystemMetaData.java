@@ -1,6 +1,6 @@
 package org.hobbit.core.data;
 
-public class SystemDescription {
+public class SystemMetaData {
 
     public String systemUri;
     public String systemName;

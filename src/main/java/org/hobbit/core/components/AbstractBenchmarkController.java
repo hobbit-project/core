@@ -128,8 +128,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * Creates the given number of task generators using the given image name
      * and environment variables.
      * 
-     * @param dataGeneratorImageName
-     * @param numberOfDataGenerators
+     * @param taskGeneratorImageName
+     * @param numberOfTaskGenerators
      * @param envVariables
      */
     protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators, String[] envVariables) {

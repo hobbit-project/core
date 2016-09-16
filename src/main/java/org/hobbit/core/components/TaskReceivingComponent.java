@@ -17,6 +17,6 @@ public interface TaskReceivingComponent extends Component {
      * @param data
      *            the data received from a data generator
      */
-    public void receiveGeneratedData(String taskId, byte[] data);
+    public void receiveGeneratedTask(String taskId, byte[] data);
 
 }

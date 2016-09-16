@@ -24,16 +24,6 @@ import com.rabbitmq.client.Envelope;
  * This abstract class implements basic functions that can be used to implement
  * a task generator.
  * 
- * FIXME Implement me!!!!
- * 
- * <p>
- * The following environment variables are expected:
- * <ul>
- * <li>{@link Constants#GENERATOR_ID_KEY}</li>
- * <li>{@link Constants#GENERATOR_COUNT_KEY}</li>
- * </ul>
- * </p>
- * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -106,7 +96,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
 		@SuppressWarnings("resource")
 		ResponseReceivingComponent respReceiver = this;
-		system2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+		system2EvalStoreQueueName = generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME);
 		system2EvalStore = connection.createChannel();
 		system2EvalStore.queueDeclare(system2EvalStoreQueueName, false, false, true, null);
 		system2EvalStore.basicConsume(system2EvalStoreQueueName, true, new DefaultConsumer(system2EvalStore) {
@@ -115,13 +105,12 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 					throws IOException {
 				ByteBuffer buffer = ByteBuffer.wrap(body);
 				String taskId = RabbitMQUtils.readString(buffer);
-				long timestamp = buffer.getLong();
 				byte[] data = RabbitMQUtils.readByteArray(buffer);
-				respReceiver.receiveResponseData(taskId, timestamp, data);
+				respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
 			}
 		});
 
-		EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+		EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
 		EvalModule2EvalStore = connection.createChannel();
 		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
 		EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
