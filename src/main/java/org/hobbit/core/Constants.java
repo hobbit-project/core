@@ -56,4 +56,6 @@ public final class Constants {
 
 	public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
 	
+	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
+	
 }
