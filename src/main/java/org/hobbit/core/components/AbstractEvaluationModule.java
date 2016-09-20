@@ -162,6 +162,11 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 		sendToCmdQueue(Commands.EVAL_MODULE_FINISHED_SIGNAL, outputStream.toByteArray());
 	}
 
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        // Nothing to do
+    }
+
 	@Override
 	public void close() throws IOException {
 		if (EvalModule2EvalStore != null) {
