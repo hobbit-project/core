@@ -70,6 +70,22 @@ public class RabbitMQUtils {
     }
 
     /**
+     * Reads an RDF model from the given byte buffer assuming that the byte
+     * array containing the model is preceded by an int containing its length.
+     * 
+     * @param buffer
+     *            the buffer containing the length of the serialized model (as
+     *            int) and the byte array containing the serialized model
+     * @return the deserialized model
+     */
+    public static Model readModel(ByteBuffer buffer) {
+        StringReader reader = new StringReader(readString(buffer));
+        Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, reader, "", DEFAULT_RDF_LANG);
+        return model;
+    }
+
+    /**
      * Transforms the given byte data into a String using the UTF-8 encoding.
      * 
      * @param data
@@ -117,6 +133,28 @@ public class RabbitMQUtils {
         } else {
             return new String(readByteArray(buffer), Charsets.UTF_8);
         }
+    }
+
+    /**
+     * writes the given byte arrays and puts their length in front of them.
+     * Thus, they can be read using a ByteBuffer and the
+     * {@link #readByteArray(ByteBuffer)} method.
+     * 
+     * @param arrays
+     *            arrays that should be written to a single array
+     * @return the byte array containing all given arrays and their lengths
+     */
+    public static byte[] writeByteArrays(byte[][] arrays) {
+        int length = arrays.length * 4;
+        for (int i = 0; i < arrays.length; ++i) {
+            length += arrays[i].length;
+        }
+        ByteBuffer buffer = ByteBuffer.allocate(length);
+        for (int i = 0; i < arrays.length; ++i) {
+            buffer.putInt(arrays[i].length);
+            buffer.put(arrays[i]);
+        }
+        return buffer.array();
     }
 
     /**

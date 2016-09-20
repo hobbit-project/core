@@ -14,4 +14,8 @@ public class BenchmarkDetails {
         this.systems = systems;
     }
 
+    public static void main(String[] args) {
+        GsonBuilder gson = new GsonBuilder();
+        gson.registerTypeAdapter(MyType2.class, new MyTypeAdapter());
+    }
 }
