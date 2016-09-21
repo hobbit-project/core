@@ -91,7 +91,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     @Override
     public void init() throws Exception {
         super.init();
-
+        // benchmark controllers should be able to accept broadcasts
+        addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
         if (System.getenv().containsKey(Constants.SYSTEM_CONTAINER_ID_KEY)) {
             systemContainerId = System.getenv().get(Constants.SYSTEM_CONTAINER_ID_KEY);
         }

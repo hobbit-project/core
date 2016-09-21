@@ -2,6 +2,8 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.io.Charsets;
 import org.hobbit.core.Commands;
@@ -30,6 +32,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     private QueueingConsumer responseConsumer = null;
     protected Channel cmdChannel = null;
     protected String containerType = "";
+    private Set<String> acceptedCmdHeaderIds = new HashSet<String>(5);
     /**
      * Threadsafe JSON parser.
      */
@@ -38,6 +41,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     @Override
     public void init() throws Exception {
         super.init();
+        addCommandHeaderId(getHobbitSessionId());
         cmdChannel = connection.createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout");
@@ -116,13 +120,21 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
+    /**
+     * Adds the given session id to the set of ids this component is reacting
+     * to.
+     * 
+     * @param sessionId
+     *            session id that should be added to the set of accepted ids.
+     */
+    protected void addCommandHeaderId(String sessionId) {
+        acceptedCmdHeaderIds.add(sessionId);
+    }
+
     protected void handleCmd(byte bytes[], String replyTo) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        int idLength = buffer.getInt();
-        byte sessionIdBytes[] = new byte[idLength];
-        buffer.get(sessionIdBytes);
-        String sessionId = new String(sessionIdBytes, Charsets.UTF_8);
-        if (sessionId.equals(getHobbitSessionId())) {
+        String sessionId = RabbitMQUtils.readString(buffer);
+        if (acceptedCmdHeaderIds.contains(sessionId)) {
             byte command = buffer.get();
             byte remainingData[];
             if (buffer.remaining() > 0) {

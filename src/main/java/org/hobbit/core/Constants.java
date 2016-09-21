@@ -17,6 +17,8 @@ public final class Constants {
 
     public static final String HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS = "SYSTEM";
 
+    public static final String HOBBIT_SESSION_ID_FOR_BROADCASTS = "BROADCAST";
+
     public static final String RABBIT_MQ_HOST_NAME_KEY = "hobbit.rabbit-host";
 
     public static final String GENERATOR_ID_KEY = "hobbit.generator-id";
@@ -26,11 +28,6 @@ public final class Constants {
     public static final String SYSTEM_CONTAINER_ID_KEY = "hobbit.system-container-id";
 
     // =============== RABBIT CONSTANTS ===============
-
-    // /**
-    // * Name of the hobbit command queue.
-    // */
-    // public static final String HOBBIT_COMMAND_QUEUE_NAME = "hobbit.command";
 
     /**
      * Name of the hobbit command exchange.
