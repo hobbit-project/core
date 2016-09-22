@@ -13,19 +13,15 @@ public final class Constants {
 
     // =============== ENVIRONMENT CONSTANTS ===============
 
-    public static final String HOBBIT_SESSION_ID_KEY = "hobbit.session-id";
+    public static final String HOBBIT_SESSION_ID_KEY = "HOBBIT_SESSION_ID";
 
-    public static final String HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS = "SYSTEM";
+    public static final String RABBIT_MQ_HOST_NAME_KEY = "HOBBIT_RABBIT_HOST";
 
-    public static final String HOBBIT_SESSION_ID_FOR_BROADCASTS = "BROADCAST";
+    public static final String GENERATOR_ID_KEY = "HOBBIT_GENERATOR_ID";
 
-    public static final String RABBIT_MQ_HOST_NAME_KEY = "hobbit.rabbit-host";
+    public static final String GENERATOR_COUNT_KEY = "HOBBIT_GENERATOR_COUNT";
 
-    public static final String GENERATOR_ID_KEY = "hobbit.generator-id";
-
-    public static final String GENERATOR_COUNT_KEY = "hobbit.generator-count";
-
-    public static final String SYSTEM_CONTAINER_ID_KEY = "hobbit.system-container-id";
+    public static final String SYSTEM_CONTAINER_ID_KEY = "HOBBIT_SYSTEM_CONTAINER_ID";
 
     // =============== RABBIT CONSTANTS ===============
 
@@ -56,5 +52,11 @@ public final class Constants {
 	public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
+
+    // =============== OTHER CONSTANTS ===============
+
+    public static final String HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS = "SYSTEM";
+
+    public static final String HOBBIT_SESSION_ID_FOR_BROADCASTS = "BROADCAST";
 	
 }

@@ -337,6 +337,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.DOCKER_CONTAINER_TERMINATED: {
+            // FIXME Add 
             String containerId = RabbitMQUtils.readString(data);
             if (dataGenContainerIds.contains(containerId)) {
                 dataGenTerminatedMutex.release();
