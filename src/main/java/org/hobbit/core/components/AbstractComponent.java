@@ -44,7 +44,7 @@ public abstract class AbstractComponent implements Component {
                 } catch (Exception e) {
                     LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i, e);
                     try {
-                        Thread.sleep(START_WAITING_TIME_BEFORE_RETRY * i);
+                        Thread.sleep(START_WAITING_TIME_BEFORE_RETRY * (i + 1));
                     } catch (Exception e2) {
                         LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.");
                     }
