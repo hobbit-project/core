@@ -18,7 +18,14 @@ public abstract class AbstractComponent implements Component {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractComponent.class);
 
+    /**
+     * Maximum number of retries that are executed to connect to RabbitMQ.
+     */
     public static final int NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ = 5;
+    /**
+     * Time, the system waits before retrying to connect to RabbitMQ. Note that
+     * this time will be multiplied with the number of already failed tries.
+     */
     public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
 
     private String hobbitSessionId;
@@ -42,11 +49,16 @@ public abstract class AbstractComponent implements Component {
                 try {
                     connection = factory.newConnection();
                 } catch (Exception e) {
-                    LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i, e);
-                    try {
-                        Thread.sleep(START_WAITING_TIME_BEFORE_RETRY * (i + 1));
-                    } catch (Exception e2) {
-                        LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.");
+                    if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
+                        long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
+                        LOGGER.warn(
+                                "Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
+                                e);
+                        try {
+                            Thread.sleep(waitingTime);
+                        } catch (Exception e2) {
+                            LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.", e2);
+                        }
                     }
                 }
             }
