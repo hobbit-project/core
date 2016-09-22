@@ -145,14 +145,48 @@ public class RabbitMQUtils {
      * @return the byte array containing all given arrays and their lengths
      */
     public static byte[] writeByteArrays(byte[][] arrays) {
+        return writeByteArrays(null, arrays, null);
+    }
+
+    /**
+     * writes the given byte arrays and puts their length in front of them.
+     * Thus, they can be read using a ByteBuffer and the
+     * {@link #readByteArray(ByteBuffer)} method.
+     * 
+     * @param precedingData
+     *            data that should be written before the arrays are written.
+     *            <b>Note</b> that this data is not preceded with the byte array
+     *            length.
+     * @param arrays
+     *            arrays that should be written to a single array
+     * @param subsequentData
+     *            data that should be written after the arrays are written.
+     *            <b>Note</b> that this data is not preceded with the byte array
+     *            length.
+     * @return the byte array containing all given arrays and their lengths
+     */
+    public static byte[] writeByteArrays(byte[] precedingData, byte[][] arrays, byte[] subsequentData) {
         int length = arrays.length * 4;
+        if (precedingData != null) {
+            length += precedingData.length;
+        }
         for (int i = 0; i < arrays.length; ++i) {
             length += arrays[i].length;
         }
+        if (subsequentData != null) {
+            length += subsequentData.length;
+        }
+        // write the data to the byte array
         ByteBuffer buffer = ByteBuffer.allocate(length);
+        if (precedingData != null) {
+            buffer.put(precedingData);
+        }
         for (int i = 0; i < arrays.length; ++i) {
             buffer.putInt(arrays[i].length);
             buffer.put(arrays[i]);
+        }
+        if (subsequentData != null) {
+            buffer.put(subsequentData);
         }
         return buffer.array();
     }

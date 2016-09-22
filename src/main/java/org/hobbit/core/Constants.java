@@ -21,7 +21,12 @@ public final class Constants {
 
     public static final String GENERATOR_COUNT_KEY = "HOBBIT_GENERATOR_COUNT";
 
+    public static final String SYSTEM_URI_KEY = "HOBBIT_SYSTEM_URI";
+
+    @Deprecated
     public static final String SYSTEM_CONTAINER_ID_KEY = "HOBBIT_SYSTEM_CONTAINER_ID";
+
+    public static final String BENCHMARK_PARAMETERS_MODEL_KEY = "BENCHMARK_PARAMETERS_MODEL";
 
     // =============== RABBIT CONSTANTS ===============
 
@@ -50,6 +55,8 @@ public final class Constants {
 	public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME = "hobbit.evalstore-evalmod";
 
 	public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
+
+    public static final String CONTROLLER_2_FRONT_END_QUEUE_NAME = "hobbit.controller-frontend";
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
 
@@ -58,5 +65,9 @@ public final class Constants {
     public static final String HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS = "SYSTEM";
 
     public static final String HOBBIT_SESSION_ID_FOR_BROADCASTS = "BROADCAST";
+
+    public static final String CONTAINER_TYPE_BENCHMARK = "BENCHMARK";
+
+    public static final String CONTAINER_TYPE_SYSTEM = "SYSTEM";
 	
 }

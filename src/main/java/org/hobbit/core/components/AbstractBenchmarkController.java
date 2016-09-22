@@ -86,21 +86,22 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     /**
      * The container id of the benchmarked system.
      */
-    private String systemContainerId;
+    private String systemContainerId = null;
 
     @Override
     public void init() throws Exception {
         super.init();
         // benchmark controllers should be able to accept broadcasts
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
-        if (System.getenv().containsKey(Constants.SYSTEM_CONTAINER_ID_KEY)) {
-            systemContainerId = System.getenv().get(Constants.SYSTEM_CONTAINER_ID_KEY);
-        }
-        if (systemContainerId == null) {
-            String errorMsg = "Couldn't get the system container id. Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
+        // if (System.getenv().containsKey(Constants.SYSTEM_CONTAINER_ID_KEY)) {
+        // systemContainerId =
+        // System.getenv().get(Constants.SYSTEM_CONTAINER_ID_KEY);
+        // }
+        // if (systemContainerId == null) {
+        // String errorMsg = "Couldn't get the system container id. Aborting.";
+        // LOGGER.error(errorMsg);
+        // throw new Exception(errorMsg);
+        // }
     }
 
     @Override
@@ -322,6 +323,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
         switch (command) {
         case Commands.START_BENCHMARK_SIGNAL: {
             startBenchmarkMutex.release();
+            systemContainerId = RabbitMQUtils.readString(data);
             break;
         }
         case Commands.DATA_GENERATOR_READY_SIGNAL: {
@@ -337,7 +339,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.DOCKER_CONTAINER_TERMINATED: {
-            // FIXME Add 
+            // FIXME Add
             String containerId = RabbitMQUtils.readString(data);
             if (dataGenContainerIds.contains(containerId)) {
                 dataGenTerminatedMutex.release();

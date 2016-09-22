@@ -28,15 +28,15 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 	/**
 	 * Name of the queue to the evaluation storage.
 	 */
-	protected String EvalModule2EvalStoreQueueName;
+	protected String evalModule2EvalStoreQueueName;
 	/**
 	 * Channel of the queue to the evaluation storage.
 	 */
-	protected Channel EvalModule2EvalStore;
+	protected Channel evalModule2EvalStore;
 	/**
 	 * Name of the incoming queue from the evaluation storage.
 	 */
-	protected String EvalStore2EvalModuleQueueName;
+	protected String evalStore2EvalModuleQueueName;
 	/**
 	 * Consumer used to receive the responses from the evaluation storage.
 	 */
@@ -46,15 +46,15 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 	public void init() throws Exception {
 		super.init();
 
-		EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-		EvalModule2EvalStore = connection.createChannel();
-		EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
+		evalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
+		evalModule2EvalStore = connection.createChannel();
+		evalModule2EvalStore.queueDeclare(evalModule2EvalStoreQueueName, false, false, true, null);
 
-		EvalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
-		EvalModule2EvalStore.queueDeclare(EvalStore2EvalModuleQueueName, false, false, true, null);
+		evalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
+		evalModule2EvalStore.queueDeclare(evalStore2EvalModuleQueueName, false, false, true, null);
 
-		consumer = new QueueingConsumer(EvalModule2EvalStore);
-		EvalModule2EvalStore.basicConsume(EvalStore2EvalModuleQueueName, consumer);
+		consumer = new QueueingConsumer(evalModule2EvalStore);
+		evalModule2EvalStore.basicConsume(evalStore2EvalModuleQueueName, consumer);
 	}
 
 	@Override
@@ -89,8 +89,8 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 			// request next response pair
 			corrId = java.util.UUID.randomUUID().toString();
 			props = new BasicProperties.Builder().deliveryMode(2).correlationId(corrId)
-					.replyTo(EvalStore2EvalModuleQueueName).build();
-			EvalModule2EvalStore.basicPublish("", EvalModule2EvalStoreQueueName, props, requestBody);
+					.replyTo(evalStore2EvalModuleQueueName).build();
+			evalModule2EvalStore.basicPublish("", evalModule2EvalStoreQueueName, props, requestBody);
 			QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 			if (delivery.getProperties().getCorrelationId().equals(corrId)) {
 				// parse the response
@@ -169,9 +169,9 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
 	@Override
 	public void close() throws IOException {
-		if (EvalModule2EvalStore != null) {
+		if (evalModule2EvalStore != null) {
 			try {
-				EvalModule2EvalStore.close();
+				evalModule2EvalStore.close();
 			} catch (Exception e) {
 			}
 		}
