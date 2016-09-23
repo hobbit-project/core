@@ -22,6 +22,8 @@ public final class Constants {
     public static final String GENERATOR_COUNT_KEY = "HOBBIT_GENERATOR_COUNT";
 
     public static final String SYSTEM_URI_KEY = "HOBBIT_SYSTEM_URI";
+    
+    public static final String CONTAINER_NAME_KEY = "HOBBIT_CONTAINER_NAME";
 
     @Deprecated
     public static final String SYSTEM_CONTAINER_ID_KEY = "HOBBIT_SYSTEM_CONTAINER_ID";

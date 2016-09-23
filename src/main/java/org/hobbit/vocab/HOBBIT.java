@@ -45,5 +45,8 @@ public class HOBBIT {
 
     public static final Property hasNumberOfDocuments = property("hasNumberOfDocuments");
     public static final Property hasExperimentType = property("hasExperimentType");
-
+    public static final Property hasImageName = property("hasImageName");
+    public static final Property involvesBenchmark = property("involvesBenchmark");
+    public static final Property involvesSystem = property("involvesSystem");
+    
 }

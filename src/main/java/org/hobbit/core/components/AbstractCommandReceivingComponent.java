@@ -2,6 +2,7 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -161,6 +162,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String[] envVariables) {
         try {
+            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+            envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
             initResponseQueue();
             byte data[] = RabbitMQUtils.writeString(
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
