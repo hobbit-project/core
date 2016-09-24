@@ -88,20 +88,26 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      */
     private String systemContainerId = null;
 
+    protected Model benchmarkParamModel;
+
     @Override
     public void init() throws Exception {
         super.init();
         // benchmark controllers should be able to accept broadcasts
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
-        // if (System.getenv().containsKey(Constants.SYSTEM_CONTAINER_ID_KEY)) {
-        // systemContainerId =
-        // System.getenv().get(Constants.SYSTEM_CONTAINER_ID_KEY);
-        // }
-        // if (systemContainerId == null) {
-        // String errorMsg = "Couldn't get the system container id. Aborting.";
-        // LOGGER.error(errorMsg);
-        // throw new Exception(errorMsg);
-        // }
+        if (System.getenv().containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
+            try {
+                benchmarkParamModel = RabbitMQUtils.readModel(System.getenv().get(
+                        Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
+            } catch (Exception e) {
+                LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
+            }
+        } else {
+            String errorMsg = "Couldn't get the expected parameter model from the variable "
+                    + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ". Aborting.";
+            LOGGER.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
     }
 
     @Override
@@ -149,7 +155,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     private void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
             Set<String> generatorIds) {
         String containerId;
-        String variables[] = Arrays.copyOf(envVariables, envVariables.length);
+        String variables[] = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2)
+                : new String[2];
         variables[variables.length - 2] = Constants.GENERATOR_COUNT_KEY + "=" + numberOfGenerators;
         for (int i = 0; i < numberOfGenerators; ++i) {
             variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + i;
@@ -192,9 +199,9 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      *            environment variables that should be given to the component
      */
     protected void createEvaluationStorage(String evalStorageImageName, String[] envVariables) {
-        evalModuleContainerId = createContainer(evalStorageImageName, envVariables);
-        if (evalModuleContainerId == null) {
-            String errorMsg = "Couldn't create evaluation module. Aborting.";
+        evalStoreContainerId = createContainer(evalStorageImageName, envVariables);
+        if (evalStoreContainerId == null) {
+            String errorMsg = "Couldn't create evaluation storage. Aborting.";
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg);
         }

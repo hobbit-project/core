@@ -63,7 +63,18 @@ public class RabbitMQUtils {
      * @return the deserialized model
      */
     public static Model readModel(byte data[], int offset, int length) {
-        StringReader reader = new StringReader(readString(data, offset, length));
+        return readModel(readString(data, offset, length));
+    }
+
+    /**
+     * Reads an RDF model from the given String.
+     * 
+     * @param string
+     *            the String containing the serialized RDF model
+     * @return the deserialized model
+     */
+    public static Model readModel(String string) {
+        StringReader reader = new StringReader(string);
         Model model = ModelFactory.createDefaultModel();
         RDFDataMgr.read(model, reader, "", DEFAULT_RDF_LANG);
         return model;

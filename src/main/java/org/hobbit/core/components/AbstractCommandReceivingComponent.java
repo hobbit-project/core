@@ -162,11 +162,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String[] envVariables) {
         try {
-            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+            envVariables = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2) : new String[2];
+            envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
             envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
             initResponseQueue();
-            byte data[] = RabbitMQUtils.writeString(
-                    gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
+            byte data[] = RabbitMQUtils.writeString(gson.toJson(new StartCommandData(imageName, containerType,
+                    containerName, envVariables)));
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
             QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery();

@@ -2,6 +2,7 @@ package org.hobbit.core.components;
 
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+
 import org.hobbit.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,8 @@ public abstract class AbstractComponent implements Component {
 
     protected Connection connection = null;
 
+    protected String rabbitMQHostName;
+
     @Override
     public void init() throws Exception {
         hobbitSessionId = null;
@@ -44,16 +47,16 @@ public abstract class AbstractComponent implements Component {
 
         if (System.getenv().containsKey(Constants.RABBIT_MQ_HOST_NAME_KEY)) {
             ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY));
+            rabbitMQHostName = System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY);
+            factory.setHost(rabbitMQHostName);
             for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
                 try {
                     connection = factory.newConnection();
                 } catch (Exception e) {
                     if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
                         long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
-                        LOGGER.warn(
-                                "Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
-                                e);
+                        LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime
+                                + "ms.", e);
                         try {
                             Thread.sleep(waitingTime);
                         } catch (Exception e2) {
