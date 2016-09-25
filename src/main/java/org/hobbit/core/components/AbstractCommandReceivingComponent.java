@@ -52,7 +52,11 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
-                handleCmd(body, properties.getReplyTo());
+                try {
+                    handleCmd(body, properties.getReplyTo());
+                } catch (Exception e) {
+                    LOGGER.error("Exception while trying to handle incoming command.", e);
+                }
             }
         };
         cmdChannel.basicConsume(queueName, true, consumer);

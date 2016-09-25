@@ -346,8 +346,22 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.DOCKER_CONTAINER_TERMINATED: {
-            // FIXME Add
+            // FIXME Add exit code check
             String containerId = RabbitMQUtils.readString(data);
+            StringBuilder builder= new StringBuilder();
+            builder.append("Container ");
+            builder.append(containerId);
+            builder.append(" terminated. Known containers are dataGenContainerIds=");
+            builder.append(Arrays.toString(dataGenContainerIds.toArray(new String[dataGenContainerIds.size()])));
+            builder.append(" taskGenContainerIds=");
+            builder.append(Arrays.toString(taskGenContainerIds.toArray(new String[taskGenContainerIds.size()])));
+            builder.append(" evalStoreContainerId=");
+            builder.append(evalStoreContainerId);
+            builder.append(" systemContainerId=");
+            builder.append(systemContainerId);
+            builder.append(" evalModuleContainerId=");
+            builder.append(evalModuleContainerId);
+            LOGGER.info(builder.toString());
             if (dataGenContainerIds.contains(containerId)) {
                 dataGenTerminatedMutex.release();
             } else if (taskGenContainerIds.contains(containerId)) {
@@ -374,3 +388,4 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
         }
     }
 }
+

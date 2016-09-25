@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +85,6 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 		byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
 		ByteBuffer buffer;
 
-		int length;
 		while (true) {
 			// request next response pair
 			corrId = java.util.UUID.randomUUID().toString();
@@ -106,15 +106,11 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 				if (buffer.remaining() == 0) {
 					return;
 				}
-				taskSentTimestamp = buffer.getLong();
-				length = buffer.getInt();
-				expectedData = new byte[length];
-				buffer.get(expectedData);
+				taskSentTimestamp = RabbitMQUtils.readLong(RabbitMQUtils.readByteArray(buffer));
+				expectedData = RabbitMQUtils.readByteArray(buffer);
 
-				responseReceivedTimestamp = buffer.getLong();
-				length = buffer.getInt();
-				receivedData = new byte[length];
-				buffer.get(receivedData);
+				responseReceivedTimestamp = RabbitMQUtils.readLong(RabbitMQUtils.readByteArray(buffer));
+				receivedData = RabbitMQUtils.readByteArray(buffer);
 
 				evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
 			}

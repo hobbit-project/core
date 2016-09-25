@@ -22,8 +22,8 @@ import com.rabbitmq.client.MessageProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent
-        implements GeneratedDataReceivingComponent, TaskReceivingComponent {
+public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent implements
+        GeneratedDataReceivingComponent, TaskReceivingComponent {
 
     // private static final Logger LOGGER =
     // LoggerFactory.getLogger(AbstractSystemAdapter.class);
@@ -164,8 +164,8 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         buffer.put(taskIdBytes);
         buffer.putInt(data.length);
         buffer.put(data);
-        system2EvalStore.basicPublish("", system2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC,
-                buffer.array());
+        system2EvalStore
+                .basicPublish("", system2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
     }
 
     @Override

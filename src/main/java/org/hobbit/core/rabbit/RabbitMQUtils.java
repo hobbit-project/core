@@ -234,4 +234,45 @@ public class RabbitMQUtils {
             return writeString(writer.toString());
         }
     }
+
+    /**
+     * Creates a byte array representing the given long value.
+     * 
+     * @param value
+     *            the value that should be serialized
+     * @return the byte array containing the given long value
+     */
+    public static byte[] writeLong(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(value);
+        return buffer.array();
+    }
+
+    /**
+     * Reads a long value from the given byte array.
+     * 
+     * @param data
+     *            a serialized long value
+     * @return the value read from the array
+     */
+    public static long readLong(byte[] data) {
+        return readLong(data, 0, data.length);
+    }
+
+    /**
+     * Reads a long value from the given byte array.
+     * 
+     * @param data
+     *            a serialized long value
+     * @param offset
+     *            position at which the parsing will start
+     * @param length
+     *            number of bytes that should be parsed (should equal
+     *            {@link Long#BYTES})
+     * @return the value read from the array
+     */
+    public static long readLong(byte[] data, int offset, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(data, offset, length);
+        return buffer.getLong();
+    }
 }
