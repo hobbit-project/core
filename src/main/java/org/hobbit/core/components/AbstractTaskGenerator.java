@@ -280,23 +280,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      *             if there is an error during the sending
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
-        // byte[] taskIdBytes = taskIdString.getBytes(Charsets.UTF_8);
-        // // + 4 for taskIdBytes.length
-        // // + 4 for data length (time stamp + data)
-        // // + 8 for time stamp
-        // // + 4 for data.length
-        // int dataLength = 8 + 4 + data.length;
-        // int capacity = 4 + taskIdString.length() + 4 + dataLength;
-        // ByteBuffer buffer = ByteBuffer.allocate(capacity);
-        // buffer.putInt(taskIdBytes.length);
-        // buffer.put(taskIdBytes);
-        // buffer.putInt(dataLength);
-        // buffer.putLong(timestamp);
-        // buffer.putInt(data.length);
-        // buffer.put(data);
-        // taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName,
-        // MessageProperties.PERSISTENT_BASIC,
-        // buffer.array());
         taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC,
                 RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
                         RabbitMQUtils.writeLong(timestamp)));
@@ -313,17 +296,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      *             if there is an error during the sending
      */
     protected void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-        // byte[] taskIdBytes = taskIdString.getBytes(Charsets.UTF_8);
-        // // + 4 for taskIdBytes.length
-        // // + 4 for data.length
-        // int capacity = 4 + 4 + taskIdBytes.length + data.length;
-        // ByteBuffer buffer = ByteBuffer.allocate(capacity);
-        // buffer.putInt(taskIdBytes.length);
-        // buffer.put(taskIdBytes);
-        // buffer.putInt(data.length);
-        // buffer.put(data);
-        // taskGen2System.basicPublish("", taskGen2SystemQueueName,
-        // MessageProperties.PERSISTENT_BASIC, buffer.array());
         taskGen2System.basicPublish("", taskGen2SystemQueueName, MessageProperties.PERSISTENT_BASIC,
                 RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(taskIdString), data }));
     }

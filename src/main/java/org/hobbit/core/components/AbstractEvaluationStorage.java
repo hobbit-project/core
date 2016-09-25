@@ -131,7 +131,8 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                         Iterator<ResultPair> iterator = null;
                         if (iteratorId == NEW_ITERATOR_ID) {
                             // create and save a new iterator
-                            resultPairIterators.add(iteratorId, iterator = createIterator());
+                            iteratorId = (byte) resultPairIterators.size();
+                            resultPairIterators.add(iterator = createIterator());
                         } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
                             response = EMPTY_RESPONSE;
                             LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
