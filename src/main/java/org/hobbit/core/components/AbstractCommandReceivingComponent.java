@@ -45,7 +45,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         addCommandHeaderId(getHobbitSessionId());
         cmdChannel = connection.createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
-        cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout");
+        cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
 
         Consumer consumer = new DefaultConsumer(cmdChannel) {

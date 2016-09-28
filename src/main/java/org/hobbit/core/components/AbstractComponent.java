@@ -1,9 +1,11 @@
 package org.hobbit.core.components;
 
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import org.hobbit.core.Constants;
+import org.hobbit.core.data.RabbitQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +57,9 @@ public abstract class AbstractComponent implements Component {
                 } catch (Exception e) {
                     if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
                         long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
-                        LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime
-                                + "ms.", e);
+                        LOGGER.warn(
+                                "Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
+                                e);
                         try {
                             Thread.sleep(waitingTime);
                         } catch (Exception e2) {
@@ -95,5 +98,28 @@ public abstract class AbstractComponent implements Component {
 
     public String generateSessionQueueName(String queueName) {
         return queueName + "-" + hobbitSessionId;
+    }
+
+    /**
+     * This method opens a channel using the established {@link #connection} to
+     * RabbitMQ and creates a new queue using the given name and the following configuration:
+     * <ul>
+     * <li>The channel number is automatically derived from the connection.</li>
+     * <li>The queue is not durable.</li>
+     * <li>The queue is not exclusive.</li>
+     * <li>The queue is configured to be deleted automatically.</li>
+     * <li>No additional queue configuration is defined.</li>
+     * </ul>
+     * 
+     * @param name
+     *            name of the queue
+     * @return {@link RabbitQueue} object comprising the {@link Channel} and the
+     *         name of the created queue
+     * @throws IOException
+     */
+    protected RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
+        Channel channel = connection.createChannel();
+        channel.queueDeclare(name, false, false, true, null);
+        return new RabbitQueue(channel, name);
     }
 }

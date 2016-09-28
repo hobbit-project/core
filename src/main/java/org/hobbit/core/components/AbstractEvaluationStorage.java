@@ -6,9 +6,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -46,32 +48,36 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * Mutex used to wait for the termination signal.
      */
     private Semaphore terminationMutex = new Semaphore(0);
-    /**
-     * Name of the queue to the evaluation storage.
-     */
-    protected String taskGen2EvalStoreQueueName;
-    /**
-     * Channel of the queue to the evaluation storage.
-     */
-    protected Channel taskGen2EvalStore;
-    /**
-     * Name of the queue to the system.
-     */
-    protected String system2EvalStoreQueueName;
-    /**
-     * Channel of the queue to the system.
-     */
-    protected Channel system2EvalStore;
-    /**
-     * Name of the queue to the evaluation storage.
-     */
-    protected String EvalModule2EvalStoreQueueName;
-    /**
-     * Channel of the queue to the evaluation storage.
-     */
-    protected Channel EvalModule2EvalStore;
+//    /**
+//     * Name of the queue to the evaluation storage.
+//     */
+//    protected String taskGen2EvalStoreQueueName;
+//    /**
+//     * Channel of the queue to the evaluation storage.
+//     */
+//    protected Channel taskGen2EvalStore;
+//    /**
+//     * Name of the queue to the system.
+//     */
+//    protected String system2EvalStoreQueueName;
+//    /**
+//     * Channel of the queue to the system.
+//     */
+//    protected Channel system2EvalStore;
+//    /**
+//     * Name of the queue to the evaluation storage.
+//     */
+//    protected String EvalModule2EvalStoreQueueName;
+//    /**
+//     * Channel of the queue to the evaluation storage.
+//     */
+//    protected Channel EvalModule2EvalStore;
 
     protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
+    
+    protected RabbitQueue taskGen2EvalStoreQueue;
+    protected RabbitQueue system2EvalStoreQueue;
+    protected RabbitQueue evalModule2EvalStoreQueue;
 
     @Override
     public void init() throws Exception {
@@ -79,10 +85,12 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         @SuppressWarnings("resource")
         ExpectedResponseReceivingComponent expReceiver = this;
-        taskGen2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME);
-        taskGen2EvalStore = connection.createChannel();
-        taskGen2EvalStore.queueDeclare(taskGen2EvalStoreQueueName, false, false, true, null);
-        taskGen2EvalStore.basicConsume(taskGen2EvalStoreQueueName, true, new DefaultConsumer(taskGen2EvalStore) {
+//        taskGen2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME);
+//        taskGen2EvalStore = connection.createChannel();
+//        taskGen2EvalStore.queueDeclare(taskGen2EvalStoreQueueName, false, false, true, null);
+//        taskGen2EvalStore.basicConsume(taskGen2EvalStoreQueueName, true, new DefaultConsumer(taskGen2EvalStore) {
+        taskGen2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
+        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true, new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                     throws IOException {
@@ -96,10 +104,12 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         @SuppressWarnings("resource")
         ResponseReceivingComponent respReceiver = this;
-        system2EvalStoreQueueName = generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME);
-        system2EvalStore = connection.createChannel();
-        system2EvalStore.queueDeclare(system2EvalStoreQueueName, false, false, true, null);
-        system2EvalStore.basicConsume(system2EvalStoreQueueName, true, new DefaultConsumer(system2EvalStore) {
+//        system2EvalStoreQueueName = generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME);
+//        system2EvalStore = connection.createChannel();
+//        system2EvalStore.queueDeclare(system2EvalStoreQueueName, false, false, true, null);
+//        system2EvalStore.basicConsume(system2EvalStoreQueueName, true, new DefaultConsumer(system2EvalStore) {
+            system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+            system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true, new DefaultConsumer(system2EvalStoreQueue.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                     throws IOException {
@@ -110,11 +120,14 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             }
         });
 
-        EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-        EvalModule2EvalStore = connection.createChannel();
-        EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
-        EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
-                new DefaultConsumer(EvalModule2EvalStore) {
+//        EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
+//        EvalModule2EvalStore = connection.createChannel();
+//        EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
+//        EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
+//                new DefaultConsumer(EvalModule2EvalStore) {
+            evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+            evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
+                    new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
                             byte[] body) throws IOException {
@@ -191,24 +204,27 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
     @Override
     public void close() throws IOException {
-        if (taskGen2EvalStore != null) {
-            try {
-                taskGen2EvalStore.close();
-            } catch (Exception e) {
-            }
-        }
-        if (system2EvalStore != null) {
-            try {
-                system2EvalStore.close();
-            } catch (Exception e) {
-            }
-        }
-        if (EvalModule2EvalStore != null) {
-            try {
-                EvalModule2EvalStore.close();
-            } catch (Exception e) {
-            }
-        }
+        IOUtils.closeQuietly(taskGen2EvalStoreQueue);
+        IOUtils.closeQuietly(system2EvalStoreQueue);
+        IOUtils.closeQuietly(evalModule2EvalStoreQueue);
+//        if (taskGen2EvalStore != null) {
+//            try {
+//                taskGen2EvalStore.close();
+//            } catch (Exception e) {
+//            }
+//        }
+//        if (system2EvalStore != null) {
+//            try {
+//                system2EvalStore.close();
+//            } catch (Exception e) {
+//            }
+//        }
+//        if (EvalModule2EvalStore != null) {
+//            try {
+//                EvalModule2EvalStore.close();
+//            } catch (Exception e) {
+//            }
+//        }
         super.close();
     }
 }

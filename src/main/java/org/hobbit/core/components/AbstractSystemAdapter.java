@@ -5,12 +5,13 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.MessageProperties;
@@ -22,8 +23,8 @@ import com.rabbitmq.client.MessageProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent implements
-        GeneratedDataReceivingComponent, TaskReceivingComponent {
+public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent
+        implements GeneratedDataReceivingComponent, TaskReceivingComponent {
 
     // private static final Logger LOGGER =
     // LoggerFactory.getLogger(AbstractSystemAdapter.class);
@@ -48,31 +49,17 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      */
     private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
     /**
-     * Name of the incoming queue with which the system can receive data from
-     * the data generators.
+     * Queue from the data generator to this evaluation storage.
      */
-    protected String dataGen2SystemQueueName;
+    protected RabbitQueue dataGen2SystemQueue;
     /**
-     * The Channel of the incoming queue with which the system can receive data
-     * from the data generators.
+     * Queue from the task generator to this evaluation storage.
      */
-    protected Channel dataGen2System;
+    protected RabbitQueue taskGen2SystemQueue;
     /**
-     * Name of the queue from the task generator.
+     * Queue from the benchmarked system to this evaluation storage.
      */
-    protected String taskGen2SystemQueueName;
-    /**
-     * Channel of the queue from the task generator.
-     */
-    protected Channel taskGen2System;
-    /**
-     * Name of the queue to the evaluation storage.
-     */
-    protected String system2EvalStoreQueueName;
-    /**
-     * Channel of the queue to the evaluation storage.
-     */
-    protected Channel system2EvalStore;
+    protected RabbitQueue system2EvalStoreQueue;
 
     @Override
     public void init() throws Exception {
@@ -81,40 +68,39 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         @SuppressWarnings("resource")
         AbstractSystemAdapter receiver = this;
 
-        dataGen2SystemQueueName = generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
-        dataGen2System = connection.createChannel();
-        dataGen2System.queueDeclare(dataGen2SystemQueueName, false, false, true, null);
-        dataGen2System.basicConsume(dataGen2SystemQueueName, true, new DefaultConsumer(dataGen2System) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                receiver.receiveGeneratedData(body);
-            }
-        });
+        dataGen2SystemQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
+        dataGen2SystemQueue.channel.basicConsume(dataGen2SystemQueue.name, true,
+                new DefaultConsumer(dataGen2SystemQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        receiver.receiveGeneratedData(body);
+                    }
+                });
 
-        taskGen2SystemQueueName = generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
-        taskGen2System = connection.createChannel();
-        taskGen2System.queueDeclare(taskGen2SystemQueueName, false, false, true, null);
-        taskGen2System.basicConsume(taskGen2SystemQueueName, true, new DefaultConsumer(taskGen2System) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                ByteBuffer buffer = ByteBuffer.wrap(body);
-                String taskId = RabbitMQUtils.readString(buffer);
-                byte[] data = RabbitMQUtils.readByteArray(buffer);
-                try {
-                    currentlyProcessedMessages.acquire();
-                } catch (InterruptedException e) {
-                    throw new IOException("Interrupted while waiting for mutex.", e);
-                }
-                receiver.receiveGeneratedTask(taskId, data);
-                currentlyProcessedMessages.release();
-            }
-        });
+        taskGen2SystemQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
+        taskGen2SystemQueue.channel.basicConsume(taskGen2SystemQueue.name, true,
+                new DefaultConsumer(taskGen2SystemQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                        String taskId = RabbitMQUtils.readString(buffer);
+                        byte[] data = RabbitMQUtils.readByteArray(buffer);
+                        try {
+                            currentlyProcessedMessages.acquire();
+                        } catch (InterruptedException e) {
+                            throw new IOException("Interrupted while waiting for mutex.", e);
+                        }
+                        receiver.receiveGeneratedTask(taskId, data);
+                        currentlyProcessedMessages.release();
+                    }
+                });
 
-        system2EvalStoreQueueName = generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME);
-        system2EvalStore = connection.createChannel();
-        system2EvalStore.queueDeclare(system2EvalStoreQueueName, false, false, true, null);
+        system2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
 
         currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
     }
@@ -125,7 +111,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
 
         terminateMutex.acquire();
         // wait until all messages have been read from the queue
-        while (taskGen2System.messageCount(taskGen2SystemQueueName) > 0) {
+        while (taskGen2SystemQueue.channel.messageCount(taskGen2SystemQueue.name) > 0) {
             Thread.sleep(1000);
         }
         // Collect all open mutex counts to make sure that there is no message
@@ -164,30 +150,36 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         buffer.put(taskIdBytes);
         buffer.putInt(data.length);
         buffer.put(data);
-        system2EvalStore
-                .basicPublish("", system2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC, buffer.array());
+        // system2EvalStore
+        // .basicPublish("", system2EvalStoreQueueName,
+        // MessageProperties.PERSISTENT_BASIC, buffer.array());
+        system2EvalStoreQueue.channel.basicPublish("", system2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
+                buffer.array());
     }
 
     @Override
     public void close() throws IOException {
-        if (dataGen2System != null) {
-            try {
-                dataGen2System.close();
-            } catch (Exception e) {
-            }
-        }
-        if (taskGen2System != null) {
-            try {
-                taskGen2System.close();
-            } catch (Exception e) {
-            }
-        }
-        if (system2EvalStore != null) {
-            try {
-                system2EvalStore.close();
-            } catch (Exception e) {
-            }
-        }
+        IOUtils.closeQuietly(dataGen2SystemQueue);
+        IOUtils.closeQuietly(taskGen2SystemQueue);
+        IOUtils.closeQuietly(system2EvalStoreQueue);
+        // if (dataGen2System != null) {
+        // try {
+        // dataGen2System.close();
+        // } catch (Exception e) {
+        // }
+        // }
+        // if (taskGen2System != null) {
+        // try {W
+        // taskGen2System.close();
+        // } catch (Exception e) {
+        // }
+        // }
+        // if (system2EvalStore != null) {
+        // try {
+        // system2EvalStore.close();
+        // } catch (Exception e) {
+        // }
+        // }
         super.close();
     }
 }

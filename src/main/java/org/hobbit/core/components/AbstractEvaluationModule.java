@@ -4,9 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,36 +28,40 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
 
-    /**
-     * Name of the queue to the evaluation storage.
-     */
-    protected String evalModule2EvalStoreQueueName;
-    /**
-     * Channel of the queue to the evaluation storage.
-     */
-    protected Channel evalModule2EvalStore;
-    /**
-     * Name of the incoming queue from the evaluation storage.
-     */
-    protected String evalStore2EvalModuleQueueName;
+//    /**
+//     * Name of the queue to the evaluation storage.
+//     */
+//    protected String evalModule2EvalStoreQueueName;
+//    /**
+//     * Channel of the queue to the evaluation storage.
+//     */
+//    protected Channel evalModule2EvalStore;
+//    /**
+//     * Name of the incoming queue from the evaluation storage.
+//     */
+//    protected String evalStore2EvalModuleQueueName;
     /**
      * Consumer used to receive the responses from the evaluation storage.
      */
     protected QueueingConsumer consumer;
+    protected RabbitQueue evalModule2EvalStoreQueue;
+    protected RabbitQueue evalStore2EvalModuleQueue;
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        evalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-        evalModule2EvalStore = connection.createChannel();
-        evalModule2EvalStore.queueDeclare(evalModule2EvalStoreQueueName, false, false, true, null);
+//        evalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
+//        evalModule2EvalStore = connection.createChannel();
+//        evalModule2EvalStore.queueDeclare(evalModule2EvalStoreQueueName, false, false, true, null);
+        evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
 
-        evalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
-        evalModule2EvalStore.queueDeclare(evalStore2EvalModuleQueueName, false, false, true, null);
+//        evalStore2EvalModuleQueueName = generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
+//        evalModule2EvalStore.queueDeclare(evalStore2EvalModuleQueueName, false, false, true, null);
+        evalStore2EvalModuleQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME));
 
-        consumer = new QueueingConsumer(evalModule2EvalStore);
-        evalModule2EvalStore.basicConsume(evalStore2EvalModuleQueueName, consumer);
+        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
+        evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
     }
 
     @Override
@@ -87,8 +93,10 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
         while (true) {
             // request next response pair
-            props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueueName).build();
-            evalModule2EvalStore.basicPublish("", evalModule2EvalStoreQueueName, props, requestBody);
+//            props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueueName).build();
+//            evalModule2EvalStore.basicPublish("", evalModule2EvalStoreQueueName, props, requestBody);
+            props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
+            evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
             QueueingConsumer.Delivery delivery = consumer.nextDelivery();
             // parse the response
             buffer = ByteBuffer.wrap(delivery.getBody());
@@ -161,12 +169,14 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
     @Override
     public void close() throws IOException {
-        if (evalModule2EvalStore != null) {
-            try {
-                evalModule2EvalStore.close();
-            } catch (Exception e) {
-            }
-        }
+        IOUtils.closeQuietly(evalModule2EvalStoreQueue);
+        IOUtils.closeQuietly(evalStore2EvalModuleQueue);
+//        if (evalModule2EvalStore != null) {
+//            try {
+//                evalModule2EvalStore.close();
+//            } catch (Exception e) {
+//            }
+//        }
         super.close();
     }
 }

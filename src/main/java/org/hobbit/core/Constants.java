@@ -40,6 +40,7 @@ public final class Constants {
     /**
      * Name of the hobbit docker service queue.
      */
+    @Deprecated
     public static final String DOCKER_SERVICE_QUEUE_NAME = "hobbit.docker-service";
 
     public static final String DATA_GEN_2_TASK_GEN_QUEUE_NAME = "hobbit.datagen-taskgen";
