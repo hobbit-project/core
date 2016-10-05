@@ -220,8 +220,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 
         Delivery delivery;
         int count = 0;
-        // while (runFlag ||
-        // (dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName) > 0)) {
         while (runFlag || (dataGen2TaskGenQueue.channel.messageCount(dataGen2TaskGenQueue.name) > 0)) {
             delivery = consumer.nextDelivery(3000);
             if (delivery != null) {
@@ -335,25 +333,6 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         IOUtils.closeQuietly(dataGen2TaskGenQueue);
         IOUtils.closeQuietly(taskGen2EvalStoreQueue);
         IOUtils.closeQuietly(taskGen2SystemQueue);
-        
-//        if (dataGen2TaskGen != null) {
-//            try {
-//                dataGen2TaskGen.close();
-//            } catch (Exception e) {
-//            }
-//        }
-//        if (taskGen2System != null) {
-//            try {
-//                taskGen2System.close();
-//            } catch (Exception e) {
-//            }
-//        }
-//        if (taskGen2EvalStore != null) {
-//            try {
-//                taskGen2EvalStore.close();
-//            } catch (Exception e) {
-//            }
-//        }
         super.close();
     }
 }

@@ -22,14 +22,14 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
     }
 
     /**
-     * @return the receiveddata
+     * @return the received data
      */
     public List<String> getReceiveddata() {
         return receivedData;
     }
 
     /**
-     * @return the receivedtasks
+     * @return the received tasks
      */
     public List<String> getReceivedtasks() {
         return receivedTasks;
