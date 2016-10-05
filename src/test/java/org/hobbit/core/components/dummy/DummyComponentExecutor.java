@@ -2,9 +2,11 @@ package org.hobbit.core.components.dummy;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.Component;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class DummyComponentExecutor implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DummyComponentExecutor.class);

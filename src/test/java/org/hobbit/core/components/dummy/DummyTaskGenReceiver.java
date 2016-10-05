@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.junit.Ignore;
 
+@Ignore
 public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
     private final List<String> receivedData = new ArrayList<String>();

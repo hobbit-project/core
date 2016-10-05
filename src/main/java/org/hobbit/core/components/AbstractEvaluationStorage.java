@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
@@ -207,24 +206,6 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         IOUtils.closeQuietly(taskGen2EvalStoreQueue);
         IOUtils.closeQuietly(system2EvalStoreQueue);
         IOUtils.closeQuietly(evalModule2EvalStoreQueue);
-//        if (taskGen2EvalStore != null) {
-//            try {
-//                taskGen2EvalStore.close();
-//            } catch (Exception e) {
-//            }
-//        }
-//        if (system2EvalStore != null) {
-//            try {
-//                system2EvalStore.close();
-//            } catch (Exception e) {
-//            }
-//        }
-//        if (EvalModule2EvalStore != null) {
-//            try {
-//                EvalModule2EvalStore.close();
-//            } catch (Exception e) {
-//            }
-//        }
         super.close();
     }
 }
