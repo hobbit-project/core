@@ -97,7 +97,7 @@ public abstract class AbstractComponent implements Component {
     }
 
     public String generateSessionQueueName(String queueName) {
-        return queueName + "-" + hobbitSessionId;
+        return queueName + "." + hobbitSessionId;
     }
 
     /**

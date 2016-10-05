@@ -89,14 +89,11 @@ public abstract class AbstractDataGenerator extends AbstractCommandReceivingComp
     }
 
     protected void sendDataToTaskGenerator(byte[] data) throws IOException {
-        // dataGen2TaskGen.basicPublish("", dataGen2TaskGenQueueName,
-        // MessageProperties.PERSISTENT_BASIC, data);
         dataGen2TaskGenQueue.channel.basicPublish("", dataGen2TaskGenQueue.name,
                 MessageProperties.PERSISTENT_BASIC, data);
     }
 
     protected void sendDataToSystemAdapter(byte[] data) throws IOException {
-//        dataGen2System.basicPublish("", dataGen2SystemQueueName, MessageProperties.PERSISTENT_BASIC, data);
         dataGen2SystemQueue.channel.basicPublish("", dataGen2SystemQueue.name,
                 MessageProperties.PERSISTENT_BASIC, data);
     }
