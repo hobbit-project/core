@@ -16,10 +16,6 @@ public abstract class AbstractDataGenerator extends AbstractCommandReceivingComp
     private Semaphore startDataGenMutex = new Semaphore(0);
     private int generatorId;
     private int numberOfGenerators;
-    // protected String dataGen2TaskGenQueueName;
-    // protected Channel dataGen2TaskGen;
-    // protected String dataGen2SystemQueueName;
-    // protected Channel dataGen2System;
     protected RabbitQueue dataGen2TaskGenQueue;
     protected RabbitQueue dataGen2SystemQueue;
 
@@ -63,8 +59,7 @@ public abstract class AbstractDataGenerator extends AbstractCommandReceivingComp
         generateData();
 
         // Unfortunately, we have to wait until all messages are consumed
-        while ((dataGen2TaskGenQueue.channel.messageCount(dataGen2TaskGenQueue.name) + dataGen2SystemQueue.channel
-                .messageCount(dataGen2SystemQueue.name)) > 0) {
+        while ((dataGen2TaskGenQueue.messageCount() + dataGen2SystemQueue.messageCount()) > 0) {
             Thread.sleep(500);
         }
     }
@@ -102,18 +97,6 @@ public abstract class AbstractDataGenerator extends AbstractCommandReceivingComp
     public void close() throws IOException {
         IOUtils.closeQuietly(dataGen2TaskGenQueue);
         IOUtils.closeQuietly(dataGen2SystemQueue);
-        // if (dataGen2TaskGen != null) {
-        // try {
-        // dataGen2TaskGen.close();
-        // } catch (Exception e) {
-        // }
-        // }
-        // if (dataGen2System != null) {
-        // try {
-        // dataGen2System.close();
-        // } catch (Exception e) {
-        // }
-        // }
         super.close();
     }
 }

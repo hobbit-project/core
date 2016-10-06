@@ -30,7 +30,7 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
         builder.append(taskId);
         builder.append(Long.toString(timestamp));
         builder.append(RabbitMQUtils.readString(data));
-        receivedResponses.add(builder.toString());
+        expectedResponses.add(builder.toString());
     }
 
     @Override

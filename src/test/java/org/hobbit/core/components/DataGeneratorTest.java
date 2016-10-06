@@ -1,6 +1,8 @@
 package org.hobbit.core.components;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.hobbit.core.Commands;
@@ -13,6 +15,9 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Tests the workflow of the {@link AbstractDataGenerator} class and the
@@ -24,22 +29,40 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
+@RunWith(Parameterized.class)
 public class DataGeneratorTest extends AbstractDataGenerator {
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
+    @Parameters
+    public static Collection<Object[]> data() {
+        List<Object[]> testConfigs = new ArrayList<Object[]>();
+        // We use only one single data generator
+        testConfigs.add(new Object[] { 1, 10000 });
+        // We use two data generators
+        testConfigs.add(new Object[] { 2, 10000 });
+        // We use ten data generators
+        testConfigs.add(new Object[] { 10, 10000 });
+        return testConfigs;
+    }
 
-    private static final int NUMBER_OF_MESSAGES = 10000;
+    private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private List<String> sentData = new ArrayList<String>();
+    private int numberOfGenerators;
+    private int numberOfMessages;
+
+    public DataGeneratorTest(int numberOfGenerators, int numberOfMessages) {
+        this.numberOfGenerators = numberOfGenerators;
+        this.numberOfMessages = numberOfMessages;
+    }
 
     @Override
     protected void generateData() throws Exception {
         byte data[];
         String msg;
-        for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
+        for (int i = 0; i < numberOfMessages; ++i) {
             msg = Integer.toString(i);
             sentData.add(msg);
             data = RabbitMQUtils.writeString(msg);
@@ -53,16 +76,22 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
         DummySystemReceiver system = new DummySystemReceiver();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyTaskGenReceiver taskGen = new DummyTaskGenReceiver();
-        DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(taskGen);
-        Thread taskGenThread = new Thread(taskGenExecutor);
-        taskGenThread.start();
+        DummyTaskGenReceiver[] taskGens = new DummyTaskGenReceiver[numberOfGenerators];
+        DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfGenerators];
+        Thread[] taskGenThreads = new Thread[numberOfGenerators];
+        for (int i = 0; i < taskGenThreads.length; ++i) {
+            taskGens[i] = new DummyTaskGenReceiver();
+            taskGenExecutors[i] = new DummyComponentExecutor(taskGens[i]);
+            taskGenThreads[i] = new Thread(taskGenExecutors[i]);
+            taskGenThreads[i].start();
+        }
 
         try {
             init();
@@ -74,15 +103,25 @@ public class DataGeneratorTest extends AbstractDataGenerator {
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
 
             systemThread.join();
-            taskGenThread.join();
+            for (int i = 0; i < taskGenThreads.length; ++i) {
+                taskGenThreads[i].join();
+            }
 
             Assert.assertTrue(systemExecutor.isSuccess());
-            Assert.assertTrue(taskGenExecutor.isSuccess());
+            for (int i = 0; i < taskGenExecutors.length; ++i) {
+                Assert.assertTrue(taskGenExecutors[i].isSuccess());
+            }
 
             List<String> receivedData = system.getReceiveddata();
             Assert.assertArrayEquals(sentData.toArray(new String[sentData.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
-            receivedData = taskGen.getReceiveddata();
+            // collect the data from all task generators
+            receivedData = new ArrayList<String>();
+            for (int i = 0; i < taskGens.length; ++i) {
+                receivedData.addAll(taskGens[i].getReceiveddata());
+            }
+            Collections.sort(receivedData);
+            Collections.sort(sentData);
             Assert.assertArrayEquals(sentData.toArray(new String[sentData.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
         } finally {

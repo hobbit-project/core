@@ -29,8 +29,8 @@ import com.rabbitmq.client.QueueingConsumer.Delivery;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent
-        implements GeneratedDataReceivingComponent {
+public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent implements
+        GeneratedDataReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskGenerator.class);
 
@@ -113,41 +113,29 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         Map<String, String> env = System.getenv();
 
         if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_ID_KEY
+                    + "\" from the environment. Aborting.");
         }
         try {
             generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
+            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_ID_KEY
+                    + "\" from the environment. Aborting.", e);
         }
         nextTaskId = generatorId;
 
         if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_COUNT_KEY
+                    + "\" from the environment. Aborting.");
         }
         try {
             numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
+            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_COUNT_KEY
+                    + "\" from the environment. Aborting.", e);
         }
 
-        // taskGen2SystemQueueName =
-        // generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
-        // taskGen2System = connection.createChannel();
-        // taskGen2System.queueDeclare(taskGen2SystemQueueName, false, false,
-        // true, null);
-        //
-        // taskGen2EvalStoreQueueName =
-        // generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME);
-        // taskGen2EvalStore = connection.createChannel();
-        // taskGen2EvalStore.queueDeclare(taskGen2EvalStoreQueueName, false,
-        // false, true, null);
-        taskGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
+        taskGen2SystemQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
         taskGen2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
 
         // currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
@@ -165,8 +153,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         // consumer = new QueueingConsumer(dataGen2TaskGen);
         // dataGen2TaskGen.basicConsume(dataGen2TaskGenQueueName, false,
         // consumer);
-        dataGen2TaskGenQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        dataGen2TaskGenQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
         consumer = new QueueingConsumer(dataGen2TaskGenQueue.channel);
         dataGen2TaskGenQueue.channel.basicConsume(dataGen2TaskGenQueue.name, false, consumer);
 
@@ -220,13 +207,18 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
 
         Delivery delivery;
         int count = 0;
-        while (runFlag || (dataGen2TaskGenQueue.channel.messageCount(dataGen2TaskGenQueue.name) > 0)) {
+        while (runFlag || (dataGen2TaskGenQueue.messageCount() > 0)) {
             delivery = consumer.nextDelivery(3000);
             if (delivery != null) {
                 generateTask(delivery.getBody());
                 ++count;
             }
         }
+
+//        // Unfortunately, we have to wait until all messages are consumed
+//        while ((taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount()) > 0) {
+//            Thread.sleep(500);
+//        }
         LOGGER.info("Terminating after " + count + " processed messages.");
     }
 
@@ -293,11 +285,14 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      *             if there is an error during the sending
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
-//        taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName, MessageProperties.PERSISTENT_BASIC,
-//                RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
-//                        RabbitMQUtils.writeLong(timestamp)));
-        taskGen2EvalStoreQueue.channel.basicPublish("", taskGen2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
-                RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
+        // taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName,
+        // MessageProperties.PERSISTENT_BASIC,
+        // RabbitMQUtils.writeByteArrays(null, new byte[][] {
+        // RabbitMQUtils.writeString(taskIdString), data },
+        // RabbitMQUtils.writeLong(timestamp)));
+        taskGen2EvalStoreQueue.channel.basicPublish("", taskGen2EvalStoreQueue.name,
+                MessageProperties.PERSISTENT_BASIC, RabbitMQUtils.writeByteArrays(null,
+                        new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
                         RabbitMQUtils.writeLong(timestamp)));
     }
 

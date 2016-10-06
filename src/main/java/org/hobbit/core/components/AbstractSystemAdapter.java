@@ -69,6 +69,9 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
     @Override
     public void init() throws Exception {
         super.init();
+        
+        currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
+        currentlyProcessedTasks = new Semaphore(maxParallelProcessedMsgs);
 
         @SuppressWarnings("resource")
         AbstractSystemAdapter receiver = this;
@@ -84,9 +87,12 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
                 } catch (InterruptedException e) {
                     throw new IOException("Interrupted while waiting for mutex.", e);
                 }
-                receiver.receiveGeneratedData(body);
-                dataGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                currentlyProcessedMessages.release();
+                try {
+                    receiver.receiveGeneratedData(body);
+                    dataGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
+                } finally {
+                    currentlyProcessedMessages.release();
+                }
             }
         });
 
@@ -104,16 +110,16 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
                 } catch (InterruptedException e) {
                     throw new IOException("Interrupted while waiting for mutex.", e);
                 }
-                receiver.receiveGeneratedTask(taskId, data);
-                taskGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                currentlyProcessedTasks.release();
+                try {
+                    receiver.receiveGeneratedTask(taskId, data);
+                    taskGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
+                } finally {
+                    currentlyProcessedTasks.release();
+                }
             }
         });
 
         system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
-
-        currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
-        currentlyProcessedTasks = new Semaphore(maxParallelProcessedMsgs);
     }
 
     @Override

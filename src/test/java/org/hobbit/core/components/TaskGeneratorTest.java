@@ -2,6 +2,7 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.hobbit.core.Commands;
@@ -15,6 +16,9 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Tests the workflow of the {@link AbstractTaskGenerator} class and the
@@ -27,28 +31,58 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
+@RunWith(Parameterized.class)
 public class TaskGeneratorTest extends AbstractTaskGenerator {
 
     private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
-    private static final int NUMBER_OF_MESSAGES = 10000;
+    @Parameters
+    public static Collection<Object[]> data() {
+        List<Object[]> testConfigs = new ArrayList<Object[]>();
+        // We use only one single data generator
+        testConfigs.add(new Object[] { 1, 10000 });
+        // We use two data generators
+        testConfigs.add(new Object[] { 2, 10000 });
+        // We use ten data generators
+        testConfigs.add(new Object[] { 10, 1000 });
+        return testConfigs;
+    }
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private List<String> sentTasks = new ArrayList<String>();
     private List<String> expectedResponses = new ArrayList<String>();
+    private int terminationCount = 0;
+    private int numberOfGenerators;
+    private int numberOfMessages;
+
+    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages) {
+        this.numberOfGenerators = numberOfGenerators;
+        this.numberOfMessages = numberOfMessages;
+    }
 
     @Test
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        DummyDataCreator dataGenerator = new DummyDataCreator(NUMBER_OF_MESSAGES);
-        DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(dataGenerator);
-        Thread dataGenThread = new Thread(dataGenExecutor);
-        dataGenThread.start();
+        Thread[] dataGenThreads = new Thread[numberOfGenerators];
+        DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
+        for (int i = 0; i < dataGenThreads.length; ++i) {
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages);
+            dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
+                @Override
+                public void run() {
+                    super.run();
+                    dataGeneratorTerminated();
+                }
+            };
+            dataGenThreads[i] = new Thread(dataGenExecutors[i]);
+            dataGenThreads[i].start();
+        }
 
         DummySystemReceiver system = new DummySystemReceiver();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
@@ -66,31 +100,19 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
-            // Start Thread that sends terminated signal
-            (new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e1) {
-                        e1.printStackTrace();
-                    }
-                    try {
-                        sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            })).start();
-
             run();
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
 
-            dataGenThread.join();
+            for (int i = 0; i < dataGenThreads.length; ++i) {
+                dataGenThreads[i].join();
+            }
             systemThread.join();
             evalStoreThread.join();
 
+            for (int i = 0; i < dataGenExecutors.length; ++i) {
+                Assert.assertTrue(dataGenExecutors[i].isSuccess());
+            }
             Assert.assertTrue(systemExecutor.isSuccess());
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
@@ -119,8 +141,20 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         sendTaskToEvalStorage(taskIdString, timestamp, data);
         builder.delete(0, builder.length());
         builder.append(taskIdString);
+        builder.append(Long.toString(timestamp));
         builder.append(dataString);
         expectedResponses.add(builder.toString());
+    }
+
+    protected synchronized void dataGeneratorTerminated() {
+        ++terminationCount;
+        if (terminationCount == numberOfGenerators) {
+            try {
+                sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

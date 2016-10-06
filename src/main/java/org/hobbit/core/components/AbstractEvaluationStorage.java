@@ -47,35 +47,21 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * Mutex used to wait for the termination signal.
      */
     private Semaphore terminationMutex = new Semaphore(0);
-//    /**
-//     * Name of the queue to the evaluation storage.
-//     */
-//    protected String taskGen2EvalStoreQueueName;
-//    /**
-//     * Channel of the queue to the evaluation storage.
-//     */
-//    protected Channel taskGen2EvalStore;
-//    /**
-//     * Name of the queue to the system.
-//     */
-//    protected String system2EvalStoreQueueName;
-//    /**
-//     * Channel of the queue to the system.
-//     */
-//    protected Channel system2EvalStore;
-//    /**
-//     * Name of the queue to the evaluation storage.
-//     */
-//    protected String EvalModule2EvalStoreQueueName;
-//    /**
-//     * Channel of the queue to the evaluation storage.
-//     */
-//    protected Channel EvalModule2EvalStore;
-
+    /**
+     * Iterators that have been started.
+     */
     protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
-    
+    /**
+     * The incoming queue from the task generator.
+     */
     protected RabbitQueue taskGen2EvalStoreQueue;
+    /**
+     * The incoming queue from the system.
+     */
     protected RabbitQueue system2EvalStoreQueue;
+    /**
+     * The incoming queue from the evaluation module.
+     */
     protected RabbitQueue evalModule2EvalStoreQueue;
 
     @Override
@@ -84,12 +70,9 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         @SuppressWarnings("resource")
         ExpectedResponseReceivingComponent expReceiver = this;
-//        taskGen2EvalStoreQueueName = generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME);
-//        taskGen2EvalStore = connection.createChannel();
-//        taskGen2EvalStore.queueDeclare(taskGen2EvalStoreQueueName, false, false, true, null);
-//        taskGen2EvalStore.basicConsume(taskGen2EvalStoreQueueName, true, new DefaultConsumer(taskGen2EvalStore) {
         taskGen2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
-        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true, new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
+        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true, new DefaultConsumer(
+                taskGen2EvalStoreQueue.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                     throws IOException {
@@ -98,17 +81,16 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                 byte[] data = RabbitMQUtils.readByteArray(buffer);
                 long timestamp = buffer.getLong();
                 expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
+                // taskGen2EvalStoreQueue.channel.basicAck(envelope.getDeliveryTag(),
+                // false);
             }
         });
 
         @SuppressWarnings("resource")
         ResponseReceivingComponent respReceiver = this;
-//        system2EvalStoreQueueName = generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME);
-//        system2EvalStore = connection.createChannel();
-//        system2EvalStore.queueDeclare(system2EvalStoreQueueName, false, false, true, null);
-//        system2EvalStore.basicConsume(system2EvalStoreQueueName, true, new DefaultConsumer(system2EvalStore) {
-            system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
-            system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true, new DefaultConsumer(system2EvalStoreQueue.channel) {
+        system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+        system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true, new DefaultConsumer(
+                system2EvalStoreQueue.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
                     throws IOException {
@@ -119,64 +101,62 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             }
         });
 
-//        EvalModule2EvalStoreQueueName = generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-//        EvalModule2EvalStore = connection.createChannel();
-//        EvalModule2EvalStore.queueDeclare(EvalModule2EvalStoreQueueName, false, false, true, null);
-//        EvalModule2EvalStore.basicConsume(EvalModule2EvalStoreQueueName, true,
-//                new DefaultConsumer(EvalModule2EvalStore) {
-            evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
-            evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
-                    new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        byte response[] = null;
-                        // get iterator id
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
-                        if (buffer.remaining() < 4) {
-                            response = EMPTY_RESPONSE;
-                            LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-                        }
-                        byte iteratorId = buffer.get();
+        evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true, new DefaultConsumer(
+                evalModule2EvalStoreQueue.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+                    throws IOException {
+                byte response[] = null;
+                // get iterator id
+                ByteBuffer buffer = ByteBuffer.wrap(body);
+                if (buffer.remaining() < 1) {
+                    response = EMPTY_RESPONSE;
+                    LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+                }
+                byte iteratorId = buffer.get();
 
-                        // get the iterator
-                        Iterator<ResultPair> iterator = null;
-                        if (iteratorId == NEW_ITERATOR_ID) {
-                            // create and save a new iterator
-                            iteratorId = (byte) resultPairIterators.size();
-                            resultPairIterators.add(iterator = createIterator());
-                        } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                            response = EMPTY_RESPONSE;
-                            LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-                                    + "). Returning emtpy response.");
-                        } else {
-                            iterator = resultPairIterators.get(iteratorId);
-                        }
-                        if (iterator != null && iterator.hasNext()) {
-                            ResultPair resultPair = iterator.next();
-                            // set response (iteratorId,
-                            // taskSentTimestamp, expectedData,
-                            // responseReceivedTimestamp, receivedData)
-                            Result expected = resultPair.getExpected();
-                            Result actual = resultPair.getActual();
-                            // response = ByteBuffer.allocate(1
-                            // + Long.SIZE / Byte.SIZE +
-                            // expected.getData().length
-                            // + Long.SIZE / Byte.SIZE +
-                            // actual.getData().length)
-                            // .put(iteratorId)
-                            // .putLong(expected.getSentTimestamp())
-                            // .put(expected.getData())
-                            // .putLong(actual.getSentTimestamp())
-                            // .put(actual.getData())
-                            // .array();
-                            response = RabbitMQUtils.writeByteArrays(new byte[] { iteratorId }, new byte[][] {
-                                    RabbitMQUtils.writeLong(expected.getSentTimestamp()), expected.getData(),
-                                    RabbitMQUtils.writeLong(actual.getSentTimestamp()), actual.getData() }, null);
-                        }
-                        getChannel().basicPublish("", properties.getReplyTo(), null, response);
-                    }
-                });
+                // get the iterator
+                Iterator<ResultPair> iterator = null;
+                if (iteratorId == NEW_ITERATOR_ID) {
+                    // create and save a new iterator
+                    iteratorId = (byte) resultPairIterators.size();
+                    resultPairIterators.add(iterator = createIterator());
+                } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                    response = EMPTY_RESPONSE;
+                    LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                            + "). Returning emtpy response.");
+                } else {
+                    iterator = resultPairIterators.get(iteratorId);
+                }
+                if (iterator != null && iterator.hasNext()) {
+                    ResultPair resultPair = iterator.next();
+                    // set response (iteratorId,
+                    // taskSentTimestamp, expectedData,
+                    // responseReceivedTimestamp, receivedData)
+                    Result expected = resultPair.getExpected();
+                    Result actual = resultPair.getActual();
+                    // response = ByteBuffer.allocate(1
+                    // + Long.SIZE / Byte.SIZE +
+                    // expected.getData().length
+                    // + Long.SIZE / Byte.SIZE +
+                    // actual.getData().length)
+                    // .put(iteratorId)
+                    // .putLong(expected.getSentTimestamp())
+                    // .put(expected.getData())
+                    // .putLong(actual.getSentTimestamp())
+                    // .put(actual.getData())
+                    // .array();
+                    response = RabbitMQUtils.writeByteArrays(new byte[] { iteratorId },
+                            new byte[][] {
+                                    expected != null ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
+                                            : new byte[0], expected != null ? expected.getData() : new byte[0],
+                                    actual != null ? RabbitMQUtils.writeLong(actual.getSentTimestamp()) : new byte[0],
+                                    actual != null ? actual.getData() : new byte[0] }, null);
+                }
+                getChannel().basicPublish("", properties.getReplyTo(), null, response);
+            }
+        });
     }
 
     /**
