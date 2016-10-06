@@ -54,9 +54,9 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
             results.put(taskId, pair);
         }
         if (isExpectedResult) {
-            pair.setActual(new ResultImpl(timestamp, data));
-        } else {
             pair.setExpected(new ResultImpl(timestamp, data));
+        } else {
+            pair.setActual(new ResultImpl(timestamp, data));
         }
     }
 

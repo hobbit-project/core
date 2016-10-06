@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.QueueingConsumer;
 
 /**
@@ -28,40 +27,24 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
 
-    // /**
-    // * Name of the queue to the evaluation storage.
-    // */
-    // protected String evalModule2EvalStoreQueueName;
-    // /**
-    // * Channel of the queue to the evaluation storage.
-    // */
-    // protected Channel evalModule2EvalStore;
-    // /**
-    // * Name of the incoming queue from the evaluation storage.
-    // */
-    // protected String evalStore2EvalModuleQueueName;
     /**
      * Consumer used to receive the responses from the evaluation storage.
      */
     protected QueueingConsumer consumer;
+    /**
+     * Queue to the evaluation storage.
+     */
     protected RabbitQueue evalModule2EvalStoreQueue;
+    /**
+     * Incoming queue from the evaluation storage.
+     */
     protected RabbitQueue evalStore2EvalModuleQueue;
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        // evalModule2EvalStoreQueueName =
-        // generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME);
-        // evalModule2EvalStore = connection.createChannel();
-        // evalModule2EvalStore.queueDeclare(evalModule2EvalStoreQueueName,
-        // false, false, true, null);
         evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
-
-        // evalStore2EvalModuleQueueName =
-        // generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME);
-        // evalModule2EvalStore.queueDeclare(evalStore2EvalModuleQueueName,
-        // false, false, true, null);
         evalStore2EvalModuleQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME));
 
         consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
@@ -97,10 +80,6 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
         while (true) {
             // request next response pair
-            // props = new
-            // BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueueName).build();
-            // evalModule2EvalStore.basicPublish("",
-            // evalModule2EvalStoreQueueName, props, requestBody);
             props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
             evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
             QueueingConsumer.Delivery delivery = consumer.nextDelivery();

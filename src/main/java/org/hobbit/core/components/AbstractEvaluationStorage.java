@@ -113,46 +113,41 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                 if (buffer.remaining() < 1) {
                     response = EMPTY_RESPONSE;
                     LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-                }
-                byte iteratorId = buffer.get();
-
-                // get the iterator
-                Iterator<ResultPair> iterator = null;
-                if (iteratorId == NEW_ITERATOR_ID) {
-                    // create and save a new iterator
-                    iteratorId = (byte) resultPairIterators.size();
-                    resultPairIterators.add(iterator = createIterator());
-                } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                    response = EMPTY_RESPONSE;
-                    LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-                            + "). Returning emtpy response.");
                 } else {
-                    iterator = resultPairIterators.get(iteratorId);
-                }
-                if (iterator != null && iterator.hasNext()) {
-                    ResultPair resultPair = iterator.next();
-                    // set response (iteratorId,
-                    // taskSentTimestamp, expectedData,
-                    // responseReceivedTimestamp, receivedData)
-                    Result expected = resultPair.getExpected();
-                    Result actual = resultPair.getActual();
-                    // response = ByteBuffer.allocate(1
-                    // + Long.SIZE / Byte.SIZE +
-                    // expected.getData().length
-                    // + Long.SIZE / Byte.SIZE +
-                    // actual.getData().length)
-                    // .put(iteratorId)
-                    // .putLong(expected.getSentTimestamp())
-                    // .put(expected.getData())
-                    // .putLong(actual.getSentTimestamp())
-                    // .put(actual.getData())
-                    // .array();
-                    response = RabbitMQUtils.writeByteArrays(new byte[] { iteratorId },
-                            new byte[][] {
-                                    expected != null ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
-                                            : new byte[0], expected != null ? expected.getData() : new byte[0],
-                                    actual != null ? RabbitMQUtils.writeLong(actual.getSentTimestamp()) : new byte[0],
-                                    actual != null ? actual.getData() : new byte[0] }, null);
+                    byte iteratorId = buffer.get();
+
+                    // get the iterator
+                    Iterator<ResultPair> iterator = null;
+                    if (iteratorId == NEW_ITERATOR_ID) {
+                        // create and save a new iterator
+                        iteratorId = (byte) resultPairIterators.size();
+                        LOGGER.info("Creating new iterator #{}", iteratorId);
+                        resultPairIterators.add(iterator = createIterator());
+                    } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                        response = EMPTY_RESPONSE;
+                        LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                                + "). Returning emtpy response.");
+                    } else {
+                        iterator = resultPairIterators.get(iteratorId);
+                    }
+                    if ((iterator != null) && (iterator.hasNext())) {
+                        ResultPair resultPair = iterator.next();
+                        // set response (iteratorId,
+                        // taskSentTimestamp, expectedData,
+                        // responseReceivedTimestamp, receivedData)
+                        Result expected = resultPair.getExpected();
+                        Result actual = resultPair.getActual();
+
+                        response = RabbitMQUtils.writeByteArrays(new byte[] { iteratorId },
+                                new byte[][] {
+                                        expected != null ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
+                                                : new byte[0],
+                                        expected != null ? expected.getData() : new byte[0],
+                                        actual != null ? RabbitMQUtils.writeLong(actual.getSentTimestamp())
+                                                : new byte[0], actual != null ? actual.getData() : new byte[0] }, null);
+                    } else {
+                        response = new byte[] { iteratorId };
+                    }
                 }
                 getChannel().basicPublish("", properties.getReplyTo(), null, response);
             }

@@ -55,17 +55,25 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         String taskId;
         ResultImpl expResult, sysResult;
         ResultPairImpl pair;
+        boolean expResultMissing, sysResultMissing;
         for (int i = 0; i < numberOfMessages; ++i) {
             taskId = Integer.toString(i);
+            expResultMissing = rand.nextDouble() > 0.9;
+            sysResultMissing = !expResultMissing && (rand.nextDouble() > 0.9);
             pair = new ResultPairImpl();
 
-            expResult = new ResultImpl(rand.nextLong(), RabbitMQUtils.writeString(taskId));
-            evalStore.putResult(true, taskId, expResult.getSentTimestamp(), expResult.getData());
-            pair.setExpected(expResult);
+            if (!expResultMissing) {
+                expResult = new ResultImpl(rand.nextLong(), RabbitMQUtils.writeString(taskId));
+                evalStore.putResult(true, taskId, expResult.getSentTimestamp(), expResult.getData());
+                pair.setExpected(expResult);
+            }
 
-            sysResult = new ResultImpl(rand.nextLong(), RabbitMQUtils.writeString(Integer.toString(rand.nextInt())));
-            evalStore.putResult(true, taskId, sysResult.getSentTimestamp(), sysResult.getData());
-            pair.setActual(sysResult);
+            if (!sysResultMissing) {
+                sysResult = new ResultImpl(rand.nextLong(), expResultMissing ? RabbitMQUtils.writeString(taskId)
+                        : RabbitMQUtils.writeString(Integer.toString(rand.nextInt())));
+                evalStore.putResult(false, taskId, sysResult.getSentTimestamp(), sysResult.getData());
+                pair.setActual(sysResult);
+            }
 
             expectedResults.put(taskId, pair);
         }
@@ -96,13 +104,30 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     @Override
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception {
-        String taskId = RabbitMQUtils.readString(expectedData);
+        Assert.assertTrue((expectedData.length + receivedData.length) > 0);
+        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData) : RabbitMQUtils
+                .readString(receivedData);
         Assert.assertTrue(taskId + " is not known.", expectedResults.containsKey(taskId));
         ResultPairImpl pair = expectedResults.get(taskId);
-        Assert.assertArrayEquals(pair.getExpected().getData(), expectedData);
-        Assert.assertArrayEquals(pair.getActual().getData(), receivedData);
-        Assert.assertEquals(pair.getExpected().getSentTimestamp(), taskSentTimestamp);
-        Assert.assertEquals(pair.getActual().getSentTimestamp(), responseReceivedTimestamp);
+        
+        if(expectedData.length == 0){
+            Assert.assertNull(pair.getExpected());
+            Assert.assertEquals(0, taskSentTimestamp);
+        } else {
+            Assert.assertNotNull(pair.getExpected());
+            Assert.assertArrayEquals(pair.getExpected().getData(), expectedData);
+            Assert.assertEquals(pair.getExpected().getSentTimestamp(), taskSentTimestamp);
+        }
+        
+        if(receivedData.length == 0){
+            Assert.assertNull(pair.getActual());
+            Assert.assertEquals(0, responseReceivedTimestamp);
+        } else {
+            Assert.assertNotNull(pair.getActual());
+            Assert.assertArrayEquals(pair.getActual().getData(), receivedData);
+            Assert.assertEquals(pair.getActual().getSentTimestamp(), responseReceivedTimestamp);
+        }
+        
         receivedResults.add(taskId);
     }
 
