@@ -199,7 +199,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     protected void createEvaluationStorage() {
         String[] parameters = Arrays
                 .copyOf(DEFAULT_EVAL_STORAGE_PARAMETERS, DEFAULT_EVAL_STORAGE_PARAMETERS.length + 1);
-        parameters[parameters.length + 1] = "HOBBIT_RABBIT_HOST=" + connection.getAddress().toString();
+        parameters[parameters.length - 1] = "HOBBIT_RABBIT_HOST=" + connection.getAddress().toString();
         createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, parameters);
     }
 
