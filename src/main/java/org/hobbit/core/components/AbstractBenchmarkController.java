@@ -23,6 +23,9 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
+    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "hobbit/evaluation_store";
+    protected static final String[] DEFAULT_EVAL_STORAGE_PARAMETERS = new String[] { "HOBBIT_RIAK_NODES=1" };
+
     /**
      * The benchmark result as RDF model received from the evaluation module.
      */
@@ -187,6 +190,17 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg);
         }
+    }
+
+    /**
+     * Creates the default evaluation storage using the given image name and
+     * environment variables.
+     */
+    protected void createEvaluationStorage() {
+        String[] parameters = Arrays
+                .copyOf(DEFAULT_EVAL_STORAGE_PARAMETERS, DEFAULT_EVAL_STORAGE_PARAMETERS.length + 1);
+        parameters[parameters.length + 1] = "HOBBIT_RABBIT_HOST=" + connection.getAddress().toString();
+        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, parameters);
     }
 
     /**
@@ -375,4 +389,3 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
         }
     }
 }
-
