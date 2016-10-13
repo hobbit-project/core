@@ -9,13 +9,11 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.RabbitRpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * Simple client of the storage service implementing a synchronized
@@ -24,26 +22,9 @@ import com.rabbitmq.client.QueueingConsumer;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public class StorageServiceClient implements Closeable {
+public class StorageServiceClient extends RabbitRpcClient implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageServiceClient.class);
-
-    /**
-     * Maximum time the client is waiting for a response from the triple store.
-     */
-    private static final long MAXIMUM_WAITING_TIME = 60000;
-    /**
-     * Channel used for the RabbitMQ-based communication.
-     */
-    private Channel channel = null;
-    /**
-     * Name of the queue containing the responses from the storage service.
-     */
-    private String replyQueueName = null;
-    /**
-     * Consumer used to read responses.
-     */
-    private QueueingConsumer consumer = null;
 
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
@@ -58,24 +39,21 @@ public class StorageServiceClient implements Closeable {
      *             .
      */
     public static StorageServiceClient create(Connection connection) throws IOException {
-        Channel channel = connection.createChannel();
-        String replyQueueName = channel.queueDeclare().getQueue();
-        QueueingConsumer consumer = new QueueingConsumer(channel);
-        channel.basicConsume(replyQueueName, true, consumer);
-        return new StorageServiceClient(channel, replyQueueName, consumer);
+        StorageServiceClient client = new StorageServiceClient();
+        try {
+            client.init(connection);
+            return client;
+        } catch (Exception e) {
+            client.close();
+            throw e;
+        }
     }
 
     /**
      * Constructor.
-     * 
-     * @param channel
-     * @param replyQueueName
-     * @param consumer
      */
-    protected StorageServiceClient(Channel channel, String replyQueueName, QueueingConsumer consumer) {
-        this.channel = channel;
-        this.replyQueueName = replyQueueName;
-        this.consumer = consumer;
+    protected StorageServiceClient() {
+        super(Constants.STORAGE_QUEUE_NAME);
     }
 
     /**
@@ -91,7 +69,7 @@ public class StorageServiceClient implements Closeable {
      *             parsed.
      */
     public boolean sendAskQuery(String query) throws Exception {
-        byte[] response = sendQuery(query);
+        byte[] response = request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
                 return Boolean.parseBoolean(RabbitMQUtils.readString(response));
@@ -112,7 +90,7 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public Model sendConstructQuery(String query) {
-        byte[] response = sendQuery(query);
+        byte[] response = request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -133,7 +111,7 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public Model sendDescribeQuery(String query) {
-        byte[] response = sendQuery(query);
+        byte[] response = request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -155,7 +133,7 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public ResultSet sendSelectQuery(String query) {
-        byte[] response = sendQuery(query);
+        byte[] response = request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
                 ByteArrayInputStream in = new ByteArrayInputStream(response);
@@ -168,49 +146,4 @@ public class StorageServiceClient implements Closeable {
         return null;
     }
 
-    /**
-     * Sends the given query to the service and returns the result as byte array
-     * or <code>null</code> if an error occurs.
-     * 
-     * @param query
-     *            the query that should be sent to the service
-     * @return the result or <code>null</code>
-     */
-    protected synchronized byte[] sendQuery(String query) {
-        byte[] response = null;
-        try {
-            String corrId = java.util.UUID.randomUUID().toString();
-
-            BasicProperties props = new BasicProperties.Builder().correlationId(corrId).replyTo(replyQueueName).build();
-
-            channel.basicPublish("", Constants.STORAGE_QUEUE_NAME, props, RabbitMQUtils.writeString(query));
-
-            while (true) {
-                QueueingConsumer.Delivery delivery = consumer.nextDelivery(MAXIMUM_WAITING_TIME);
-                if (delivery == null) {
-                    LOGGER.error(
-                            "Couldn't get a response from the triple store during the maximum waiting timg ({}ms). Returning null.",
-                            MAXIMUM_WAITING_TIME);
-                    return null;
-                }
-                if (delivery.getProperties().getCorrelationId().equals(corrId)) {
-                    response = delivery.getBody();
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Exception while sending query. Returning null.", e);
-        }
-        return response;
-    }
-
-    @Override
-    public void close() throws IOException {
-        if (channel != null) {
-            try {
-                channel.close();
-            } catch (Exception ignore) {
-            }
-        }
-    }
 }
