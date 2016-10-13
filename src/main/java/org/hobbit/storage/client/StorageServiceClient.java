@@ -41,19 +41,12 @@ public class StorageServiceClient extends RabbitRpcClient implements Closeable {
     public static StorageServiceClient create(Connection connection) throws IOException {
         StorageServiceClient client = new StorageServiceClient();
         try {
-            client.init(connection);
+            client.init(connection, Constants.STORAGE_QUEUE_NAME);
             return client;
         } catch (Exception e) {
             client.close();
             throw e;
         }
-    }
-
-    /**
-     * Constructor.
-     */
-    protected StorageServiceClient() {
-        super(Constants.STORAGE_QUEUE_NAME);
     }
 
     /**

@@ -6,8 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.io.IOUtils;
+import org.hobbit.core.data.RabbitQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +46,9 @@ public class RabbitRpcClient implements Closeable {
      *             .
      */
     public static RabbitRpcClient create(Connection connection, String requestQueueName) throws IOException {
-        RabbitRpcClient client = new RabbitRpcClient(requestQueueName);
+        RabbitRpcClient client = new RabbitRpcClient();
         try {
-            client.init(connection);
+            client.init(connection, requestQueueName);
             return client;
         } catch (Exception e) {
             client.close();
@@ -56,17 +57,13 @@ public class RabbitRpcClient implements Closeable {
     }
 
     /**
-     * Channel used for the RabbitMQ-based communication.
+     * Queue used for the request.
      */
-    private Channel channel = null;
+    private RabbitQueue requestQueue;
     /**
-     * Name of the queue containing the requests.
+     * Queue used for the responses.
      */
-    private String requestQueueName = null;
-    /**
-     * Name of the queue containing the responses from the storage service.
-     */
-    private String replyQueueName = null;
+    private RabbitQueue responseQueue;
     /**
      * Mutex for managing access to the {@link #currentRequests} object.
      */
@@ -77,28 +74,20 @@ public class RabbitRpcClient implements Closeable {
     private Map<String, RabbitRpcRequest> currentRequests = new HashMap<String, RabbitRpcRequest>();
 
     /**
-     * Constructor.
-     * 
-     * @param channel
-     * @param replyQueueName
-     * @param consumer
-     */
-    protected RabbitRpcClient(String requestQueueName) {
-        this.requestQueueName = requestQueueName;
-    }
-
-    /**
      * Initializes the client by
      * 
      * @param connection
      * @throws IOException
      */
-    protected void init(Connection connection) throws IOException {
-        channel = connection.createChannel();
-        replyQueueName = channel.queueDeclare().getQueue();
-        channel.basicQos(1);
-        RabbitRpcClientConsumer consumer = new RabbitRpcClientConsumer(channel, this);
-        channel.basicConsume(replyQueueName, true, consumer);
+    protected void init(Connection connection, String requestQueueName) throws IOException {
+        Channel tempChannel = connection.createChannel();
+        tempChannel.queueDeclare(requestQueueName, false, false, true, null);
+        requestQueue = new RabbitQueue(tempChannel, requestQueueName);
+        tempChannel = connection.createChannel();
+        responseQueue = new RabbitQueue(tempChannel, tempChannel.queueDeclare().getQueue());
+        responseQueue.channel.basicQos(1);
+        RabbitRpcClientConsumer consumer = new RabbitRpcClientConsumer(responseQueue.channel, this);
+        responseQueue.channel.basicConsume(responseQueue.name, true, consumer);
     }
 
     /**
@@ -115,13 +104,13 @@ public class RabbitRpcClient implements Closeable {
             String corrId = java.util.UUID.randomUUID().toString();
 
             BasicProperties props = new BasicProperties.Builder().correlationId(corrId).deliveryMode(2)
-                    .replyTo(replyQueueName).build();
+                    .replyTo(responseQueue.name).build();
             RabbitRpcRequest request = new RabbitRpcRequest();
             requestMapMutex.acquire();
             currentRequests.put(corrId, request);
             requestMapMutex.release();
 
-            channel.basicPublish("", requestQueueName, props, data);
+            requestQueue.channel.basicPublish("", requestQueue.name, props, data);
 
             response = request.get();
         } catch (Exception e) {
@@ -156,18 +145,34 @@ public class RabbitRpcClient implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (channel != null) {
-            try {
-                channel.close();
-            } catch (TimeoutException e) {
-            }
-        }
+        IOUtils.closeQuietly(requestQueue);
+        IOUtils.closeQuietly(responseQueue);
     }
 
+    /**
+     * Internal implementation of a Consumer that receives messages on the reply
+     * queue and calls
+     * {@link RabbitRpcClient#processResponseForRequest(String, byte[])} of its
+     * {@link #client}.
+     * 
+     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+     *
+     */
     protected static class RabbitRpcClientConsumer extends DefaultConsumer {
 
+        /**
+         * The client for which this instance is acting as consumer.
+         */
         private RabbitRpcClient client;
 
+        /**
+         * Constructor.
+         * 
+         * @param channel
+         *            channel from which the messages are received
+         * @param client
+         *            the client for which this instance is acting as consumer
+         */
         public RabbitRpcClientConsumer(Channel channel, RabbitRpcClient client) {
             super(channel);
             this.client = client;
@@ -187,8 +192,22 @@ public class RabbitRpcClient implements Closeable {
         }
     }
 
+    /**
+     * Simple extension of the {@link AbstractFuture} class that waits for the
+     * response which is set by the {@link #setResponse(byte[] response)}.
+     * 
+     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+     *
+     */
     protected static class RabbitRpcRequest extends AbstractFuture<byte[]> implements Future<byte[]> {
 
+        /**
+         * Calls the internal {@link #set(byte[])} method of the
+         * {@link AbstractFuture} class.
+         * 
+         * @param response
+         *            the response this request is waiting for
+         */
         public void setResponse(byte[] response) {
             set(response);
         }
