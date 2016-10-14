@@ -34,9 +34,7 @@ public class StorageServiceClient extends RabbitRpcClient implements Closeable {
      *            RabbitMQ connection used for the communication
      * @return a StorageServiceClient instance
      * @throws IOException
-     *             if a problem occurs during the creation of the
-     *             {@link #channel}, the response queue or the {@link #consumer}
-     *             .
+     *             if a problem occurs during the creation of the queues or the consumer.
      */
     public static StorageServiceClient create(Connection connection) throws IOException {
         StorageServiceClient client = new StorageServiceClient();
