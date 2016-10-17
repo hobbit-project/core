@@ -1,5 +1,7 @@
 package org.hobbit.core.data;
 
+import java.util.Set;
+
 public class BenchmarkMetaData {
 
     public String benchmarkUri;
