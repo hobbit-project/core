@@ -25,28 +25,33 @@ public class HOBBIT {
         return ResourceFactory.createProperty(uri, local);
     }
 
+    public static final Resource API = resource("API");
     public static final Resource Benchmark = resource("Benchmark");
-    public static final Resource BenchmarkParameter = resource("BenchmarkParameter");
+    public static final Resource Challenge = resource("Challenge");
+    public static final Resource ChallengeTask = resource("ChallengeTask");
+    public static final Resource ConfigurableParameter = resource("ConfigurableParameter");
+    public static final Resource Experiment = resource("Experiment");
+    public static final Resource FeatureParameter = resource("FeatureParameter");
+    public static final Resource Hardware = resource("Hardware");
+    public static final Resource KPI = resource("KPI");
+    public static final Resource Parameter = resource("Parameter");
+    public static final Resource System = resource("System");
+    public static final Resource SystemInstance = resource("SystemInstance");
 
-    public static final Resource A2KB = resource("A2KB");
-    public static final Resource C2KB = resource("C2KB");
-    public static final Resource D2KB = resource("D2KB");
-    public static final Resource Rc2KB = resource("Rc2KB");
-    public static final Resource Sa2KB = resource("Sa2KB");
-    public static final Resource Sc2KB = resource("Sc2KB");
-    public static final Resource OKE2015_Task1 = resource("OKE2015_Task1");
-    public static final Resource OKE2015_Task2 = resource("OKE2015_Task2");
-    public static final Resource ERec = resource("ERec");
-    public static final Resource ETyping = resource("ETyping");
-
-    public static final Resource StrongAnnoMatch = resource("StrongAnnoMatch");
-    public static final Resource WeakAnnoMatch = resource("WeakAnnoMatch");
-    public static final Resource StrongEntityMatch = resource("StrongEntityMatch");
-
-    public static final Property hasNumberOfDocuments = property("hasNumberOfDocuments");
-    public static final Property hasExperimentType = property("hasExperimentType");
-    public static final Property hasImageName = property("hasImageName");
+    public static final Property defaultValue = property("defaultValue");
+    public static final Property endTime = property("endTime");
+    public static final Property hasAPI = property("hasAPI");
+    public static final Property hasParameter = property("hasParameter");
+    public static final Property hobbitPlatformVersion = property("hobbitPlatformVersion");
+    public static final Property imageName = property("imageName");
+    public static final Property instanceOf = property("instanceOf");
     public static final Property involvesBenchmark = property("involvesBenchmark");
-    public static final Property involvesSystem = property("involvesSystem");
-    
+    public static final Property involvesSystemInstance = property("involvesSystemInstance");
+    public static final Property isPartOf = property("isPartOf");
+    public static final Property measuresKPI = property("measuresKPI");
+    public static final Property relevantForAnalysis = property("relevantForAnalysis");
+    public static final Property startTime = property("startTime");
+    public static final Property version = property("version");
+    public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
+
 }
