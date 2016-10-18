@@ -3,6 +3,7 @@ package org.hobbit.storage.client;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.StringWriter;
 
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
@@ -34,7 +35,8 @@ public class StorageServiceClient extends RabbitRpcClient implements Closeable {
      *            RabbitMQ connection used for the communication
      * @return a StorageServiceClient instance
      * @throws IOException
-     *             if a problem occurs during the creation of the queues or the consumer.
+     *             if a problem occurs during the creation of the queues or the
+     *             consumer.
      */
     public static StorageServiceClient create(Connection connection) throws IOException {
         StorageServiceClient client = new StorageServiceClient();
@@ -135,6 +137,52 @@ public class StorageServiceClient extends RabbitRpcClient implements Closeable {
             }
         }
         return null;
+    }
+
+    /**
+     * Sends the given UPDATE query to the storage service and returns
+     * <code>true</code> if the query is successful or <code>false</code> if an
+     * error occurs or the service needs too much time to respond.
+     * 
+     * @param query
+     *            UPDATE query
+     * @return flag indicating whether the query has been executed successfully
+     *         or not
+     */
+    public boolean sendUpdateQuery(String query) {
+        byte[] response = request(RabbitMQUtils.writeString(query));
+        return (response != null) && (response.length > 0);
+    }
+
+    /**
+     * Inserts the given model into the storage and returns <code>true</code> if
+     * the query is successful or <code>false</code> if an error occurs or the
+     * service needs too much time to respond.
+     * 
+     * @param model
+     *            RDF model containing triples that should be inserted
+     * @return flag indicating whether the query has been executed successfully
+     *         or not
+     */
+    public boolean sendInsertQuery(Model model) {
+        StringWriter writer = new StringWriter();
+        model.write(writer);
+        String modelString = writer.toString();
+        StringBuilder builder = new StringBuilder();
+        int pos = 0;
+        // find the free line between the prefixes and the triples
+        if (modelString.contains("\n\n")) {
+            pos = modelString.indexOf("\n\n");
+            pos += 2;
+            builder.append(modelString.substring(0, pos));
+        }
+        builder.append("INSERT DATA\n{");
+        builder.append(modelString.substring(pos));
+        builder.append("\n}");
+
+        String query = builder.toString();
+        LOGGER.info("Generated query: ", query.replace('\n', ' '));
+        return sendUpdateQuery(query);
     }
 
 }
