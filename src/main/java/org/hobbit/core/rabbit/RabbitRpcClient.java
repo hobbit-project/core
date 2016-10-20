@@ -53,6 +53,12 @@ public class RabbitRpcClient implements Closeable {
             throw e;
         }
     }
+    
+    /**
+     * Constructor.
+     */
+    protected RabbitRpcClient() {
+    }
 
     /**
      * Queue used for the request.

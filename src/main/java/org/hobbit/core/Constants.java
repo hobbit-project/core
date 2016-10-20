@@ -62,6 +62,12 @@ public final class Constants {
     public static final String CONTROLLER_2_FRONT_END_QUEUE_NAME = "hobbit.controller-frontend";
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
+	
+	// =============== GRAPH CONSTANTS ===============
+	
+	public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
+    public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
+    public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";
 
     // =============== OTHER CONSTANTS ===============
 
