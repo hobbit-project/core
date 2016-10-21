@@ -54,4 +54,14 @@ public class HOBBIT {
     public static final Property version = property("version");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
 
+    @Deprecated
+    public static final Resource BenchmarkCrashed = resource("BenchmarkCrashed");
+    @Deprecated
+    public static final Resource BenchmarkImageMissing = resource("BenchmarkImageMissing");
+    @Deprecated
+    public static final Resource SystemCrashed = resource("SystemCrashed");
+    @Deprecated
+    public static final Resource SystemImageMissing = resource("SystemImageMissing");
+    @Deprecated
+    public static final Property terminatedWithError = property("terminatedWithError");
 }

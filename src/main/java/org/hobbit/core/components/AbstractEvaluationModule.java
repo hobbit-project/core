@@ -3,13 +3,17 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,13 +43,30 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
      * Incoming queue from the evaluation storage.
      */
     protected RabbitQueue evalStore2EvalModuleQueue;
+    /**
+     * The URI of the experiment.
+     */
+    protected String experimentUri;
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
-        evalStore2EvalModuleQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME));
+        Map<String, String> env = System.getenv();
+        // Get the experiment URI
+        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
+            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
+        } else {
+            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
+                    + ". Aborting.";
+            LOGGER.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
+
+        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        evalStore2EvalModuleQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME));
 
         consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
         evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
@@ -165,5 +186,11 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
         // }
         // }
         super.close();
+    }
+
+    protected Model createDefaultModel() {
+        Model resultModel = ModelFactory.createDefaultModel();
+        resultModel.add(resultModel.createResource(experimentUri), RDF.type, HOBBIT.Experiment);
+        return resultModel;
     }
 }

@@ -3,9 +3,11 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -90,24 +92,41 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * The container id of the benchmarked system.
      */
     private String systemContainerId = null;
-
+    /**
+     * The RDF model containing the benchmark parameters.
+     */
     protected Model benchmarkParamModel;
+    /**
+     * The URI of the experiment.
+     */
+    protected String experimentUri;
 
     @Override
     public void init() throws Exception {
         super.init();
         // benchmark controllers should be able to accept broadcasts
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
-        if (System.getenv().containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
+
+        Map<String, String> env = System.getenv();
+        // Get the benchmark parameter model
+        if (env.containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
             try {
-                benchmarkParamModel = RabbitMQUtils.readModel(System.getenv().get(
-                        Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
+                benchmarkParamModel = RabbitMQUtils.readModel(env.get(Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
             } catch (Exception e) {
                 LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
             }
         } else {
             String errorMsg = "Couldn't get the expected parameter model from the variable "
                     + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ". Aborting.";
+            LOGGER.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
+        // Get the experiment URI
+        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
+            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
+        } else {
+            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
+                    + ". Aborting.";
             LOGGER.error(errorMsg);
             throw new Exception(errorMsg);
         }
@@ -131,7 +150,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * @param numberOfDataGenerators
      * @param envVariables
      */
-    protected void createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators, String[] envVariables) {
+    protected void createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators,
+            String[] envVariables) {
         createGenerator(dataGeneratorImageName, numberOfDataGenerators, envVariables, dataGenContainerIds);
     }
 
@@ -143,7 +163,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * @param numberOfTaskGenerators
      * @param envVariables
      */
-    protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators, String[] envVariables) {
+    protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators,
+            String[] envVariables) {
         createGenerator(taskGeneratorImageName, numberOfTaskGenerators, envVariables, taskGenContainerIds);
     }
 
@@ -184,6 +205,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      *            environment variables that should be given to the module
      */
     protected void createEvaluationModule(String evalModuleImageName, String[] envVariables) {
+        envVariables = ArrayUtils.add(envVariables, Constants.HOBBIT_EXPERIMENT_URI_KEY + "=" + experimentUri);
         evalModuleContainerId = createContainer(evalModuleImageName, envVariables);
         if (evalModuleContainerId == null) {
             String errorMsg = "Couldn't create evaluation module. Aborting.";
@@ -197,10 +219,9 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * environment variables.
      */
     protected void createEvaluationStorage() {
-        String[] parameters = Arrays
-                .copyOf(DEFAULT_EVAL_STORAGE_PARAMETERS, DEFAULT_EVAL_STORAGE_PARAMETERS.length + 1);
-        parameters[parameters.length - 1] = "HOBBIT_RABBIT_HOST=" + connection.getAddress().toString();
-        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, parameters);
+        String[] envVariables = ArrayUtils.add(DEFAULT_EVAL_STORAGE_PARAMETERS,
+                Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + this.rabbitMQHostName);
+        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, envVariables);
     }
 
     /**
