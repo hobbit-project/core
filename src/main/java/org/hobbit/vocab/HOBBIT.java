@@ -59,6 +59,8 @@ public class HOBBIT {
     @Deprecated
     public static final Resource BenchmarkImageMissing = resource("BenchmarkImageMissing");
     @Deprecated
+    public static final Resource ExperimentTookTooMuchTime = resource("ExperimentTookTooMuchTime");
+    @Deprecated
     public static final Resource SystemCrashed = resource("SystemCrashed");
     @Deprecated
     public static final Resource SystemImageMissing = resource("SystemImageMissing");

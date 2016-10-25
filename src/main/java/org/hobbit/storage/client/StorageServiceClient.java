@@ -178,6 +178,14 @@ public class StorageServiceClient implements Closeable {
      *         or not
      */
     public boolean sendInsertQuery(Model model, String graphURI) {
+        if(model == null){
+            LOGGER.error("Can not store a model that is null. Returning false.");
+            return false;
+        }
+        if(graphURI == null){
+            LOGGER.error("Can not store a model without a graph URI. Returning false.");
+            return false;
+        }
         StringWriter writer = new StringWriter();
         model.write(writer, "TTL");
         String modelString = writer.toString();
