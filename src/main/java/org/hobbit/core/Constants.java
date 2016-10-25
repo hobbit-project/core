@@ -1,5 +1,7 @@
 package org.hobbit.core;
 
+import org.hobbit.vocab.HOBBIT;
+
 /**
  * This class defines constants of the hobbit platform.
  * 
@@ -67,6 +69,7 @@ public final class Constants {
 	
 	// =============== GRAPH CONSTANTS ===============
 	
+	public static final String NEW_EXPERIMENT_URI = HOBBIT.getURI() + "New";
 	public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";
