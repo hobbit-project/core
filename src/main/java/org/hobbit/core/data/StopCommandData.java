@@ -1,25 +1,25 @@
 package org.hobbit.core.data;
 
 public class StopCommandData {
-    public String containerId;
+    public String containerName;
 
-    public StopCommandData(String containerId) {
-        this.containerId = containerId;
+    public StopCommandData(String containerName) {
+        this.containerName = containerName;
     }
 
-    public String getContainerId() {
-        return containerId;
+    public String getContainerName() {
+        return containerName;
     }
 
-    public void setContainerId(String containerId) {
-        this.containerId = containerId;
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("StopCommandData [containerId=");
-        builder.append(containerId);
+        builder.append("StopCommandData [containerName=");
+        builder.append(containerName);
         builder.append("]");
         return builder.toString();
     }

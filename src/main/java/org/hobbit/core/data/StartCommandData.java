@@ -4,6 +4,9 @@ public class StartCommandData {
 
     public String image;
     public String type;
+    /**
+     * Name of the parent container
+     */
     public String parent;
     public String[] environmentVariables;
 

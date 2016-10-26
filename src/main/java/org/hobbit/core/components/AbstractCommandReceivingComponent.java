@@ -61,8 +61,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         };
         cmdChannel.basicConsume(queueName, true, consumer);
 
-        if (System.getenv().containsKey(Constants.HOBBIT_SESSION_ID_KEY)) {
-            containerName = System.getenv().get(Constants.HOBBIT_SESSION_ID_KEY);
+        if (System.getenv().containsKey(Constants.CONTAINER_NAME_KEY)) {
+            containerName = System.getenv().get(Constants.CONTAINER_NAME_KEY);
         }
         if (containerName == null) {
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
@@ -170,8 +170,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
             envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
             initResponseQueue();
-            byte data[] = RabbitMQUtils.writeString(gson.toJson(new StartCommandData(imageName, containerType,
-                    containerName, envVariables)));
+            byte data[] = RabbitMQUtils.writeString(
+                    gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
             QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery();

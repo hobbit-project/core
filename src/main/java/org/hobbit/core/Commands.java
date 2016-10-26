@@ -1,5 +1,11 @@
 package org.hobbit.core;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
 public final class Commands {
 
     private Commands() {
@@ -45,7 +51,8 @@ public final class Commands {
      * Command used to ask a docker managing component to start a certain
      * container.
      * <p>
-     * The command is followed by a String containing the following JSON data: <br>
+     * The command is followed by a String containing the following JSON data:
+     * <br>
      * <code>
      * {<br>"image": "image-to-run",<br> "type": "system|benchmark",<br> "parent":"parent-container-id"<br>}
      * </code>
@@ -56,7 +63,8 @@ public final class Commands {
      * Command used to ask a docker managing component to stop a certain
      * container.
      * <p>
-     * The command is followed by a String containing the following JSON data: <br>
+     * The command is followed by a String containing the following JSON data:
+     * <br>
      * <code>
      * {<br>"containerId": "container-to-stop"<br>}
      * </code>
@@ -71,4 +79,36 @@ public final class Commands {
     public static final byte DOCKER_CONTAINER_TERMINATED = 16;
 
     public static final byte START_BENCHMARK_SIGNAL = 17;
+
+    private static final ImmutableMap<Byte, String> ID_TO_COMMAND_NAME_MAP = generateMap();
+
+    private static ImmutableMap<Byte, String> generateMap() {
+        Map<Byte, String> mapping = new HashMap<Byte, String>();
+        Class<Commands> clazz = Commands.class;
+        Field[] fields = clazz.getFields();
+        byte commandId;
+        for (int i = 0; i < fields.length; ++i) {
+            try {
+                commandId = fields[i].getByte(null);
+                mapping.put(commandId, fields[i].getName());
+            } catch (Exception e) {
+            }
+        }
+        return ImmutableMap.copyOf(mapping);
+    }
+
+    /**
+     * Returns the name of the command if it is defined inside the {@link Commands} class or its id as String.
+     * 
+     * @param command the command that should be transformed into a String
+     * @return the name of the command or its id if the name is not known
+     */
+    public static String toString(byte command) {
+        Byte commandObject = new Byte(command);
+        if (Commands.ID_TO_COMMAND_NAME_MAP.containsKey(commandObject)) {
+            return ID_TO_COMMAND_NAME_MAP.get(commandObject);
+        } else {
+            return Byte.toString(command);
+        }
+    }
 }
