@@ -4,6 +4,12 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
+/**
+ * Representation of the Hobbit vocabulary as Java objects.
+ * 
+ * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+ *
+ */
 public class HOBBIT {
 
     protected static final String uri = "http://w3id.org/hobbit/vocab#";
@@ -30,6 +36,7 @@ public class HOBBIT {
     public static final Resource Challenge = resource("Challenge");
     public static final Resource ChallengeTask = resource("ChallengeTask");
     public static final Resource ConfigurableParameter = resource("ConfigurableParameter");
+    public static final Resource Error = resource("Error");
     public static final Resource Experiment = resource("Experiment");
     public static final Resource FeatureParameter = resource("FeatureParameter");
     public static final Resource Hardware = resource("Hardware");
@@ -51,19 +58,8 @@ public class HOBBIT {
     public static final Property measuresKPI = property("measuresKPI");
     public static final Property relevantForAnalysis = property("relevantForAnalysis");
     public static final Property startTime = property("startTime");
+    public static final Property terminatedWithError = property("terminatedWithError");
     public static final Property version = property("version");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
 
-    @Deprecated
-    public static final Resource BenchmarkCrashed = resource("BenchmarkCrashed");
-    @Deprecated
-    public static final Resource BenchmarkImageMissing = resource("BenchmarkImageMissing");
-    @Deprecated
-    public static final Resource ExperimentTookTooMuchTime = resource("ExperimentTookTooMuchTime");
-    @Deprecated
-    public static final Resource SystemCrashed = resource("SystemCrashed");
-    @Deprecated
-    public static final Resource SystemImageMissing = resource("SystemImageMissing");
-    @Deprecated
-    public static final Property terminatedWithError = property("terminatedWithError");
 }

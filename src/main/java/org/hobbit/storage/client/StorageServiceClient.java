@@ -204,7 +204,7 @@ public class StorageServiceClient implements Closeable {
         builder.append("\n}}");
 
         String query = builder.toString();
-        LOGGER.info("Generated query: ", query.replace('\n', ' '));
+        LOGGER.info("Generated query: {}", query.replace('\n', ' '));
         return sendUpdateQuery(query);
     }
 
