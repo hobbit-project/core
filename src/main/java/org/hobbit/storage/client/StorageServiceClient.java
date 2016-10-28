@@ -3,12 +3,26 @@ package org.hobbit.storage.client;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.QuadDataAcc;
+import org.apache.jena.sparql.modify.request.UpdateCreate;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDrop;
+import org.apache.jena.sparql.modify.request.UpdateLoad;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitRpcClient;
@@ -178,36 +192,26 @@ public class StorageServiceClient implements Closeable {
      *         or not
      */
     public boolean sendInsertQuery(Model model, String graphURI) {
-        if(model == null){
+        if (model == null) {
             LOGGER.error("Can not store a model that is null. Returning false.");
             return false;
         }
-        if(graphURI == null){
+        if (graphURI == null) {
             LOGGER.error("Can not store a model without a graph URI. Returning false.");
             return false;
         }
-        StringWriter writer = new StringWriter();
-        model.write(writer, "TTL");
-        String modelString = writer.toString();
-        StringBuilder builder = new StringBuilder();
-        int pos = 0;
-        // find the free line between the prefixes and the triples
-        if (modelString.contains("\n\n")) {
-            pos = modelString.indexOf("\n\n");
-            pos += 2;
-            builder.append(modelString.substring(0, pos).replace("@prefix", "prefix"));
+        StmtIterator iterator = model.listStatements();
+        QuadDataAcc quads = new QuadDataAcc();
+        quads.setGraph(NodeFactory.createURI("http://example.org/test"));
+        while (iterator.hasNext()) {
+            quads.addTriple(iterator.next().asTriple());
         }
-        builder.append("INSERT DATA\n{\nGRAPH <");
-        builder.append(graphURI);
-        builder.append("> {\n");
-        builder.append(modelString.substring(pos));
-        builder.append("\n}}");
 
-        String query = builder.toString();
+        String query = (new UpdateDataInsert(quads)).toString(model);
         LOGGER.info("Generated query: {}", query.replace('\n', ' '));
         return sendUpdateQuery(query);
     }
-
+    
     /**
      * {@inheritDoc}
      * <p>
