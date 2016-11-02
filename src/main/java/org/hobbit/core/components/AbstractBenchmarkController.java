@@ -1,6 +1,7 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,9 +10,17 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.vocab.HOBBIT;
+import org.hobbit.vocab.HobbitErrors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +41,10 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * The benchmark result as RDF model received from the evaluation module.
      */
     protected Model resultModel;
+    /**
+     * The benchmark result as RDF model received from the evaluation module.
+     */
+    protected Semaphore resultModelMutex = new Semaphore(1);
     /**
      * Mutex used to wait for the start signal from the controller.
      */
@@ -92,6 +105,10 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * The container id of the benchmarked system.
      */
     private String systemContainerId = null;
+    /**
+     * The exit code of the system container
+     */
+    protected int systemExitCode = 0;
     /**
      * The RDF model containing the benchmark parameters.
      */
@@ -345,6 +362,79 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     }
 
     /**
+     * Uses the given model as result model if the result model is
+     * <code>null</code>. Else, the two models are merged.
+     * 
+     * @param resultModel
+     *            the new result model
+     */
+    protected void setResultModel(Model resultModel) {
+        try {
+            resultModelMutex.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for the result model mutex. Returning.", e);
+        }
+        try {
+            if (resultModel == null) {
+                this.resultModel = resultModel;
+            } else {
+                this.resultModel.add(resultModel);
+            }
+        } finally {
+            resultModelMutex.release();
+        }
+    }
+
+    /**
+     * Generates a default model containing an error code and the benchmark
+     * parameters if no result model has been received from the evaluation
+     * module until now. If the model already has been received, the error is
+     * added to the existing model.
+     */
+    protected void generateErrorResultModel() {
+        try {
+            resultModelMutex.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for the result model mutex. Returning.", e);
+        }
+        try {
+            if (resultModel == null) {
+                this.resultModel = ModelFactory.createDefaultModel();
+                resultModel.add(resultModel.getResource(experimentUri), RDF.type, HOBBIT.Experiment);
+            }
+            resultModel.add(resultModel.getResource(experimentUri), HOBBIT.terminatedWithError,
+                    HobbitErrors.BenchmarkCrashed);
+        } finally {
+            resultModelMutex.release();
+        }
+        addParametersToResultModel();
+    }
+
+    /**
+     * Adds the {@link #benchmarkParamModel} triples to the
+     * {@link #resultModel}.
+     */
+    protected void addParametersToResultModel() {
+        try {
+            resultModelMutex.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for the result model mutex. Returning.", e);
+        }
+        try {
+            Resource experimentResource = resultModel.getResource(experimentUri);
+            StmtIterator iterator = benchmarkParamModel.listStatements(
+                    benchmarkParamModel.getResource(Constants.NEW_EXPERIMENT_URI), null, (RDFNode) null);
+            Statement statement;
+            while (iterator.hasNext()) {
+                statement = iterator.next();
+                resultModel.add(experimentResource, statement.getPredicate(), statement.getObject());
+            }
+        } finally {
+            resultModelMutex.release();
+        }
+    }
+
+    /**
      * Sends the result RDF model to the platform controller.
      * 
      * @param model
@@ -352,11 +442,21 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      */
     protected void sendResultModel(Model model) {
         try {
+            resultModelMutex.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for the result model mutex. Returning.", e);
+        }
+        try {
+            if (systemExitCode != 0) {
+                model.add(model.getResource(experimentUri), HOBBIT.terminatedWithError, HobbitErrors.SystemCrashed);
+            }
             sendToCmdQueue(Commands.BENCHMARK_FINISHED_SIGNAL, RabbitMQUtils.writeModel(model));
         } catch (IOException e) {
             String errorMsg = "Exception while trying to send the result to the platform controller.";
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
+        } finally {
+            resultModelMutex.release();
         }
     }
 
@@ -381,17 +481,53 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.DOCKER_CONTAINER_TERMINATED: {
-            // FIXME Add exit code check
-            String containerId = RabbitMQUtils.readString(data);
-            if (dataGenContainerIds.contains(containerId)) {
+            ByteBuffer buffer = ByteBuffer.wrap(data);
+            String containerName = RabbitMQUtils.readString(buffer);
+            int exitCode = buffer.get();
+            containerTerminated(containerName, exitCode);
+            break;
+        }
+        case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
+            resultModel = RabbitMQUtils.readModel(data);
+            LOGGER.info("model size = " + resultModel.size());
+        }
+        }
+    }
+
+    /**
+     * This method handles messages from the command bus containing the
+     * information that a container terminated. It checks whether the container
+     * belongs to the current benchmark and whether it has to react.
+     * 
+     * @param containerName
+     *            the name of the terminated container
+     * @param exitCode
+     *            the exit code of the terminated container
+     */
+    protected void containerTerminated(String containerName, int exitCode) {
+        if (dataGenContainerIds.contains(containerName)) {
+            if (exitCode == 0) {
                 dataGenTerminatedMutex.release();
-            } else if (taskGenContainerIds.contains(containerId)) {
+            } else {
+                containerCrashed(containerName);
+            }
+        } else if (taskGenContainerIds.contains(containerName)) {
+            if (exitCode == 0) {
                 taskGenTerminatedMutex.release();
-            } else if (containerId.equals(evalStoreContainerId)) {
+            } else {
+                containerCrashed(containerName);
+            }
+        } else if (containerName.equals(evalStoreContainerId)) {
+            if (exitCode == 0) {
                 evalStoreTerminatedMutex.release();
-            } else if (containerId.equals(systemContainerId)) {
-                systemTerminatedMutex.release();
-            } else if (containerId.equals(evalModuleContainerId)) {
+            } else {
+                containerCrashed(containerName);
+            }
+        } else if (containerName.equals(systemContainerId)) {
+            systemTerminatedMutex.release();
+            systemExitCode = exitCode;
+        } else if (containerName.equals(evalModuleContainerId)) {
+            if (exitCode == 0) {
                 evalModuleTerminatedMutex.release();
                 try {
                     sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
@@ -400,13 +536,16 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
                             + " command. Won't wait for the evaluation store to terminate!", e);
                     evalStoreTerminatedMutex.release();
                 }
+            } else {
+                containerCrashed(containerName);
             }
-            break;
         }
-        case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
-            resultModel = RabbitMQUtils.readModel(data);
-            LOGGER.info("model size = " + resultModel.size());
-        }
-        }
+    }
+
+    protected void containerCrashed(String containerName) {
+        LOGGER.error("A data generator crashed (\"{}\"). Terminating.", containerName);
+        generateErrorResultModel();
+        sendResultModel(resultModel);
+        System.exit(1);
     }
 }
