@@ -47,6 +47,7 @@ public class HOBBIT {
 
     public static final Property defaultValue = property("defaultValue");
     public static final Property endTime = property("endTime");
+    public static final Property executionDate = property("executionDate");
     public static final Property hasAPI = property("hasAPI");
     public static final Property hasParameter = property("hasParameter");
     public static final Property hobbitPlatformVersion = property("hobbitPlatformVersion");
@@ -55,7 +56,10 @@ public class HOBBIT {
     public static final Property involvesBenchmark = property("involvesBenchmark");
     public static final Property involvesSystemInstance = property("involvesSystemInstance");
     public static final Property isPartOf = property("isPartOf");
+    public static final Property isTaskOf = property("isTaskOf");
     public static final Property measuresKPI = property("measuresKPI");
+    public static final Property organizer = property("organizer");
+    public static final Property publicationDate = property("publicationDate");
     public static final Property relevantForAnalysis = property("relevantForAnalysis");
     public static final Property startTime = property("startTime");
     public static final Property terminatedWithError = property("terminatedWithError");

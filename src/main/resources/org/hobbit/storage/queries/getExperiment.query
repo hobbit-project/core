@@ -1,0 +1,34 @@
+PREFIX hobbit: <http://w3id.org/hobbit/vocab#>
+
+CONSTRUCT {
+    %EXPERIMENT_URI% a hobbit:Experiment .
+	%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system .
+	%EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
+	%EXPERIMENT_URI% hobbit:wasCarriedOut ?hardware .
+	%EXPERIMENT_URI% hobbit:startTime ?startTime .
+	%EXPERIMENT_URI% hobbit:endTime ?endTime .
+	%EXPERIMENT_URI% hobbit:hobbitPlatformVersion ?platformVersion .
+	%EXPERIMENT_URI% hobbit:isPartOf ?challenge .
+	%EXPERIMENT_URI% ?resultProp ?resultValue .
+	%EXPERIMENT_URI% ?parameterProp ?parameterValue . }
+WHERE {
+  GRAPH %GRAPH_URI% {
+	%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system .
+	%EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
+	%EXPERIMENT_URI% hobbit:wasCarriedOut ?hardware .
+	%EXPERIMENT_URI% hobbit:startTime ?startTime .
+	%EXPERIMENT_URI% hobbit:endTime ?endTime .
+	%EXPERIMENT_URI% hobbit:hobbitPlatformVersion ?platformVersion .
+	%EXPERIMENT_URI% hobbit:isPartOf ?challenge .
+	OPTIONAL {
+		%EXPERIMENT_URI% ?resultProp ?resultValue .
+		?benchmark hobbit:measuresKPI ?resultProp .
+		?resultProp a hobbit:KPI .
+	}
+	OPTIONAL {
+		%EXPERIMENT_URI% ?parameterProp ?parameterValue .
+		?benchmark hobbit:hasParameter ?parameterProp .
+		{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
+	}
+  }
+}

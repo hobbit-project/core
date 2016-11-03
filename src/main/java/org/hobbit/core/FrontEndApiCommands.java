@@ -35,4 +35,13 @@ public class FrontEndApiCommands {
      */
     public static final byte ADD_EXPERIMENT_CONFIGURATION = 3;
 
+    /**
+     * This command requests systems that have been uploaded by the given user.
+     */
+    public static final byte GET_SYSTEMS_OF_USER = 4;
+
+    /**
+     * This command closes the given challenge.
+     */
+    public static final byte CLOSE_CHALLENGE = 5;
 }
