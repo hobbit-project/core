@@ -52,6 +52,7 @@ public class HOBBIT {
     public static final Property hasParameter = property("hasParameter");
     public static final Property hobbitPlatformVersion = property("hobbitPlatformVersion");
     public static final Property imageName = property("imageName");
+    public static final Property implementsAPI = property("implementsAPI");
     public static final Property instanceOf = property("instanceOf");
     public static final Property involvesBenchmark = property("involvesBenchmark");
     public static final Property involvesSystemInstance = property("involvesSystemInstance");
