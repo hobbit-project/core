@@ -44,7 +44,8 @@ public class HOBBIT {
     public static final Resource Parameter = resource("Parameter");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
-
+    
+    public static final Property closed = property("closed");
     public static final Property defaultValue = property("defaultValue");
     public static final Property endTime = property("endTime");
     public static final Property executionDate = property("executionDate");

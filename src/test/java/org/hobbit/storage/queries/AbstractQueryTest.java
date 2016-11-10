@@ -64,7 +64,7 @@ public abstract class AbstractQueryTest {
         // load the models
         Dataset storeContent = DatasetFactory.createTxnMem();
         // If the named graph is not empty, load it
-        if (expectedResultResource != null) {
+        if (storeContentResource != null) {
             storeContent.addNamedModel(FIRST_GRAPH_NAME, loadModel(storeContentResource));
         } else {
             storeContent.addNamedModel(FIRST_GRAPH_NAME, ModelFactory.createDefaultModel());

@@ -76,6 +76,9 @@ public class StorageServiceClient implements Closeable {
      *             parsed.
      */
     public boolean sendAskQuery(String query) throws Exception {
+        if (query == null) {
+            throw new IllegalArgumentException("The given query is null.");
+        }
         byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
@@ -97,6 +100,10 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public Model sendConstructQuery(String query) {
+        if (query == null) {
+            LOGGER.error("The given query is null. Returning null.");
+            return null;
+        }
         byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
@@ -118,6 +125,10 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public Model sendDescribeQuery(String query) {
+        if (query == null) {
+            LOGGER.error("The given query is null. Returning null.");
+            return null;
+        }
         byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
@@ -140,6 +151,10 @@ public class StorageServiceClient implements Closeable {
      * @return result for the query or <code>null</code>
      */
     public ResultSet sendSelectQuery(String query) {
+        if (query == null) {
+            LOGGER.error("The given query is null. Returning null.");
+            return null;
+        }
         byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
         if (response != null) {
             try {
@@ -164,6 +179,10 @@ public class StorageServiceClient implements Closeable {
      *         or not
      */
     public boolean sendUpdateQuery(String query) {
+        if (query == null) {
+            LOGGER.error("Can not send an update query that is null. Returning false.");
+            return false;
+        }
         byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
         return (response != null) && (response.length > 0);
     }
@@ -200,7 +219,7 @@ public class StorageServiceClient implements Closeable {
         LOGGER.info("Generated query: {}", query.replace('\n', ' '));
         return sendUpdateQuery(query);
     }
-    
+
     /**
      * {@inheritDoc}
      * <p>

@@ -127,28 +127,54 @@ public class SparqlQueries {
      * Returns a SPARQL query for creating a subgraph of a challenge task that
      * defines an experiment of this task.
      * 
-     * @param systemUri
-     *            URI of the challenge that should be closed. <code>null</code>
-     *            works like a wildcard.
      * @param experimentUri
      *            URI of the newly created experiment.
+     * @param challengeTaskUri
+     *            URI of the challenge task from which the experiment should be
+     *            created. <code>null</code> works like a wildcard.
+     * @param systemUri
+     *            URI of the system of the experiment. <code>null</code> works
+     *            like a wildcard.
      * @param graphUri
      *            URI of the graph the experiment is stored. <code>null</code>
      *            works like a wildcard.
      * @return the SPARQL construct query that performs the retrieving or
      *         <code>null</code> if the query hasn't been loaded correctly
+     * @throws IllegalArgumentException
+     *             if the given experimentUri is null
      */
     public static final String getCreateExperimentFromTaskQuery(String experimentUri, String challengeTaskUri,
             String systemUri, String graphUri) {
+        if (experimentUri == null) {
+            throw new IllegalArgumentException("The given experiment URI must not be null.");
+        }
         return replacePlaceholders(
                 CREATE_EXPERIMENT_FROM_CHALLENGE_TASK, new String[] { EXPERIMENT_PLACEHOLDER,
                         CHALLENGE_TASK_PLACEHOLDER, SYSTEM_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { experimentUri, challengeTaskUri, systemUri, graphUri });
     }
 
+    /**
+     * Replaces the given placeholders in the given query with the given
+     * replacements. If a replacement is <code>null</code>, it is replaced by a
+     * variable.
+     * 
+     * @param query
+     *            the query containing placeholders
+     * @param placeholders
+     *            the placeholders that should be replaced
+     * @param replacements
+     *            the replacements that should be used to replace the
+     *            placeholders.
+     * @return the newly created query or <code>null</code> if the given query
+     *         was <code>null</code>.
+     */
     private static final String replacePlaceholders(String query, String[] placeholders, String[] replacements) {
         if (query == null) {
             return null;
+        }
+        if (placeholders.length != replacements.length) {
+            throw new IllegalArgumentException("The length of the placeholders != length of replacements.");
         }
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < replacements.length; ++i) {
