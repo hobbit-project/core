@@ -32,17 +32,57 @@ public class UpdateQueryTest extends AbstractQueryTest {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
 
         // Close challenge update
+        /*
+         * A normal challenge is closed after the update is executed.
+         */
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/closedChallengeConfig.ttl", FIRST_GRAPH_NAME });
+        /*
+         * An already closed challenge stays closed.
+         */
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/closedChallengeConfig.ttl",
                 SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/closedChallengeConfig.ttl", FIRST_GRAPH_NAME });
-        testConfigs.add(new Object[] {
-                "org/hobbit/storage/queries/exampleChallengeConfig.ttl", SparqlQueries
-                        .getCloseChallengeQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME),
-                null, SECOND_GRAPH_NAME });
+        /*
+         * An empty graph is not changed.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null,
+                SECOND_GRAPH_NAME });
 
+        
+        // Check the model diff based SPARQL UPDATE query creation
+        Model original, updated;
+        original = loadModel("org/hobbit/storage/queries/exampleChallengeConfig.ttl");
+        updated = loadModel("org/hobbit/storage/queries/changedChallengeConfig.ttl");
+        /*
+         * The original model is changed to the updated model as expected.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getUpdateQueryFromDiff(original, updated, FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME });
+        /*
+         * A query that should focus on the second graph does not change the
+         * first graph
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getUpdateQueryFromDiff(original, updated, SECOND_GRAPH_NAME),
+                "org/hobbit/storage/queries/exampleChallengeConfig.ttl", FIRST_GRAPH_NAME });
+        /*
+         * A query that should DELETE and INSERT something does not change an
+         * empty graph.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getUpdateQueryFromDiff(original, updated, SECOND_GRAPH_NAME), null, SECOND_GRAPH_NAME });
+        /*
+         * The difference between an open and a closed challenge can be
+         * expressed with this method as well.
+         */
+        updated = loadModel("org/hobbit/storage/queries/closedChallengeConfig.ttl");
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getUpdateQueryFromDiff(original, updated, FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/closedChallengeConfig.ttl", FIRST_GRAPH_NAME });
         return testConfigs;
     }
 

@@ -99,12 +99,11 @@ hobbit:hasModel "...." ;
 
 
 <http://example.org/MyChallenge> a	hobbit:Challenge;
-	rdfs:label "My example Challenge"@en;
+	rdfs:label "The first example challenge!!! (changed the label)"@en;
 	rdfs:comment	"This is an example for a challenge."@en;
 	hobbit:executionDate "2016-12-24"^^xsd:Date;
 	hobbit:publicationDate "2016-12-26"^^xsd:Date;
-	hobbit:organizer "Michael Roeder"@en;
-    hobbit:closed "true"^^xsd:boolean .
+	hobbit:organizer "Michael Roeder"@en .
 
 # --- Challenge Task 1 ---
 

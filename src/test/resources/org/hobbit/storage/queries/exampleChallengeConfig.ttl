@@ -44,8 +44,10 @@ bench:lanceDataFormat  a	hobbit:ConfigurableParameter;
             rdfs:range bench:DataFormat;
 	hobbit:hasDefaultValue bench:Turtle .
 
-bench:DataFormat  a owl:Class;
-	owl:oneOf (bench:RDF_XML bench:N3 bench:Turtle) .
+bench:DataFormat  a owl:Class .
+bench:RDF_XML a bench:DataFormat .
+bench:N3  a bench:DataFormat .
+bench:Turtle a bench:DataFormat .
 	
 # --- System ---
 

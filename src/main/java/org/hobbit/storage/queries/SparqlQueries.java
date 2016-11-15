@@ -2,9 +2,17 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.QuadAcc;
+import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,5 +200,50 @@ public class SparqlQueries {
             builder.delete(0, builder.length());
         }
         return StringUtils.replaceEachRepeatedly(query, placeholders, replacements);
+    }
+
+    /**
+     * Generates a SPARQL UPDATE query based on the differences between the two
+     * given models. Triples that are present in the original model but not in
+     * the updated model will be put into the DELETE part of the query. Triples
+     * that are present in the updated model but can not be found in the
+     * original model will be put into the INSERT part of the query.
+     * 
+     * @param original
+     *            the original RDF model
+     * @param updated
+     *            the updated RDF model
+     * @param graphUri
+     *            the URI of the graph to which the UPDATE query should be
+     *            applied or <code>null</code>
+     * @return The SPARQL UPDATE query
+     */
+    public static final String getUpdateQueryFromDiff(Model original, Model updated, String graphUri) {
+        UpdateDeleteInsert update = new UpdateDeleteInsert();
+        Node graph = null;
+        if (graphUri != null) {
+            graph = NodeFactory.createURI(graphUri);
+            update.setWithIRI(graph);
+        }
+        StmtIterator iterator;
+
+        // deleted statements
+        Model temp = original.difference(updated);
+        iterator = temp.listStatements();
+        QuadAcc quads = update.getDeleteAcc();
+        while (iterator.hasNext()) {
+                quads.addTriple(iterator.next().asTriple());
+        }
+
+        // inserted statements
+        temp = updated.difference(original);
+        iterator = temp.listStatements();
+        quads = update.getInsertAcc();
+        while (iterator.hasNext()) {
+            quads.addTriple(iterator.next().asTriple());
+        }
+
+        System.out.println(update.toString(original));
+        return update.toString(original);
     }
 }

@@ -127,7 +127,7 @@ public abstract class AbstractQueryTest {
 
     protected abstract Model executeQuery(String query, Dataset storeContent);
 
-    private Model loadModel(String resourceName) {
+    protected static Model loadModel(String resourceName) {
         Model model = ModelFactory.createDefaultModel();
         InputStream is = AbstractQueryTest.class.getClassLoader().getResourceAsStream(resourceName);
         Assert.assertNotNull(is);
