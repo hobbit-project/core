@@ -24,7 +24,6 @@ public final class Constants {
     public static final String SYSTEM_URI_KEY = "HOBBIT_SYSTEM_URI";
     
     public static final String CONTAINER_NAME_KEY = "HOBBIT_CONTAINER_NAME";
-
     @Deprecated
     public static final String SYSTEM_CONTAINER_ID_KEY = "HOBBIT_SYSTEM_CONTAINER_ID";
 
@@ -62,6 +61,8 @@ public final class Constants {
 	public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
 
     public static final String CONTROLLER_2_FRONT_END_QUEUE_NAME = "hobbit.controller-frontend";
+
+    public static final String CONTROLLER_2_ANALYSIS_QUEUE_NAME = "hobbit.controller-analysis";
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
 	
