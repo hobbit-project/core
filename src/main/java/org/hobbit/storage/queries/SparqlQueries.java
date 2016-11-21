@@ -55,7 +55,7 @@ public class SparqlQueries {
     }
 
     /**
-     * An update query that closes a challenge.
+     * A construct query that retrieves the graph of a challenge.
      */
     private static final String GET_CHALLENGE_GRAPH_QUERY = loadQuery("org/hobbit/storage/queries/getChallenge.query");
 
@@ -161,6 +161,29 @@ public class SparqlQueries {
     }
 
     /**
+     * An update query that deletes the graph of a challenge.
+     */
+    private static final String DELETE_CHALLENGE_GRAPH_QUERY = loadQuery(
+            "org/hobbit/storage/queries/deleteChallenge.query");
+
+    /**
+     * Returns a SPARQL update query for deleting the graph of a challenge.
+     * 
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL update query that performs the deletion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String deleteChallengeGraphQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(DELETE_CHALLENGE_GRAPH_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
+    }
+
+    /**
      * Replaces the given placeholders in the given query with the given
      * replacements. If a replacement is <code>null</code>, it is replaced by a
      * variable.
@@ -230,7 +253,7 @@ public class SparqlQueries {
         iterator = temp.listStatements();
         QuadAcc quads = update.getDeleteAcc();
         while (iterator.hasNext()) {
-                quads.addTriple(iterator.next().asTriple());
+            quads.addTriple(iterator.next().asTriple());
         }
 
         // inserted statements
