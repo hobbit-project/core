@@ -184,6 +184,26 @@ public class SparqlQueries {
     }
 
     /**
+     * An update query that cleans up the graph of containing challenges.
+     */
+    private static final String CLEAN_UP_CHALLENGE_GRAPH_QUERY = loadQuery(
+            "org/hobbit/storage/queries/cleanUpChallengeGraph.query");
+
+    /**
+     * Returns a SPARQL update query for cleaning up the graph of a challenge configs.
+     * 
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL update query that performs the deletion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String cleanUpChallengeGraphQuery(String graphUri) {
+        return replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERY,
+                new String[] { GRAPH_PLACEHOLDER }, new String[] { graphUri });
+    }
+
+    /**
      * Replaces the given placeholders in the given query with the given
      * replacements. If a replacement is <code>null</code>, it is replaced by a
      * variable.

@@ -12,11 +12,11 @@
 exp:LinkingExp10 a hobbit:Experiment ;
 	hobbit:involvesSystemInstance sys:limesV1;
 	hobbit:involvesBenchmark bench:lance;
-	hobbit:wasCarriedOut hobbit:hasHardware ;
+	hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
 	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
 	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
 	hobbit:hobbitPlatformVersion "V1.3" ;
-	hobbit:isPartOf hobbit:OAEILinkingChallenge ;
+	hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
 	bench:lanceDataFormat bench:RDF_XML;
 	bench:precision "0.5"^^xsd:float ;
 	bench:recall "0.5"^^xsd:float ;

@@ -18,7 +18,7 @@ hobbit:version "V1.1";
 hobbit:measuresKPI bench:precision ;
 hobbit:measuresKPI bench:recall ;
 hobbit:measuresKPI bench:fmeasure ;
-hobbit:hasApi	bench:lanceApi;  	
+hobbit:hasAPI	bench:lanceApi;  	
 	hobbit:hasParameter bench:lanceDataFormat .
 
 bench:precision a hobbit:KPI;
@@ -42,7 +42,7 @@ bench:lanceDataFormat  a	hobbit:ConfigurableParameter;
 	rdfs:label	"Lance dataset format"@en;
 	rdfs:comment	"......."@en;
             rdfs:range bench:DataFormat;
-	hobbit:hasDefaultValue bench:Turtle .
+	hobbit:defaultValue bench:Turtle .
 
 bench:DataFormat  a owl:Class .
 bench:RDF_XML a bench:DataFormat .
@@ -55,7 +55,7 @@ sys:limesV1 a  hobbit:SystemInstance ;
 	rdfs:label	"Limes"@en;
 	rdfs:comment	"Limes is an Instance Matching System..."@en;
 	hobbit:imageName "LimesImageName" ;
-	hobbit:implementsApi bench:lanceApi ;
+	hobbit:implementsAPI bench:lanceApi ;
 	hobbit:instanceOf sys:limes ;
 	sys:threshold "0.7"^^xsd:float .
 
@@ -72,11 +72,11 @@ sys:threshold a hobbit:FeatureParameter;
 exp:LinkingExp10 a hobbit:Experiment ;
 	hobbit:involvesSystemInstance sys:limesV1;
 	hobbit:involvesBenchmark bench:lance;
-	hobbit:wasCarriedOut hobbit:hasHardware ;
+	hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
 	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
 	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
 	hobbit:hobbitPlatformVersion "V1.3" ;
-	hobbit:isPartOf hobbit:OAEILinkingChallenge ;
+	hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
 	bench:lanceDataFormat bench:RDF_XML;
 	bench:precision "0.5"^^xsd:float ;
 	bench:recall "0.5"^^xsd:float ;
@@ -84,7 +84,7 @@ exp:LinkingExp10 a hobbit:Experiment ;
 
 # --- Hardware ---
 
-hobbit:hasHardware a hobbit:Hardware ;
+<http://example.org/ExampleHardware> a hobbit:Hardware ;
 hobbit:hasModel "...." ;
 		hobbit:hasProcessors "...." ;
 		hobbit:hasMemory "...." ;

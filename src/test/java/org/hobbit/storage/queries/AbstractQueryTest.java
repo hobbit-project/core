@@ -1,6 +1,8 @@
 package org.hobbit.storage.queries;
 
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.Dataset;
@@ -89,22 +91,27 @@ public abstract class AbstractQueryTest {
         String resultModelString = result.toString();
         // Check the recall
         iterator = expectedResult.listStatements();
+        Set<Statement> statements = new HashSet<>();
         while (iterator.hasNext()) {
             s = iterator.next();
-            Assert.assertTrue(
-                    "The result does not contain the expected statement " + s.toString() + ". expected model:\n"
-                            + expectedModelString + "\nresult model:\n" + resultModelString,
-                    modelContainsStatement(result, s));
+            if (!modelContainsStatement(result, s)) {
+                statements.add(s);
+            }
         }
+        Assert.assertTrue("The result does not contain the expected statements " + statements.toString()
+                + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
+                statements.size() == 0);
         // Check the precision
         iterator = result.listStatements();
         while (iterator.hasNext()) {
             s = iterator.next();
-            Assert.assertTrue(
-                    "The result contains the unexpected statement " + s.toString() + ". expected model:\n"
-                            + expectedModelString + "\nresult model:\n" + resultModelString,
-                    modelContainsStatement(result, s));
+            if (!modelContainsStatement(expectedResult, s)) {
+                statements.add(s);
+            }
         }
+        Assert.assertTrue("The result contains the unexpected statements " + statements.toString()
+                + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
+                statements.size() == 0);
     }
 
     private boolean modelContainsStatement(Model result, Statement s) {

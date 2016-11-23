@@ -50,7 +50,16 @@ public class HOBBIT {
     public static final Property endTime = property("endTime");
     public static final Property executionDate = property("executionDate");
     public static final Property hasAPI = property("hasAPI");
+    public static final Property hasCPUTypeCount = property("hasCPUTypeCount");
+    public static final Property hasDisks = property("hasDisks");
+    public static final Property hasFileSystem = property("hasFileSystem");
+    public static final Property hasMemory = property("hasMemory");
+    public static final Property hasModel = property("hasModel");
+    public static final Property hasNetworkAdapters = property("hasNetworkAdapters");
+    public static final Property hasOS = property("hasOS");
     public static final Property hasParameter = property("hasParameter");
+    public static final Property hasProcessors = property("hasProcessors");
+    public static final Property hasRAM = property("hasRAM");
     public static final Property hobbitPlatformVersion = property("hobbitPlatformVersion");
     public static final Property imageName = property("imageName");
     public static final Property implementsAPI = property("implementsAPI");
@@ -67,5 +76,6 @@ public class HOBBIT {
     public static final Property terminatedWithError = property("terminatedWithError");
     public static final Property version = property("version");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
+
 
 }

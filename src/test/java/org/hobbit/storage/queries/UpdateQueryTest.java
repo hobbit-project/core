@@ -51,7 +51,6 @@ public class UpdateQueryTest extends AbstractQueryTest {
                 SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null,
                 SECOND_GRAPH_NAME });
 
-        
         // Check the model diff based SPARQL UPDATE query creation
         Model original, updated;
         original = loadModel("org/hobbit/storage/queries/exampleChallengeConfig.ttl");
@@ -83,6 +82,15 @@ public class UpdateQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getUpdateQueryFromDiff(original, updated, FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/closedChallengeConfig.ttl", FIRST_GRAPH_NAME });
+
+        // Check the clean up challenge config query
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/cleanUpChallengeExample1.ttl",
+                SparqlQueries.cleanUpChallengeGraphQuery(FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/cleanUpChallengeExample1Result.ttl", FIRST_GRAPH_NAME });
+        // Check the clean up challenge config query with an already clean config graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/cleanUpChallengeExample2.ttl",
+                SparqlQueries.cleanUpChallengeGraphQuery(FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/cleanUpChallengeExample2.ttl", FIRST_GRAPH_NAME });
         return testConfigs;
     }
 
