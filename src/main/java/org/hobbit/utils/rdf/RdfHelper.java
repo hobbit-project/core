@@ -11,6 +11,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDFS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements simple methods to get data from a given RDF Model.
@@ -19,6 +21,8 @@ import org.apache.jena.vocabulary.RDFS;
  *
  */
 public class RdfHelper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RdfHelper.class);
 
     /**
      * Returns the label of the given {@link Resource} if it is present in the
@@ -96,21 +100,47 @@ public class RdfHelper {
      *            wildcard.
      * @return object of the triple as {@link Calendar} or <code>null</code> if
      *         such a triple couldn't be found or the value can not be read as
-     *         {@link Calendar}
+     *         XSDDate
      */
     public static Calendar getDateValue(Model model, Resource subject, Property predicate) {
+        return getCalendarValue(model, subject, predicate, XSDDatatype.XSDdate);
+    }
+
+    /**
+     * Returns the object as {@link Calendar} of the first triple that has the
+     * given subject and predicate and that can be found in the given model.
+     *
+     * @param model
+     *            the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as {@link Calendar} or <code>null</code> if
+     *         such a triple couldn't be found or the value can not be read as
+     *         XSDDateTime
+     */
+    public static Calendar getDateTimeValue(Model model, Resource subject, Property predicate) {
+        return getCalendarValue(model, subject, predicate, XSDDatatype.XSDdateTime);
+    }
+
+    protected static Calendar getCalendarValue(Model model, Resource subject, Property predicate,
+            XSDDatatype dateType) {
         if (model == null) {
             return null;
         }
         Literal literal = getLiteral(model, subject, predicate);
         if (literal != null) {
             try {
-                Object o = XSDDatatype.XSDdate.parse(literal.getString());
+                Object o = dateType.parse(literal.getString());
                 if (o instanceof XSDDateTime) {
                     return ((XSDDateTime) o).asCalendar();
                 }
             } catch (Exception e) {
                 // nothing to do
+                LOGGER.error("Couldn't parse " + dateType.getURI() + ". Returning null.", e);
             }
         }
         return null;
@@ -140,6 +170,30 @@ public class RdfHelper {
             RDFNode node = nodeIterator.next();
             if (node.isLiteral()) {
                 return node.asLiteral();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the object as {@link Resource} of the first triple that has the
+     * given subject and predicate and that can be found in the given model.
+     *
+     * @param model
+     *            the model that should contain the triple
+     * @param subject
+     *            the subject of the triple
+     * @param predicate
+     *            the predicate of the triple
+     * @return object of the triple as {@link Resource} or <code>null</code> if
+     *         such a triple couldn't be found
+     */
+    public static Resource getObjectResource(Model model, Resource subject, Property predicate) {
+        NodeIterator nodeIterator = model.listObjectsOfProperty(subject, predicate);
+        while (nodeIterator.hasNext()) {
+            RDFNode node = nodeIterator.next();
+            if (node.isResource()) {
+                return node.asResource();
             }
         }
         return null;

@@ -101,8 +101,8 @@ hobbit:hasModel "...." ;
 <http://example.org/MyChallenge> a	hobbit:Challenge;
 	rdfs:label "My example Challenge"@en;
 	rdfs:comment	"This is an example for a challenge."@en;
-	hobbit:executionDate "2016-12-24"^^xsd:Date;
-	hobbit:publicationDate "2016-12-26"^^xsd:Date;
+	hobbit:executionDate "2016-12-24"^^xsd:date;
+	hobbit:publicationDate "2016-12-26"^^xsd:date;
 	hobbit:organizer "Michael Roeder"@en;
     hobbit:closed "true"^^xsd:boolean .
 
@@ -142,6 +142,6 @@ bench:frequency a hobbit:ConfigurableParameter .
 <http://example.org/MyChallenge2> a	hobbit:Challenge;
 	rdfs:label "My second Challenge"@en;
 	rdfs:comment	"This is a second example for a challenge."@en;
-	hobbit:executionDate "2016-12-24"^^xsd:Date;
-	hobbit:publicationDate "2016-12-26"^^xsd:Date;
+	hobbit:executionDate "2016-12-24"^^xsd:date;
+	hobbit:publicationDate "2016-12-26"^^xsd:date;
 	hobbit:organizer "Michael Roeder"@en .

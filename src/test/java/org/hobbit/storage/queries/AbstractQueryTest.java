@@ -1,7 +1,6 @@
 package org.hobbit.storage.queries;
 
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -9,12 +8,10 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.hobbit.utils.test.ModelComparisonHelper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -81,55 +78,22 @@ public abstract class AbstractQueryTest {
             expectedResult = ModelFactory.createDefaultModel();
         }
 
-        // execte query
+        // execute query
         Model result = executeQuery(query, storeContent);
 
         // Compare the models
-        StmtIterator iterator;
-        Statement s;
         String expectedModelString = expectedResult.toString();
         String resultModelString = result.toString();
         // Check the recall
-        iterator = expectedResult.listStatements();
-        Set<Statement> statements = new HashSet<>();
-        while (iterator.hasNext()) {
-            s = iterator.next();
-            if (!modelContainsStatement(result, s)) {
-                statements.add(s);
-            }
-        }
+        Set<Statement> statements = ModelComparisonHelper.getMissingStatements(expectedResult, result);
         Assert.assertTrue("The result does not contain the expected statements " + statements.toString()
                 + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
                 statements.size() == 0);
         // Check the precision
-        iterator = result.listStatements();
-        while (iterator.hasNext()) {
-            s = iterator.next();
-            if (!modelContainsStatement(expectedResult, s)) {
-                statements.add(s);
-            }
-        }
+        statements = ModelComparisonHelper.getMissingStatements(result, expectedResult);
         Assert.assertTrue("The result contains the unexpected statements " + statements.toString()
                 + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
                 statements.size() == 0);
-    }
-
-    private boolean modelContainsStatement(Model result, Statement s) {
-        Resource subject = s.getSubject();
-        RDFNode object = s.getObject();
-        if (subject.isAnon()) {
-            if (object.isAnon()) {
-                return result.contains(null, s.getPredicate(), (RDFNode) null);
-            } else {
-                return result.contains(null, s.getPredicate(), object);
-            }
-        } else {
-            if (object.isAnon()) {
-                return result.contains(subject, s.getPredicate(), (RDFNode) null);
-            } else {
-                return result.contains(subject, s.getPredicate(), object);
-            }
-        }
     }
 
     protected abstract Model executeQuery(String query, Dataset storeContent);
