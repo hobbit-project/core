@@ -1,6 +1,8 @@
 package org.hobbit.utils.rdf;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
@@ -9,6 +11,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -197,5 +200,50 @@ public class RdfHelper {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the objects as {@link Resource}s of all triples that have the
+     * given subject and predicate and that can be found in the given model.
+     *
+     * @param model
+     *            the model that should contain the triple
+     * @param subject
+     *            the subject of the triple
+     * @param predicate
+     *            the predicate of the triple
+     * @return List of object of the triples as {@link Resource}
+     */
+    public static List<Resource> getObjectResources(Model model, Resource subject, Property predicate) {
+        NodeIterator nodeIterator = model.listObjectsOfProperty(subject, predicate);
+        List<Resource> objects = new ArrayList<>();
+        while (nodeIterator.hasNext()) {
+            RDFNode node = nodeIterator.next();
+            if (node.isResource()) {
+                objects.add(node.asResource());
+            }
+        }
+        return objects;
+    }
+
+    /**
+     * Returns a list of subjects of triples that have the given object and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *            the model that should contain the triple
+     * @param predicate
+     *            the predicate of the triple
+     * @param object
+     *            the object of the triple
+     * @return List of subject of the triples as {@link Resource}
+     */
+    public static List<Resource> getSubjectResources(Model model, Property predicate, Resource object) {
+        ResIterator resIterator = model.listSubjectsWithProperty(predicate, object);
+        List<Resource> subjects = new ArrayList<>();
+        while (resIterator.hasNext()) {
+            subjects.add(resIterator.next());
+        }
+        return subjects;
     }
 }

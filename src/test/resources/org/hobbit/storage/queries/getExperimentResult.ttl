@@ -21,3 +21,11 @@ exp:LinkingExp10 a hobbit:Experiment ;
 	bench:precision "0.5"^^xsd:float ;
 	bench:recall "0.5"^^xsd:float ;
 	bench:fmeasure "0.5"^^xsd:float .
+	
+bench:precision a hobbit:KPI .
+
+bench:recall a hobbit:KPI .
+
+bench:fmeasure a hobbit:KPI .
+
+bench:lanceDataFormat  a	hobbit:ConfigurableParameter .

@@ -123,6 +123,36 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query that selects the graph of an experiment that is part of
+     * a given challenge task.
+     */
+    private static final String GET_EXPERIMENT_OF_TASK_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getExperimentOfTask.query");
+
+    /**
+     * Returns a SPARQL query for retrieving the graph of an experiment that is
+     * part of the given challenge task.
+     * 
+     * @param experimentUri
+     *            URI of the experiment that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param challengeTaskUri
+     *            URI of the challenge task from which the experiment should be
+     *            created. <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentOfTaskQuery(String experimentUri, String challengeTaskUri,
+            String graphUri) {
+        return replacePlaceholders(GET_EXPERIMENT_OF_TASK_QUERY,
+                new String[] { EXPERIMENT_PLACEHOLDER, CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { experimentUri, challengeTaskUri, graphUri });
+    }
+
+    /**
      * A construct query that selects the subgraph of a challenge task that
      * defines an experiment of this task.
      */
@@ -190,7 +220,8 @@ public class SparqlQueries {
             "org/hobbit/storage/queries/cleanUpChallengeGraph.query");
 
     /**
-     * Returns a SPARQL update query for cleaning up the graph of a challenge configs.
+     * Returns a SPARQL update query for cleaning up the graph of a challenge
+     * configs.
      * 
      * @param graphUri
      *            URI of the graph the challenge is stored. <code>null</code>
@@ -199,8 +230,8 @@ public class SparqlQueries {
      *         <code>null</code> if the query hasn't been loaded correctly
      */
     public static final String cleanUpChallengeGraphQuery(String graphUri) {
-        return replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERY,
-                new String[] { GRAPH_PLACEHOLDER }, new String[] { graphUri });
+        return replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERY, new String[] { GRAPH_PLACEHOLDER },
+                new String[] { graphUri });
     }
 
     /**
