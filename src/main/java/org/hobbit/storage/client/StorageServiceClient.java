@@ -210,7 +210,7 @@ public class StorageServiceClient implements Closeable {
         }
         StmtIterator iterator = model.listStatements();
         QuadDataAcc quads = new QuadDataAcc();
-        quads.setGraph(NodeFactory.createURI("http://example.org/test"));
+        quads.setGraph(NodeFactory.createURI(graphURI));
         while (iterator.hasNext()) {
             quads.addTriple(iterator.next().asTriple());
         }
