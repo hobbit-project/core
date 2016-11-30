@@ -191,6 +191,28 @@ public class SparqlQueries {
     }
 
     /**
+     * An update query that deletes the graph of an experiment.
+     */
+    private static final String DELETE_EXPERIMENT_GRAPH_QUERY = loadQuery(
+            "org/hobbit/storage/queries/deleteExperiment.query");
+
+    /**
+     * Returns a SPARQL update query for deleting the graph of an experiment.
+     * 
+     * @param experimentUri
+     *            URI of the experiment that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored.
+     * @return the SPARQL update query that performs the deletion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String deleteExperimentGraphQuery(String experimentUri, String graphUri) {
+        return replacePlaceholders(DELETE_EXPERIMENT_GRAPH_QUERY,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { experimentUri, graphUri });
+    }
+
+    /**
      * An update query that deletes the graph of a challenge.
      */
     private static final String DELETE_CHALLENGE_GRAPH_QUERY = loadQuery(
@@ -203,8 +225,7 @@ public class SparqlQueries {
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
      * @param graphUri
-     *            URI of the graph the challenge is stored. <code>null</code>
-     *            works like a wildcard.
+     *            URI of the graph the challenge is stored.
      * @return the SPARQL update query that performs the deletion or
      *         <code>null</code> if the query hasn't been loaded correctly
      */

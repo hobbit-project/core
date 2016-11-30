@@ -1,5 +1,7 @@
 package org.hobbit.core;
 
+import java.util.TimeZone;
+
 /**
  * This class defines constants of the hobbit platform.
  * 
@@ -84,5 +86,7 @@ public final class Constants {
     public static final String CONTAINER_TYPE_BENCHMARK = "BENCHMARK";
 
     public static final String CONTAINER_TYPE_SYSTEM = "SYSTEM";
+    
+    public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
 	
 }

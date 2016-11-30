@@ -14,6 +14,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +107,11 @@ public class RdfHelper {
      *         XSDDate
      */
     public static Calendar getDateValue(Model model, Resource subject, Property predicate) {
-        return getCalendarValue(model, subject, predicate, XSDDatatype.XSDdate);
+        Calendar result = getCalendarValue(model, subject, predicate, XSDDatatype.XSDdate);
+        if (result != null) {
+            result.setTimeZone(Constants.DEFAULT_TIME_ZONE);
+        }
+        return result;
     }
 
     /**

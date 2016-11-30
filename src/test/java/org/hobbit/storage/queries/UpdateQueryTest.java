@@ -83,6 +83,18 @@ public class UpdateQueryTest extends AbstractQueryTest {
                 SparqlQueries.getUpdateQueryFromDiff(original, updated, FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/closedChallengeConfig.ttl", FIRST_GRAPH_NAME });
 
+        // Delete experiment
+        testConfigs
+                .add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
+                        SparqlQueries.deleteExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10",
+                                FIRST_GRAPH_NAME),
+                        "org/hobbit/storage/queries/deletedExperiment.ttl", FIRST_GRAPH_NAME });
+        testConfigs
+                .add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
+                        SparqlQueries.deleteExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10",
+                                SECOND_GRAPH_NAME),
+                        "org/hobbit/storage/queries/exampleExperiment.ttl", FIRST_GRAPH_NAME });
+
         // Delete challenge
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/deleteChallengeExample.ttl",
                 SparqlQueries.deleteChallengeGraphQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME),
