@@ -48,6 +48,14 @@ bench:DataFormat  a owl:Class .
 bench:RDF_XML a bench:DataFormat .
 bench:N3  a bench:DataFormat .
 bench:Turtle a bench:DataFormat .
+
+bench:BenchmarkX a	hobbit:Benchmark;
+	rdfs:label "X Benchmark"@en;
+	rdfs:comment	"X Benchmark"@en;
+	hobbit:imageName	"benchmarkXImage";
+	hobbit:version "V1.0";
+	hobbit:measuresKPI bench:precision ;
+	hobbit:hasAPI	<http://example.org/benchmarkXApi> .
 	
 # --- System ---
 
@@ -67,67 +75,34 @@ sys:threshold a hobbit:FeatureParameter;
 	rdfs:comment	"Threshold parameter for Limes system."@en;
             rdfs:range	xsd:float .
 
-# --- Experiment ---
+# --- The deleted challenge ---
 
-exp:LinkingExp10 a hobbit:Experiment ;
-	hobbit:involvesSystemInstance sys:limesV1;
-	hobbit:involvesBenchmark bench:lance;
-	hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
-	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
-	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
-	hobbit:hobbitPlatformVersion "V1.3" ;
-	hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
-	bench:lanceDataFormat bench:RDF_XML;
-	bench:precision "0.5"^^xsd:float ;
-	bench:recall "0.5"^^xsd:float ;
-	bench:fmeasure "0.5"^^xsd:float .
-
-# --- Hardware ---
-
-<http://example.org/ExampleHardware> a hobbit:Hardware ;
-hobbit:hasModel "...." ;
-		hobbit:hasProcessors "...." ;
-		hobbit:hasMemory "...." ;
-		hobbit:hasDisks "..." ;
-		hobbit:hasNetworkAdapters "...." ;
-		hobbit:hasOS "Linux .." ;
-		hobbit:hasFileSystem "..." ;
-		hobbit:hasCPUTypeCount ""^^xsd:int ;
-		hobbit:hasRAM "..." .
-
-# --- Challenge ---
-
-
-<http://example.org/MyChallenge> a	hobbit:Challenge;
-	rdfs:label "My example Challenge"@en;
-	rdfs:comment	"This is an example for a challenge."@en;
-	hobbit:executionDate "2016-12-24"^^xsd:date;
-	hobbit:publicationDate "2016-12-26"^^xsd:date;
-	hobbit:organizer "Michael Roeder"@en;
-	hobbit:visible	"true"^^xsd:boolean .
+	<http://example.org/MyChallenge> a	hobbit:Challenge;
+		rdfs:label "My example Challenge"@en;
+		rdfs:comment	"This is an example for a challenge."@en;
+		hobbit:executionDate "2016-12-24"^^xsd:date;
+		hobbit:publicationDate "2016-12-26"^^xsd:date;
+		hobbit:organizer "Michael Roeder"@en .
 
 # --- Challenge Task 1 ---
 
-<http://example.org/MyChallengeTask1> a hobbit:ChallengeTask;
-	rdfs:label "Example task 1"@en;
-	rdfs:comment	"Task 1 of my example challenge."@en;
-	hobbit:isTaskOf <http://example.org/MyChallenge>;
-	hobbit:involvesBenchmark bench:BenchmarkX;
-	hobbit:involvesSystemInstance <http://example.org/SystemA>;
-	hobbit:involvesSystemInstance <http://example.org/SystemB> .
-
-bench:BenchmarkX a	hobbit:Benchmark .
+	<http://example.org/MyChallengeTask1> a hobbit:ChallengeTask;
+		rdfs:label "Example task 1"@en;
+		rdfs:comment	"Task 1 of my example challenge."@en;
+		hobbit:isTaskOf <http://example.org/MyChallenge>;
+		hobbit:involvesBenchmark bench:BenchmarkX;
+		hobbit:involvesSystemInstance <http://example.org/SystemA>;
+		hobbit:involvesSystemInstance <http://example.org/SystemB> .
 
 # --- Challenge Task 2 ---
 
-<http://example.org/MyChallengeTask2> a hobbit:ChallengeTask;
-	rdfs:label "Example task 2"@en;
-	rdfs:comment	"The second task of my example challenge."@en;
-	hobbit:isTaskOf <http://example.org/MyChallenge>;
-	hobbit:involvesBenchmark bench:BenchmarkY;
-	bench:dataSize "1000"^^xsd:positiveInteger;
-	bench:frequency "9"^^xsd:positiveInteger;
-	hobbit:involvesSystemInstance <http://example.org/SystemC> .
+	<http://example.org/MyChallengeTask2> a hobbit:ChallengeTask;
+		rdfs:label "Example task 2"@en;
+		rdfs:comment	"The second task of my example challenge."@en;
+		hobbit:isTaskOf <http://example.org/MyChallenge>;
+		hobbit:involvesBenchmark bench:lance;
+		bench:lanceDataFormat bench:RDF_XML;
+		hobbit:involvesSystemInstance sys:limesV1 .
 
 bench:BenchmarkY a	hobbit:Benchmark;
 	hobbit:hasParameter bench:dataSize;
@@ -145,3 +120,11 @@ bench:frequency a hobbit:ConfigurableParameter .
 	hobbit:executionDate "2016-12-24"^^xsd:date;
 	hobbit:publicationDate "2016-12-26"^^xsd:date;
 	hobbit:organizer "Michael Roeder"@en .
+
+<http://example.org/MyChallenge2Task1> a hobbit:ChallengeTask;
+	rdfs:label "Example task 1 of the second challenge"@en;
+	rdfs:comment	"Task 1 of my second challenge."@en;
+	hobbit:isTaskOf <http://example.org/MyChallenge2>;
+	hobbit:involvesBenchmark bench:BenchmarkX;
+	hobbit:involvesSystemInstance <http://example.org/SystemA>;
+	hobbit:involvesSystemInstance <http://example.org/SystemB> .

@@ -75,7 +75,7 @@ public class HOBBIT {
     public static final Property startTime = property("startTime");
     public static final Property terminatedWithError = property("terminatedWithError");
     public static final Property version = property("version");
+    public static final Property visible = property("visible");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
-
 
 }

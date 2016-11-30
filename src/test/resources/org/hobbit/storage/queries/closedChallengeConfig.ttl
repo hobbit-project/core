@@ -104,6 +104,7 @@ hobbit:hasModel "...." ;
 	hobbit:executionDate "2016-12-24"^^xsd:date;
 	hobbit:publicationDate "2016-12-26"^^xsd:date;
 	hobbit:organizer "Michael Roeder"@en;
+	hobbit:visible	"true"^^xsd:boolean;
     hobbit:closed "true"^^xsd:boolean .
 
 # --- Challenge Task 1 ---

@@ -3,32 +3,23 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
     %CHALLENGE_URI% a hobbit:Challenge .
-    %CHALLENGE_URI% rdfs:label ?challengeLabel .
-    %CHALLENGE_URI% rdfs:comment ?challengeDesc .
-	%CHALLENGE_URI% hobbit:executionDate ?exDate .
-	%CHALLENGE_URI% hobbit:publicationDate ?pubDate .
-	%CHALLENGE_URI% hobbit:organizer ?organizer .
+	%CHALLENGE_URI% ?challengeProp ?challengeObj .
 	?challengeTask a hobbit:ChallengeTask .
+	?challengeTask ?taskProp ?taskObj .
 	?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
-	?challengeTask rdfs:label ?taskLabel .
-	?challengeTask rdfs:comment ?taskDesc .
 	?challengeTask hobbit:involvesBenchmark ?benchmark .
 	?challengeTask hobbit:involvesSystemInstance ?system .
 	?challengeTask ?parameterProp ?parameterValue .
-	?benchmark hobbit:hasParameter ?parameterProp . }
+	?benchmark hobbit:hasParameter ?parameterProp . 
+}
 WHERE {
   GRAPH %GRAPH_URI% {
     %CHALLENGE_URI% a hobbit:Challenge .
-    %CHALLENGE_URI% rdfs:label ?challengeLabel .
-    %CHALLENGE_URI% rdfs:comment ?challengeDesc .
-	%CHALLENGE_URI% hobbit:executionDate ?exDate .
-	%CHALLENGE_URI% hobbit:publicationDate ?pubDate .
-	%CHALLENGE_URI% hobbit:organizer ?organizer .
+	%CHALLENGE_URI% ?challengeProp ?challengeObj .
 	OPTIONAL {
 		?challengeTask a hobbit:ChallengeTask .
+		?challengeTask ?taskProp ?taskObj .
 		?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
-		?challengeTask rdfs:label ?taskLabel .
-		?challengeTask rdfs:comment ?taskDesc .
 		?challengeTask hobbit:involvesBenchmark ?benchmark .
 		OPTIONAL {
 			?challengeTask hobbit:involvesSystemInstance ?system .
