@@ -2,6 +2,7 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -67,6 +68,23 @@ public class ConstructQueryTest extends AbstractQueryTest {
                 SparqlQueries.getCreateExperimentFromTaskQuery(Constants.NEW_EXPERIMENT_URI,
                         "http://example.org/MyChallengeTask2", "http://example.org/SystemC", null),
                 "org/hobbit/storage/queries/createExpFromTaskSystemC.ttl" });
+
+        // Construct experiment from challenge task
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForSystems.ttl",
+                SparqlQueries.getExperimentGraphOfSystemsQuery(
+                        Arrays.asList("http://w3id.org/system#limesV1", "http://w3id.org/system#limesV2"),
+                        FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getExperimentForSystemsResults.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForSystems.ttl",
+                SparqlQueries.getExperimentGraphOfSystemsQuery(
+                        Arrays.asList("http://w3id.org/system#limesV1", "http://w3id.org/system#limesV2"),
+                        SECOND_GRAPH_NAME),
+                null });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForSystems.ttl",
+                SparqlQueries.getExperimentGraphOfSystemsQuery(
+                        Arrays.asList("http://w3id.org/system#DoesNotExistV1", "http://w3id.org/system#DoesNotExistV2"),
+                        FIRST_GRAPH_NAME),
+                null });
 
         return testConfigs;
     }

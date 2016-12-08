@@ -8,6 +8,8 @@
 @prefix sys: <http://w3id.org/system#> .
 @prefix bench: <http://w3id.org/bench#> .
 
+# --- Experiment ---
+
 exp:LinkingExp10 a hobbit:Experiment ;
 	hobbit:involvesSystemInstance sys:limesV1;
 	hobbit:involvesBenchmark bench:lance;
@@ -15,7 +17,18 @@ exp:LinkingExp10 a hobbit:Experiment ;
 	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
 	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
 	hobbit:hobbitPlatformVersion "V1.3" ;
-	hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
+	bench:lanceDataFormat bench:RDF_XML;
+	bench:precision "0.5"^^xsd:float ;
+	bench:recall "0.5"^^xsd:float ;
+	bench:fmeasure "0.5"^^xsd:float .
+
+exp:LinkingExp11 a hobbit:Experiment ;
+	hobbit:involvesSystemInstance sys:limesV2;
+	hobbit:involvesBenchmark bench:lance;
+	hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
+	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
+	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
+	hobbit:hobbitPlatformVersion "V1.3" ;
 	bench:lanceDataFormat bench:RDF_XML;
 	bench:precision "0.5"^^xsd:float ;
 	bench:recall "0.5"^^xsd:float ;
@@ -28,3 +41,4 @@ bench:recall a hobbit:KPI .
 bench:fmeasure a hobbit:KPI .
 
 bench:lanceDataFormat  a	hobbit:ConfigurableParameter .
+

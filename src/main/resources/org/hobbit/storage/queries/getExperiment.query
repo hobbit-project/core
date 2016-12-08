@@ -13,6 +13,7 @@ CONSTRUCT {
 }
 WHERE {
   GRAPH %GRAPH_URI% {
+    %EXPERIMENT_URI% a hobbit:Experiment .
 	%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system .
 	%EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
 	%EXPERIMENT_URI% ?experimentProp	?experimentObj .

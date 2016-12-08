@@ -2,6 +2,7 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -120,6 +121,50 @@ public class SparqlQueries {
     public static final String getExperimentGraphQuery(String experimentUri, String graphUri) {
         return replacePlaceholders(GET_EXPERIMENT_QUERY, new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { experimentUri, graphUri });
+    }
+
+    /**
+     * Returns a SPARQL query for retrieving the graphs of experiments that
+     * involve one of the given systems.
+     * 
+     * @param systemUris
+     *            URIs of the systems that might be involved in the experiment.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentGraphOfSystemsQuery(List<String> systemUris, String graphUri) {
+        if ((systemUris == null) || (systemUris.size() == 0)) {
+            return null;
+        }
+        // Replace the system triple in the normal select query by a set of
+        // possible systems
+        StringBuilder queryBuilder = new StringBuilder();
+        final String SYSTEM_TRIPLE = "%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system";
+        int pos = GET_EXPERIMENT_QUERY.indexOf("WHERE");
+        pos = GET_EXPERIMENT_QUERY.indexOf(SYSTEM_TRIPLE, pos);
+        if (pos < 0) {
+            return null;
+        }
+        queryBuilder.append(GET_EXPERIMENT_QUERY.subSequence(0, pos));
+        queryBuilder.append('{');
+        boolean first = true;
+        for (String systemUri : systemUris) {
+            if (first) {
+                first = false;
+            } else {
+                queryBuilder.append("} UNION {");
+            }
+            queryBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
+            queryBuilder.append(systemUri);
+            queryBuilder.append('>');
+        }
+        queryBuilder.append('}');
+        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(pos + SYSTEM_TRIPLE.length()));
+        return replacePlaceholders(queryBuilder.toString(), new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { null, graphUri });
     }
 
     /**
