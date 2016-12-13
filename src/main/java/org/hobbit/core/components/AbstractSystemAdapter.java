@@ -2,10 +2,12 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
@@ -26,8 +28,7 @@ import com.rabbitmq.client.MessageProperties;
 public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent implements
         GeneratedDataReceivingComponent, TaskReceivingComponent {
 
-    // private static final Logger LOGGER =
-    // LoggerFactory.getLogger(AbstractSystemAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSystemAdapter.class);
 
     /**
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
@@ -65,6 +66,10 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      * Queue from the benchmarked system to this evaluation storage.
      */
     protected RabbitQueue system2EvalStoreQueue;
+    /**
+     * The RDF model containing the system parameters.
+     */
+    protected Model systemParamModel;
 
     @Override
     public void init() throws Exception {
@@ -72,6 +77,21 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         
         currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
         currentlyProcessedTasks = new Semaphore(maxParallelProcessedMsgs);
+        
+        Map<String, String> env = System.getenv();
+        // Get the benchmark parameter model
+        if (env.containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
+            try {
+                systemParamModel = RabbitMQUtils.readModel(env.get(Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
+            } catch (Exception e) {
+                LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
+            }
+        } else {
+            String errorMsg = "Couldn't get the expected parameter model from the variable "
+                    + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ". Aborting.";
+            LOGGER.error(errorMsg);
+            throw new Exception(errorMsg);
+        }
 
         @SuppressWarnings("resource")
         AbstractSystemAdapter receiver = this;

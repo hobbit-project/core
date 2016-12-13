@@ -28,11 +28,31 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCommandReceivingComponent.class);
 
+    /**
+     * Name of this Docker container.
+     */
     private String containerName;
+    /**
+     * Name of the queue that is used to receive responses for messages that are
+     * sent via the command queue and for which an answer is expected.
+     */
     private String responseQueueName = null;
+    /**
+     * Consumer of the queue that is used to receive responses for messages that are
+     * sent via the command queue and for which an answer is expected.
+     */
     private QueueingConsumer responseConsumer = null;
+    /**
+     * Channel that is used for the command queue.
+     */
     protected Channel cmdChannel = null;
+    /**
+     * Type of this container.
+     */
     protected String containerType = "";
+    /**
+     * Set of command headers that are expected by this component.
+     */
     private Set<String> acceptedCmdHeaderIds = new HashSet<String>(5);
     /**
      * Threadsafe JSON parser.
