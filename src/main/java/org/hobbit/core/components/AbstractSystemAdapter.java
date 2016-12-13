@@ -12,6 +12,8 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.DefaultConsumer;

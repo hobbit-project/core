@@ -219,7 +219,26 @@ public class RabbitMQUtils {
     }
 
     /**
-     * Creates a byte array containing the serialized RDF model.
+     * Creates a String containing the serialized RDF model using the
+     * {@link RabbitMQUtils#DEFAULT_RDF_LANG}.
+     * 
+     * @param model
+     *            the model that should be serialized
+     * @return the String containing the model
+     */
+    public static String writeModel2String(Model model) {
+        if (model == null) {
+            return "";
+        } else {
+            StringWriter writer = new StringWriter();
+            RDFDataMgr.write(writer, model, DEFAULT_RDF_LANG);
+            return writer.toString();
+        }
+    }
+
+    /**
+     * Creates a byte array containing the serialized RDF model using the
+     * {@link RabbitMQUtils#DEFAULT_RDF_LANG}.
      * 
      * @param model
      *            the model that should be serialized
@@ -229,9 +248,7 @@ public class RabbitMQUtils {
         if (model == null) {
             return new byte[0];
         } else {
-            StringWriter writer = new StringWriter();
-            RDFDataMgr.write(writer, model, DEFAULT_RDF_LANG);
-            return writeString(writer.toString());
+            return writeString(writeModel2String(model));
         }
     }
 
