@@ -148,7 +148,7 @@ public class RdfHelper {
                 }
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.error("Couldn't parse " + dateType.getURI() + ". Returning null.", e);
+                LOGGER.debug("Couldn't parse " + dateType.getURI() + ". Returning null.", e);
             }
         }
         return null;
