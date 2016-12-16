@@ -3,6 +3,7 @@ package org.hobbit.core.mimic;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -70,12 +71,16 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
             QueueingConsumer consumer = new QueueingConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
 
+            // Add the queue name to the environment variables of the container
+            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+            envVariables[envVariables.length - 1] = Constants.DATA_QUEUE_NAME_KEY + "=" + queue.name;
             // create the container
             containerName = connector.createContainer(dockerImage, envVariables, this);
             if (containerName == null) {
                 throw new Exception("Couldn't create container with image \"" + dockerImage + "\".");
             }
             try {
+                // Add the created container to the internal mapping
                 synchronized (terminations) {
                     if (terminations.containsKey(containerName)) {
                         termination = terminations.get(containerName);
@@ -84,7 +89,7 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
                         terminations.put(containerName, termination);
                     }
                 }
-
+                // Receive the data and write it to the file
                 Delivery delivery;
                 while ((!termination.isTerminated()) || (queue.channel.messageCount(queue.name) > 0)) {
                     delivery = consumer.nextDelivery(DEFAULT_TIMEOUT);

@@ -11,7 +11,7 @@ import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.MessageProperties;
 
-public abstract class AbstractDataGenerator extends AbstractCommandReceivingComponent {
+public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
     private Semaphore startDataGenMutex = new Semaphore(0);
     private int generatorId;

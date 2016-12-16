@@ -41,7 +41,8 @@ public class RabbitRpcClient implements Closeable {
      *            name of the queue to which the requests should be sent
      * @return a StorageServiceClient instance
      * @throws IOException
-     *             if a problem occurs during the creation of the queues or the consumer.
+     *             if a problem occurs during the creation of the queues or the
+     *             consumer.
      */
     public static RabbitRpcClient create(Connection connection, String requestQueueName) throws IOException {
         RabbitRpcClient client = new RabbitRpcClient();
@@ -53,7 +54,7 @@ public class RabbitRpcClient implements Closeable {
             throw e;
         }
     }
-    
+
     /**
      * Constructor.
      */
@@ -78,10 +79,17 @@ public class RabbitRpcClient implements Closeable {
     private Map<String, RabbitRpcRequest> currentRequests = new HashMap<String, RabbitRpcRequest>();
 
     /**
-     * Initializes the client by declaring a request queue using the given connection and queue name as well as a second queue and a consumer for retrieving responses.
+     * Initializes the client by declaring a request queue using the given
+     * connection and queue name as well as a second queue and a consumer for
+     * retrieving responses.
      * 
-     * @param connection the RabbitMQ connection that is used for creating queues
+     * @param connection
+     *            the RabbitMQ connection that is used for creating queues
+     * @param requestQueueName
+     *            the name of the queue
      * @throws IOException
+     *             if a communication problem during the creation of the
+     *             channel, the queue or the internal consumer occurs
      */
     protected void init(Connection connection, String requestQueueName) throws IOException {
         Channel tempChannel = connection.createChannel();
@@ -206,8 +214,7 @@ public class RabbitRpcClient implements Closeable {
     protected static class RabbitRpcRequest extends AbstractFuture<byte[]> implements Future<byte[]> {
 
         /**
-         * Calls the internal set method of the
-         * {@link AbstractFuture} class.
+         * Calls the internal set method of the {@link AbstractFuture} class.
          * 
          * @param response
          *            the response this request is waiting for

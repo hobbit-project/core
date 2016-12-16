@@ -164,8 +164,11 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * and environment variables.
      * 
      * @param dataGeneratorImageName
+     *            name of the data generator Docker image
      * @param numberOfDataGenerators
+     *            number of generators that should be created
      * @param envVariables
+     *            environment variables for the data generators
      */
     protected void createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators,
             String[] envVariables) {
@@ -177,8 +180,11 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * and environment variables.
      * 
      * @param taskGeneratorImageName
+     *            name of the task generator Docker image
      * @param numberOfTaskGenerators
+     *            number of generators that should be created
      * @param envVariables
+     *            environment variables for the task generators
      */
     protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators,
             String[] envVariables) {
@@ -189,9 +195,13 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * Internal method for creating generator components.
      * 
      * @param generatorImageName
+     *            name of the generator Docker image
      * @param numberOfGenerators
+     *            number of generators that should be created
      * @param envVariables
+     *            environment variables for the task generators
      * @param generatorIds
+     *            set of generator container names
      */
     private void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
             Set<String> generatorIds) {
@@ -411,8 +421,8 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     }
 
     /**
-     * Adds the {@link #benchmarkParamModel} triples to the
-     * {@link #resultModel}.
+     * Adds the {@link #benchmarkParamModel} triples to the {@link #resultModel}
+     * .
      */
     protected void addParametersToResultModel() {
         try {

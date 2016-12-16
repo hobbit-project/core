@@ -17,8 +17,8 @@ import com.rabbitmq.client.Channel;
 public interface PlatformConnector {
 
     /**
-     * This method opens a channel using the established {@link #connection} to
-     * RabbitMQ and creates a new queue using the given name and the following
+     * This method opens a channel using the established connection to RabbitMQ
+     * and creates a new queue using the given name and the following
      * configuration:
      * <ul>
      * <li>The channel number is automatically derived from the connection.</li>
@@ -33,6 +33,8 @@ public interface PlatformConnector {
      * @return {@link RabbitQueue} object comprising the {@link Channel} and the
      *         name of the created queue
      * @throws IOException
+     *             if a communication problem during the creation of the channel
+     *             or the queue occurs
      */
     public RabbitQueue createDefaultRabbitQueue(String name) throws IOException;
 

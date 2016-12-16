@@ -38,8 +38,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private String responseQueueName = null;
     /**
-     * Consumer of the queue that is used to receive responses for messages that are
-     * sent via the command queue and for which an answer is expected.
+     * Consumer of the queue that is used to receive responses for messages that
+     * are sent via the command queue and for which an answer is expected.
      */
     private QueueingConsumer responseConsumer = null;
     /**
@@ -95,6 +95,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param command
      *            the command that should be sent
      * @throws IOException
+     *             if a communication problem occurs
      */
     protected void sendToCmdQueue(byte command) throws IOException {
         sendToCmdQueue(command, null);
@@ -109,6 +110,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param data
      *            data that should be appended to the command
      * @throws IOException
+     *             if a communication problem occurs
      */
     protected void sendToCmdQueue(byte command, byte data[]) throws IOException {
         sendToCmdQueue(command, data, null);
@@ -125,6 +127,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param props
      *            properties that should be used for the message
      * @throws IOException
+     *             if a communication problem occurs
      */
     protected void sendToCmdQueue(byte command, byte data[], BasicProperties props) throws IOException {
         byte sessionIdBytes[] = getHobbitSessionId().getBytes(Charsets.UTF_8);
@@ -226,6 +229,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * {@link #responseConsumer} if they haven't been initialized before.
      * 
      * @throws IOException
+     *             if a communication problem occurs
      */
     private void initResponseQueue() throws IOException {
         if (responseQueueName == null) {

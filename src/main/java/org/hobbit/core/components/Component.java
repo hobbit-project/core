@@ -10,17 +10,19 @@ import java.io.Closeable;
  */
 public interface Component extends Closeable {
 
-	/**
-	 * This method initializes the component.
-	 * 
-	 * @throws Exception
-	 */
-	public void init() throws Exception;
-	
-	/**
-	 * This method executes the component.
-	 * 
-	 * @throws Exception
-	 */
-	public void run() throws Exception;
+    /**
+     * This method initializes the component.
+     * 
+     * @throws Exception
+     *             if an error occurs during the initialization
+     */
+    public void init() throws Exception;
+
+    /**
+     * This method executes the component.
+     * 
+     * @throws Exception
+     *             if an error occurs during the execution
+     */
+    public void run() throws Exception;
 }

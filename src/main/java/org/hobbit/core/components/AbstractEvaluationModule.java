@@ -142,6 +142,7 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
      *            the time at which the response has been received from the
      *            system
      * @throws Exception
+     *             if an error occurs during the evaluation
      */
     protected abstract void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception;
