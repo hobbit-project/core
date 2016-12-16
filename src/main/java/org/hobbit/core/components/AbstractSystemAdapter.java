@@ -82,15 +82,15 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         
         Map<String, String> env = System.getenv();
         // Get the benchmark parameter model
-        if (env.containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
+        if (env.containsKey(Constants.SYSTEM_PARAMETERS_MODEL_KEY)) {
             try {
-                systemParamModel = RabbitMQUtils.readModel(env.get(Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
+                systemParamModel = RabbitMQUtils.readModel(env.get(Constants.SYSTEM_PARAMETERS_MODEL_KEY));
             } catch (Exception e) {
                 LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
             }
         } else {
             String errorMsg = "Couldn't get the expected parameter model from the variable "
-                    + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ". Aborting.";
+                    + Constants.SYSTEM_PARAMETERS_MODEL_KEY + ". Aborting.";
             LOGGER.error(errorMsg);
             throw new Exception(errorMsg);
         }
