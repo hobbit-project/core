@@ -8,6 +8,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
@@ -27,8 +28,8 @@ import com.rabbitmq.client.MessageProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent implements
-        GeneratedDataReceivingComponent, TaskReceivingComponent {
+public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent
+        implements GeneratedDataReceivingComponent, TaskReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSystemAdapter.class);
 
@@ -76,72 +77,75 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
     @Override
     public void init() throws Exception {
         super.init();
-        
+
         currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
         currentlyProcessedTasks = new Semaphore(maxParallelProcessedMsgs);
-        
+
         Map<String, String> env = System.getenv();
         // Get the benchmark parameter model
         if (env.containsKey(Constants.SYSTEM_PARAMETERS_MODEL_KEY)) {
             try {
                 systemParamModel = RabbitMQUtils.readModel(env.get(Constants.SYSTEM_PARAMETERS_MODEL_KEY));
             } catch (Exception e) {
-                LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
+                LOGGER.warn("Couldn't deserialize the given parameter model. The parameter model will be empty.", e);
+                systemParamModel = ModelFactory.createDefaultModel();
             }
         } else {
-            String errorMsg = "Couldn't get the expected parameter model from the variable "
-                    + Constants.SYSTEM_PARAMETERS_MODEL_KEY + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
+            LOGGER.warn("Couldn't get the expected parameter model from the variable "
+                    + Constants.SYSTEM_PARAMETERS_MODEL_KEY + ". The parameter model will be empty.");
+            systemParamModel = ModelFactory.createDefaultModel();
         }
 
         @SuppressWarnings("resource")
         AbstractSystemAdapter receiver = this;
 
-        dataGen2SystemQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
-        dataGen2SystemQueue.channel.basicConsume(dataGen2SystemQueue.name, false, new DefaultConsumer(
-                dataGen2SystemQueue.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                try {
-                    currentlyProcessedMessages.acquire();
-                } catch (InterruptedException e) {
-                    throw new IOException("Interrupted while waiting for mutex.", e);
-                }
-                try {
-                    receiver.receiveGeneratedData(body);
-                    dataGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                } finally {
-                    currentlyProcessedMessages.release();
-                }
-            }
-        });
+        dataGen2SystemQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
+        dataGen2SystemQueue.channel.basicConsume(dataGen2SystemQueue.name, false,
+                new DefaultConsumer(dataGen2SystemQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        try {
+                            currentlyProcessedMessages.acquire();
+                        } catch (InterruptedException e) {
+                            throw new IOException("Interrupted while waiting for mutex.", e);
+                        }
+                        try {
+                            receiver.receiveGeneratedData(body);
+                            dataGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
+                        } finally {
+                            currentlyProcessedMessages.release();
+                        }
+                    }
+                });
 
-        taskGen2SystemQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
-        taskGen2SystemQueue.channel.basicConsume(taskGen2SystemQueue.name, false, new DefaultConsumer(
-                taskGen2SystemQueue.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                ByteBuffer buffer = ByteBuffer.wrap(body);
-                String taskId = RabbitMQUtils.readString(buffer);
-                byte[] data = RabbitMQUtils.readByteArray(buffer);
-                try {
-                    currentlyProcessedTasks.acquire();
-                } catch (InterruptedException e) {
-                    throw new IOException("Interrupted while waiting for mutex.", e);
-                }
-                try {
-                    receiver.receiveGeneratedTask(taskId, data);
-                    taskGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                } finally {
-                    currentlyProcessedTasks.release();
-                }
-            }
-        });
+        taskGen2SystemQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
+        taskGen2SystemQueue.channel.basicConsume(taskGen2SystemQueue.name, false,
+                new DefaultConsumer(taskGen2SystemQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                        String taskId = RabbitMQUtils.readString(buffer);
+                        byte[] data = RabbitMQUtils.readByteArray(buffer);
+                        try {
+                            currentlyProcessedTasks.acquire();
+                        } catch (InterruptedException e) {
+                            throw new IOException("Interrupted while waiting for mutex.", e);
+                        }
+                        try {
+                            receiver.receiveGeneratedTask(taskId, data);
+                            taskGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
+                        } finally {
+                            currentlyProcessedTasks.release();
+                        }
+                    }
+                });
 
-        system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+        system2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
     }
 
     @Override
@@ -150,8 +154,8 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
 
         terminateMutex.acquire();
         // wait until all messages have been read from the queue
-        while ((taskGen2SystemQueue.channel.messageCount(taskGen2SystemQueue.name) + dataGen2SystemQueue.channel
-                .messageCount(dataGen2SystemQueue.name)) > 0) {
+        while ((taskGen2SystemQueue.channel.messageCount(taskGen2SystemQueue.name)
+                + dataGen2SystemQueue.channel.messageCount(dataGen2SystemQueue.name)) > 0) {
             Thread.sleep(1000);
         }
         // Collect all open mutex counts to make sure that there is no message
