@@ -37,7 +37,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
     // /**
     // * Default value of the {@link #maxParallelProcessedMsgs} attribute.
     // */
-    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
+//    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
 
     /**
      * Mutex used to wait for the start signal after the component has been

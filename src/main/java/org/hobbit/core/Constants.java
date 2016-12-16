@@ -34,6 +34,8 @@ public final class Constants {
     public static final String SYSTEM_PARAMETERS_MODEL_KEY = "SYSTEM_PARAMETERS_MODEL";
     
     public static final String HOBBIT_EXPERIMENT_URI_KEY = "HOBBIT_EXPERIMENT_URI";
+    
+    public static final String DATA_QUEUE_NAME_KEY = "DATA_QUEUE_NAME";
 
     // =============== RABBIT CONSTANTS ===============
 
