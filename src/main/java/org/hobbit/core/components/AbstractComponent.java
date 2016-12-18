@@ -17,7 +17,7 @@ import java.io.IOException;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractComponent implements Component {
+public abstract class AbstractComponent implements Component, RabbitQueueFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractComponent.class);
 
@@ -119,7 +119,8 @@ public abstract class AbstractComponent implements Component {
      * @throws IOException
      *             if a communication error occurs
      */
-    protected RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
         Channel channel = connection.createChannel();
         channel.queueDeclare(name, false, false, true, null);
         return new RabbitQueue(channel, name);

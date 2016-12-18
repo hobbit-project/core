@@ -1,8 +1,5 @@
 package org.hobbit.core.mimic;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,13 +9,10 @@ import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.ContainerStateObserver;
 import org.hobbit.core.components.PlatformConnector;
-import org.hobbit.core.data.ContainerTermination;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.SimpleFileReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
 
 /**
  * This implementation of a {@link MimickingAlgorithmManager} creates a Docker
@@ -35,8 +29,6 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBasedMimickingAlg.class);
 
-    private static final long DEFAULT_TIMEOUT = 1000;
-
     /**
      * The name of the image containing the mimicking algorithm.
      */
@@ -46,10 +38,7 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
      * platform.
      */
     private PlatformConnector connector;
-    /**
-     * The containers and their termination status.
-     */
-    private Map<String, ContainerTermination> terminations = new HashMap<String, ContainerTermination>();
+    private Map<String, SimpleFileReceiver> receivers = new HashMap<>();
 
     public DockerBasedMimickingAlg(PlatformConnector connector, String dockerImage) {
         this.dockerImage = dockerImage;
@@ -57,19 +46,15 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
     }
 
     @Override
-    public void generateData(String outputFile, String[] envVariables) throws Exception {
+    public void generateData(String outputDirectory, String[] envVariables) throws Exception {
         RabbitQueue queue = null;
         String containerName = null;
-        OutputStream os = null;
-        ContainerTermination termination = null;
+        SimpleFileReceiver receiver = null;
         try {
-            // create the output file
-            os = new BufferedOutputStream(new FileOutputStream(outputFile));
             // create the queue to get data from the container
             queue = connector.createDefaultRabbitQueue(UUID.randomUUID().toString().replace("-", ""));
-            // create a consumer that writes incoming data to the file
-            QueueingConsumer consumer = new QueueingConsumer(queue.channel);
-            queue.channel.basicConsume(queue.name, true, consumer);
+            // create a receiver that writes incoming data to the files
+            receiver = SimpleFileReceiver.create(queue);
 
             // Add the queue name to the environment variables of the container
             envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
@@ -81,21 +66,22 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
             }
             try {
                 // Add the created container to the internal mapping
-                synchronized (terminations) {
-                    if (terminations.containsKey(containerName)) {
-                        termination = terminations.get(containerName);
+                synchronized (receivers) {
+                    // if the key is already there, we have to directly shutdown
+                    // the receiver
+                    if (receivers.containsKey(containerName)) {
+                        receiver.terminate();
                     } else {
-                        termination = new ContainerTermination();
-                        terminations.put(containerName, termination);
+                        // add the receiver
+                        receivers.put(containerName, receiver);
                     }
                 }
-                // Receive the data and write it to the file
-                Delivery delivery;
-                while ((!termination.isTerminated()) || (queue.channel.messageCount(queue.name) > 0)) {
-                    delivery = consumer.nextDelivery(DEFAULT_TIMEOUT);
-                    if (delivery != null) {
-                        os.write(delivery.getBody());
-                    }
+                // Receive the data and write it to the files
+                receiver.receiveData(outputDirectory);
+                // Check whether error occured
+                if (receiver.getErrorCount() > 0) {
+                    throw new Exception(
+                            receiver.getErrorCount() + " errors occured during the receiving of created files.");
                 }
             } finally {
                 // a problem occurred -> destroy the container
@@ -104,22 +90,22 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
         } finally {
             // close the queue and the file
             IOUtils.closeQuietly(queue);
-            IOUtils.closeQuietly(os);
+            if (receiver != null) {
+                receiver.forceTermination();
+            }
         }
     }
 
     @Override
     public void containerStopped(String containerName, int exitCode) {
-        synchronized (terminations) {
-            ContainerTermination termination = null;
-            if (terminations.containsKey(containerName)) {
-                termination = terminations.get(containerName);
+        synchronized (receivers) {
+            if (receivers.containsKey(containerName)) {
+                receivers.get(containerName).terminate();
+                ;
             } else {
                 LOGGER.warn("Got a termination message for an unknown container. Adding it.");
-                termination = new ContainerTermination();
-                terminations.put(containerName, termination);
+                receivers.put(containerName, null);
             }
-            termination.notifyTermination(exitCode);
         }
     }
 
