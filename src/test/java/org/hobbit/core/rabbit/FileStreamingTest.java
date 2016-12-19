@@ -135,8 +135,6 @@ public class FileStreamingTest implements RabbitQueueFactory {
         Assert.assertTrue(outputFile.exists());
         byte[] inputFileContent = FileUtils.readFileToByteArray(inputFile);
         byte[] outputFileContent = FileUtils.readFileToByteArray(outputFile);
-        System.out.println(
-                "Comparing files with " + inputFileContent.length + " and " + outputFileContent.length + " bytes.");
         Assert.assertArrayEquals(inputFileContent, outputFileContent);
     }
 

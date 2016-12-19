@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -64,17 +65,14 @@ public class SimpleFileReceiver {
             outputDirectory = outputDirectory + File.separator;
         }
         try {
-            Delivery delivery;
-            System.out.println(terminated);
-            System.out.println(queue.channel.messageCount(queue.name));
-            while ((!terminated) || (queue.channel.messageCount(queue.name) > 0)) {
+            Delivery delivery = null;
+            // while the receiver should not terminate, the last delivery was
+            // not empty or there are still deliveries in the (servers) queue
+            while ((!terminated) || (delivery != null) || (queue.channel.messageCount(queue.name) > 0)) {
                 delivery = consumer.nextDelivery(DEFAULT_TIMEOUT);
                 if (delivery != null) {
-                    System.out.println("!");
                     executor.execute(new MessageProcessing(this, outputDirectory, delivery.getBody()));
                 }
-                System.out.println(terminated);
-                System.out.println(queue.channel.messageCount(queue.name));
             }
         } finally {
             close();
@@ -101,6 +99,13 @@ public class SimpleFileReceiver {
 
     protected void close() {
         executor.shutdown();
+        // We will wait up to 10 seconds if one of the tasks is still
+        // running
+        try {
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for executor to terminate.");
+        }
         IOUtils.closeQuietly(queue);
         for (String fileName : fileStates.keySet()) {
             if (fileStates.get(fileName).outputStream != null) {
@@ -140,6 +145,7 @@ public class SimpleFileReceiver {
                         receiver.increaseErrorCount();
                         return;
                     }
+                    receiver.fileStates.put(filename, state);
                 }
             }
             synchronized (state) {

@@ -51,13 +51,13 @@ public class SimpleFileSender implements Closeable {
         buffer.putInt(nameBytes.length);
         buffer.put(nameBytes);
         int messageIdPos = buffer.position();
+        int dataStartPos = messageIdPos + 4;
         do {
             buffer.position(messageIdPos);
             buffer.putInt(messageId);
-            length = is.read(array, messageIdPos, array.length - messageIdPos);
+            length = is.read(array, dataStartPos, array.length - dataStartPos);
             queue.channel.basicPublish("", queue.name, MessageProperties.MINIMAL_PERSISTENT_BASIC,
-                    Arrays.copyOf(array, (length > 0) ? (messageIdPos + 4 + length) : (messageIdPos + 4)));
-            System.out.println("s");
+                    Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
             ++messageId;
         } while (length > 0);
     }
