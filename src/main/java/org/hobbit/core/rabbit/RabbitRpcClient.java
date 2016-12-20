@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
@@ -30,6 +31,12 @@ import com.rabbitmq.client.Envelope;
 public class RabbitRpcClient implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitRpcClient.class);
+
+    /**
+     * The default maximum amount of time in millisecond the client is waiting
+     * for a response = {@value #DEFAULT_MAX_WAITING_TIME}ms.
+     */
+    private static final long DEFAULT_MAX_WAITING_TIME = 600000;
 
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
@@ -77,6 +84,12 @@ public class RabbitRpcClient implements Closeable {
      * Mapping of correlation Ids to their {@link RabbitRpcRequest} instances.
      */
     private Map<String, RabbitRpcRequest> currentRequests = new HashMap<String, RabbitRpcRequest>();
+    /**
+     * The maximum amount of time in millisecond the client is waiting for a
+     * response. The default value is defined by
+     * {@link #DEFAULT_MAX_WAITING_TIME}.
+     */
+    private long maxWaitingTime = DEFAULT_MAX_WAITING_TIME;
 
     /**
      * Initializes the client by declaring a request queue using the given
@@ -124,7 +137,7 @@ public class RabbitRpcClient implements Closeable {
 
             requestQueue.channel.basicPublish("", requestQueue.name, props, data);
 
-            response = request.get();
+            response = request.get(maxWaitingTime, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             LOGGER.error("Exception while sending query. Returning null.", e);
         }
@@ -153,6 +166,20 @@ public class RabbitRpcClient implements Closeable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public long getMaxWaitingTime() {
+        return maxWaitingTime;
+    }
+
+    /**
+     * Sets the maximum amount of time the client is waiting for a response.
+     * 
+     * @param maxWaitingTime
+     *            the maximum waiting time in milliseconds
+     */
+    public void setMaxWaitingTime(long maxWaitingTime) {
+        this.maxWaitingTime = maxWaitingTime;
     }
 
     @Override

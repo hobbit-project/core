@@ -30,6 +30,11 @@ import com.rabbitmq.client.Connection;
 public class StorageServiceClient implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageServiceClient.class);
+    /**
+     * The default maximum amount of time in millisecond the client is waiting
+     * for a response = {@value #DEFAULT_MAX_WAITING_TIME}ms.
+     */
+    private static final long DEFAULT_MAX_WAITING_TIME = 60000;
 
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
@@ -44,6 +49,7 @@ public class StorageServiceClient implements Closeable {
      */
     public static StorageServiceClient create(Connection connection) throws IOException {
         RabbitRpcClient rpcClient = RabbitRpcClient.create(connection, Constants.STORAGE_QUEUE_NAME);
+        rpcClient.setMaxWaitingTime(DEFAULT_MAX_WAITING_TIME);
         return new StorageServiceClient(rpcClient);
     }
 
