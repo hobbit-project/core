@@ -393,6 +393,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
         } finally {
             resultModelMutex.release();
         }
+        addParametersToResultModel();
     }
 
     /**
@@ -498,7 +499,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
-            resultModel = RabbitMQUtils.readModel(data);
+            setResultModel(RabbitMQUtils.readModel(data));
             LOGGER.info("model size = " + resultModel.size());
         }
         }

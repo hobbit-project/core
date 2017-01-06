@@ -4,29 +4,38 @@ CONSTRUCT {
     %EXPERIMENT_URI% a hobbit:Experiment .
 	%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system .
 	%EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
-	%EXPERIMENT_URI% ?experimentProp	?experimentObj .
+	%EXPERIMENT_URI% ?experimentProp ?experimentObj .
 	%EXPERIMENT_URI% hobbit:isPartOf %CHALLENGE_TASK_URI% .
 	%EXPERIMENT_URI% ?resultProp ?resultValue .
 	?resultProp a hobbit:KPI .
+	?resultProp ?resultPropProp ?resultPropObject . 
 	%EXPERIMENT_URI% ?parameterProp ?parameterValue . 
 	?parameterProp a ?parameterType .
+	?parameterProp ?parameterPropProp ?parameterPropObject . 
+	?benchmark ?benchmarkProp ?benchmarkObject . 
+	?system ?systemProp ?systemObject . 
 }
 WHERE {
   GRAPH %GRAPH_URI% {
+    %EXPERIMENT_URI% a hobbit:Experiment .
 	%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system .
+	OPTIONAL { ?system ?systemProp ?systemObject . }
 	%EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
+	OPTIONAL { ?benchmark ?benchmarkProp ?benchmarkObject . }
 	%EXPERIMENT_URI% ?experimentProp	?experimentObj .
 	%EXPERIMENT_URI% hobbit:isPartOf %CHALLENGE_TASK_URI% .
 	OPTIONAL {
 		%EXPERIMENT_URI% ?resultProp ?resultValue .
 		?benchmark hobbit:measuresKPI ?resultProp .
 		?resultProp a hobbit:KPI .
+	    OPTIONAL { ?resultProp ?resultPropProp ?resultPropObject . }
 	}
 	OPTIONAL {
 		%EXPERIMENT_URI% ?parameterProp ?parameterValue .
 		?benchmark hobbit:hasParameter ?parameterProp .
 		?parameterProp a ?parameterType .
 		{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
+	    OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
 	}
   }
 }

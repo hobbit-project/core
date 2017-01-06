@@ -11,28 +11,28 @@
 # --- Benchmark ---
 
 bench:lance a	hobbit:Benchmark;
-rdfs:label "Lance Benchmark"@en;
-rdfs:comment	"LANCE is a benchmark for the assessment of Instance Matching techniques and systems for Linked Data data that are accompanied by a schema."@en;
-hobbit:imageName	"LanceDockerImage";
-hobbit:version "V1.1";
-hobbit:measuresKPI bench:precision ;
-hobbit:measuresKPI bench:recall ;
-hobbit:measuresKPI bench:fmeasure ;
-hobbit:hasAPI	bench:lanceApi;  	
+    rdfs:label "Lance Benchmark"@en;
+    rdfs:comment	"LANCE is a benchmark for the assessment of Instance Matching techniques and systems for Linked Data data that are accompanied by a schema."@en;
+    hobbit:imageName	"LanceDockerImage";
+    hobbit:version "V1.1";
+    hobbit:measuresKPI bench:precision ;
+    hobbit:measuresKPI bench:recall ;
+    hobbit:measuresKPI bench:fmeasure ;
+    hobbit:hasAPI	bench:lanceApi;  	
 	hobbit:hasParameter bench:lanceDataFormat .
 
 bench:precision a hobbit:KPI;
-rdfs:label "Precision"@en;
+    rdfs:label "Precision"@en;
 	rdfs:comment	"Precision = TP / (TP + FP)"@en;
 	rdfs:range	xsd:float .
 
 bench:recall a hobbit:KPI;
-rdfs:label "Recall"@en;
+    rdfs:label "Recall"@en;
 	rdfs:comment	"Recall = TP / (TP + FN)"@en;
 	rdfs:range	xsd:float .
 
 bench:fmeasure a hobbit:KPI;
-rdfs:label "F-measure"@en;
+    rdfs:label "F-measure"@en;
 	rdfs:comment	"F-measure is the harmonic mean of precision and recall."@en;
 	rdfs:range	xsd:float .
 		

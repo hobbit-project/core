@@ -21,10 +21,42 @@ exp:LinkingExp10 a hobbit:Experiment ;
 	bench:recall "0.5"^^xsd:float ;
 	bench:fmeasure "0.5"^^xsd:float .
 	
-bench:precision a hobbit:KPI .
+bench:precision a hobbit:KPI;
+    rdfs:label "Precision"@en;
+	rdfs:comment	"Precision = TP / (TP + FP)"@en;
+	rdfs:range	xsd:float .
 
-bench:recall a hobbit:KPI .
+bench:recall a hobbit:KPI;
+    rdfs:label "Recall"@en;
+	rdfs:comment	"Recall = TP / (TP + FN)"@en;
+	rdfs:range	xsd:float .
 
-bench:fmeasure a hobbit:KPI .
+bench:fmeasure a hobbit:KPI;
+    rdfs:label "F-measure"@en;
+	rdfs:comment	"F-measure is the harmonic mean of precision and recall."@en;
+	rdfs:range	xsd:float .
 
-bench:lanceDataFormat  a	hobbit:ConfigurableParameter .
+bench:lanceDataFormat  a	hobbit:ConfigurableParameter;
+	rdfs:label	"Lance dataset format"@en;
+	rdfs:comment	"......."@en;
+    rdfs:range bench:DataFormat;
+	hobbit:defaultValue bench:Turtle .
+
+bench:lance a	hobbit:Benchmark;
+    rdfs:label "Lance Benchmark"@en;
+    rdfs:comment	"LANCE is a benchmark for the assessment of Instance Matching techniques and systems for Linked Data data that are accompanied by a schema."@en;
+    hobbit:imageName	"LanceDockerImage";
+    hobbit:version "V1.1";
+    hobbit:measuresKPI bench:precision ;
+    hobbit:measuresKPI bench:recall ;
+    hobbit:measuresKPI bench:fmeasure ;
+    hobbit:hasAPI	bench:lanceApi;  	
+	hobbit:hasParameter bench:lanceDataFormat .
+    
+sys:limesV1 a  hobbit:SystemInstance ; 
+	rdfs:label	"Limes"@en;
+	rdfs:comment	"Limes is an Instance Matching System..."@en;
+	hobbit:imageName "LimesImageName" ;
+	hobbit:implementsAPI bench:lanceApi ;
+	hobbit:instanceOf sys:limes ;
+	sys:threshold "0.7"^^xsd:float .

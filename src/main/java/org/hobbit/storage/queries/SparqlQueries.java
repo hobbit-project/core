@@ -161,8 +161,8 @@ public class SparqlQueries {
             queryBuilder.append(systemUri);
             queryBuilder.append('>');
         }
-        queryBuilder.append('}');
-        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(pos + SYSTEM_TRIPLE.length()));
+        queryBuilder.append("} . \n");
+        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(pos));
         return replacePlaceholders(queryBuilder.toString(), new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { null, graphUri });
     }
@@ -298,6 +298,31 @@ public class SparqlQueries {
     public static final String cleanUpChallengeGraphQuery(String graphUri) {
         return replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERY, new String[] { GRAPH_PLACEHOLDER },
                 new String[] { graphUri });
+    }
+
+    /**
+     * A select query for counting the number of experiments of a challenge
+     * task.
+     */
+    private static final String COUNT_EXP_OF_TASK_QUERY = loadQuery(
+            "org/hobbit/storage/queries/selectChallengeTaskExpCount.query");
+
+    /**
+     * Returns a SPARQL query for counting the number of experiments of a
+     * challenge task.
+     * 
+     * @param challengeTaskUri
+     *            URI of the challenge task
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL select query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String countExperimentsOfTaskQuery(String challengeTaskUri, String graphUri) {
+        return replacePlaceholders(COUNT_EXP_OF_TASK_QUERY,
+                new String[] { CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { challengeTaskUri, graphUri });
     }
 
     /**

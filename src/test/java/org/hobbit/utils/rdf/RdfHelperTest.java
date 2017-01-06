@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.TimeZone;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -108,19 +109,20 @@ public class RdfHelperTest {
         Model model = ModelFactory.createDefaultModel();
         model.read(new StringReader(modelString), "http://example.org/", "TTL");
 
-        Calendar executionDate = Calendar.getInstance();
+        TimeZone timeZone = TimeZone.getTimeZone("GMT");
+        Calendar executionDate = Calendar.getInstance(timeZone);
         executionDate.set(2016, Calendar.DECEMBER, 24, 0, 0, 0);
         executionDate.set(Calendar.MILLISECOND, 0);
         Assert.assertEquals(executionDate,
                 RdfHelper.getDateValue(model, model.getResource("http://example.org/MyChallenge"),
                         model.getProperty("http://w3id.org/hobbit/vocab#executionDate")));
-        Calendar publicationDate = Calendar.getInstance();
+        Calendar publicationDate = Calendar.getInstance(timeZone);
         publicationDate.set(2016, Calendar.DECEMBER, 26, 0, 0, 0);
         publicationDate.set(Calendar.MILLISECOND, 0);
         Assert.assertEquals(publicationDate,
                 RdfHelper.getDateValue(model, model.getResource("http://example.org/MyChallenge"),
                         model.getProperty("http://w3id.org/hobbit/vocab#publicationDate")));
-        Calendar secPublicationDate = Calendar.getInstance();
+        Calendar secPublicationDate = Calendar.getInstance(timeZone);
         secPublicationDate.set(2016, Calendar.DECEMBER, 27, 0, 0, 0);
         secPublicationDate.set(Calendar.MILLISECOND, 0);
         Assert.assertEquals(secPublicationDate,
