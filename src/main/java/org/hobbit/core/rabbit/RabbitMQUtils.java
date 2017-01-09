@@ -9,6 +9,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Contains utility methods for working with RabbitMQ.
@@ -17,6 +19,8 @@ import org.apache.jena.riot.RDFDataMgr;
  *
  */
 public class RabbitMQUtils {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQUtils.class);
 
     public static final Lang DEFAULT_RDF_LANG = Lang.JSONLD;
 
@@ -33,10 +37,14 @@ public class RabbitMQUtils {
         if (buffer == null) {
             return null;
         } else {
-            int length = buffer.getInt();
-            byte[] data = new byte[length];
-            buffer.get(data, 0, data.length);
-            return data;
+            if (buffer.remaining() < Integer.BYTES) {
+                return new byte[0];
+            } else {
+                int length = buffer.getInt();
+                byte[] data = new byte[length];
+                buffer.get(data, 0, data.length);
+                return data;
+            }
         }
     }
 
@@ -289,6 +297,10 @@ public class RabbitMQUtils {
      * @return the value read from the array
      */
     public static long readLong(byte[] data, int offset, int length) {
+        if(length < Long.BYTES) {
+            LOGGER.error("Cant read a long value from {} bytes. Returning 0.", length);
+            return 0;
+        }
         ByteBuffer buffer = ByteBuffer.wrap(data, offset, length);
         return buffer.getLong();
     }
