@@ -25,6 +25,7 @@
 	rdfs:comment	"Task 1 of my example challenge."@en;
 	hobbit:isTaskOf <http://example.org/MyChallenge>;
 	hobbit:involvesBenchmark bench:BenchmarkX;
+	bench:dataType bench:TrafficData;
 	hobbit:involvesSystemInstance <http://example.org/SystemA>;
 	hobbit:involvesSystemInstance <http://example.org/SystemB> .
 
@@ -43,12 +44,22 @@
 
 # --- Benchmark ---
 
-bench:BenchmarkX a	hobbit:Benchmark .
+bench:BenchmarkX a	hobbit:Benchmark;
+	hobbit:hasParameter bench:dataType .
+
+bench:dataType a hobbit:ConfigurableParameter;
+    rdfs:range bench:GenerationDataType .
+
+bench:GenerationDataType a owl:Class, rdfs:Class .
+    
+bench:TrafficData a bench:GenerationDataType .
 
 bench:BenchmarkY a	hobbit:Benchmark;
 	hobbit:hasParameter bench:dataSize;
 	hobbit:hasParameter bench:frequency .
 
-bench:dataSize a hobbit:ConfigurableParameter .
+bench:dataSize a hobbit:ConfigurableParameter;
+    rdfs:range xsd:positiveInteger .
 
-bench:frequency a hobbit:ConfigurableParameter .
+bench:frequency a hobbit:ConfigurableParameter;
+    rdfs:range xsd:positiveInteger .

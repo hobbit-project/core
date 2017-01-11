@@ -11,6 +11,9 @@ CONSTRUCT {
 	?challengeTask hobbit:involvesSystemInstance ?system .
 	?challengeTask ?parameterProp ?parameterValue .
 	?parameterProp ?parameterPropProp ?parameterPropObject . 
+	?parameterProp rdfs:range ?parameterPropRange . 
+	?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . 
+	?parameterValue ?parameterValueRangeRelation ?parameterPropRange . 
 	?benchmark hobbit:hasParameter ?parameterProp .
 	?benchmark ?benchmarkProp ?benchmarkObject . 
 	?system ?systemProp ?systemObject . 
@@ -34,6 +37,10 @@ WHERE {
 			?benchmark hobbit:hasParameter ?parameterProp .
 			{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
 			OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
+			OPTIONAL { ?parameterProp rdfs:range ?parameterPropRange .
+				OPTIONAL { ?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . }
+				OPTIONAL { ?parameterValue ?parameterValueRangeRelation ?parameterPropRange . }
+			}
 		}
 	}
   }

@@ -11,5 +11,7 @@
 <http://w3id.org/hobbit/experiments#New> a hobbit:Experiment;
 	hobbit:involvesSystemInstance <http://example.org/SystemA>;
 	hobbit:involvesBenchmark bench:BenchmarkX;
+	bench:dataType bench:TrafficData;
 	hobbit:isPartOf <http://example.org/MyChallengeTask1> .
 	
+bench:BenchmarkX hobbit:hasParameter bench:dataType .
