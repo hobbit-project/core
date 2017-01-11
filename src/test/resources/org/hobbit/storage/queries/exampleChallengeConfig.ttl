@@ -97,7 +97,6 @@ hobbit:hasModel "...." ;
 
 # --- Challenge ---
 
-
 <http://example.org/MyChallenge> a	hobbit:Challenge;
 	rdfs:label "My example Challenge"@en;
 	rdfs:comment	"This is an example for a challenge."@en;

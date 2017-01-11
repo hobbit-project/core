@@ -40,4 +40,15 @@
 	bench:frequency "9"^^xsd:positiveInteger;
 	hobbit:involvesSystemInstance <http://example.org/SystemC> .
 
-bench:BenchmarkY hobbit:hasParameter bench:dataSize, bench:frequency;
+
+# --- Benchmark ---
+
+bench:BenchmarkX a	hobbit:Benchmark .
+
+bench:BenchmarkY a	hobbit:Benchmark;
+	hobbit:hasParameter bench:dataSize;
+	hobbit:hasParameter bench:frequency .
+
+bench:dataSize a hobbit:ConfigurableParameter .
+
+bench:frequency a hobbit:ConfigurableParameter .
