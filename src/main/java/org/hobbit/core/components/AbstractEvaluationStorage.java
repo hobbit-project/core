@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
@@ -28,8 +29,8 @@ import com.rabbitmq.client.Envelope;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent implements
-        ResponseReceivingComponent, ExpectedResponseReceivingComponent {
+public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent
+        implements ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
 
@@ -63,6 +64,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * The incoming queue from the evaluation module.
      */
     protected RabbitQueue evalModule2EvalStoreQueue;
+    /**
+     * Channel on which the acknowledgements are send.
+     */
+    protected Channel ackChannel = null;
 
     @Override
     public void init() throws Exception {
@@ -70,88 +75,115 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         @SuppressWarnings("resource")
         ExpectedResponseReceivingComponent expReceiver = this;
-        taskGen2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
-        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true, new DefaultConsumer(
-                taskGen2EvalStoreQueue.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                ByteBuffer buffer = ByteBuffer.wrap(body);
-                String taskId = RabbitMQUtils.readString(buffer);
-                byte[] data = RabbitMQUtils.readByteArray(buffer);
-                long timestamp = buffer.getLong();
-                expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
-                // taskGen2EvalStoreQueue.channel.basicAck(envelope.getDeliveryTag(),
-                // false);
-            }
-        });
+        taskGen2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
+        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true,
+                new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                        String taskId = RabbitMQUtils.readString(buffer);
+                        byte[] data = RabbitMQUtils.readByteArray(buffer);
+                        long timestamp = buffer.getLong();
+                        expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
+                        // taskGen2EvalStoreQueue.channel.basicAck(envelope.getDeliveryTag(),
+                        // false);
+                    }
+                });
 
+        final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         @SuppressWarnings("resource")
         ResponseReceivingComponent respReceiver = this;
-        system2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
-        system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true, new DefaultConsumer(
-                system2EvalStoreQueue.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                ByteBuffer buffer = ByteBuffer.wrap(body);
-                String taskId = RabbitMQUtils.readString(buffer);
-                byte[] data = RabbitMQUtils.readByteArray(buffer);
-                respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
-            }
-        });
-
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
-        evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true, new DefaultConsumer(
-                evalModule2EvalStoreQueue.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-                    throws IOException {
-                byte response[] = null;
-                // get iterator id
-                ByteBuffer buffer = ByteBuffer.wrap(body);
-                if (buffer.remaining() < 1) {
-                    response = EMPTY_RESPONSE;
-                    LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-                } else {
-                    byte iteratorId = buffer.get();
-
-                    // get the iterator
-                    Iterator<ResultPair> iterator = null;
-                    if (iteratorId == NEW_ITERATOR_ID) {
-                        // create and save a new iterator
-                        iteratorId = (byte) resultPairIterators.size();
-                        LOGGER.info("Creating new iterator #{}", iteratorId);
-                        resultPairIterators.add(iterator = createIterator());
-                    } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                        response = EMPTY_RESPONSE;
-                        LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-                                + "). Returning emtpy response.");
-                    } else {
-                        iterator = resultPairIterators.get(iteratorId);
+        system2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+        system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true,
+                new DefaultConsumer(system2EvalStoreQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                        String taskId = RabbitMQUtils.readString(buffer);
+                        byte[] data = RabbitMQUtils.readByteArray(buffer);
+                        respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
+                        if (ackChannel != null) {
+                            ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                        }
                     }
-                    if ((iterator != null) && (iterator.hasNext())) {
-                        ResultPair resultPair = iterator.next();
-                        // set response (iteratorId,
-                        // taskSentTimestamp, expectedData,
-                        // responseReceivedTimestamp, receivedData)
-                        Result expected = resultPair.getExpected();
-                        Result actual = resultPair.getActual();
+                });
 
-                        response = RabbitMQUtils.writeByteArrays(new byte[] { iteratorId },
-                                new byte[][] {
-                                        expected != null ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
-                                                : new byte[0],
-                                        expected != null ? expected.getData() : new byte[0],
-                                        actual != null ? RabbitMQUtils.writeLong(actual.getSentTimestamp())
-                                                : new byte[0], actual != null ? actual.getData() : new byte[0] }, null);
-                    } else {
-                        response = new byte[] { iteratorId };
+        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
+                new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                            byte[] body) throws IOException {
+                        byte response[] = null;
+                        // get iterator id
+                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                        if (buffer.remaining() < 1) {
+                            response = EMPTY_RESPONSE;
+                            LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+                        } else {
+                            byte iteratorId = buffer.get();
+
+                            // get the iterator
+                            Iterator<ResultPair> iterator = null;
+                            if (iteratorId == NEW_ITERATOR_ID) {
+                                // create and save a new iterator
+                                iteratorId = (byte) resultPairIterators.size();
+                                LOGGER.info("Creating new iterator #{}", iteratorId);
+                                resultPairIterators.add(iterator = createIterator());
+                            } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                                response = EMPTY_RESPONSE;
+                                LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                                        + "). Returning emtpy response.");
+                            } else {
+                                iterator = resultPairIterators.get(iteratorId);
+                            }
+                            if ((iterator != null) && (iterator.hasNext())) {
+                                ResultPair resultPair = iterator.next();
+                                // set response (iteratorId,
+                                // taskSentTimestamp, expectedData,
+                                // responseReceivedTimestamp, receivedData)
+                                Result expected = resultPair.getExpected();
+                                Result actual = resultPair.getActual();
+
+                                response = RabbitMQUtils
+                                        .writeByteArrays(
+                                                new byte[] {
+                                                        iteratorId },
+                                                new byte[][] {
+                                                        expected != null
+                                                                ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
+                                                                : new byte[0],
+                                                        expected != null ? expected.getData() : new byte[0],
+                                                        actual != null
+                                                                ? RabbitMQUtils.writeLong(actual.getSentTimestamp())
+                                                                : new byte[0],
+                                                        actual != null ? actual.getData() : new byte[0] },
+                                                null);
+                            } else {
+                                response = new byte[] { iteratorId };
+                            }
+                        }
+                        getChannel().basicPublish("", properties.getReplyTo(), null, response);
                     }
-                }
-                getChannel().basicPublish("", properties.getReplyTo(), null, response);
+                });
+
+        boolean sendAcks = false;
+        if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
+            sendAcks = Boolean.getBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
+            if (sendAcks) {
+                // Create channel for acknowledgements
+                ackChannel = connection.createChannel();
+                String queueName = ackChannel.queueDeclare().getQueue();
+                ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
+                        false, true, null);
+                ackChannel.queueBind(queueName, generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "");
             }
-        });
+        }
     }
 
     /**

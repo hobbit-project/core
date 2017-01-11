@@ -36,13 +36,20 @@ public final class Constants {
     public static final String HOBBIT_EXPERIMENT_URI_KEY = "HOBBIT_EXPERIMENT_URI";
     
     public static final String DATA_QUEUE_NAME_KEY = "DATA_QUEUE_NAME";
-
+    
+    public static final String ACKNOWLEDGEMENT_FLAG_KEY = "ACKNOWLEDGEMENT_FLAG";
+    
     // =============== RABBIT CONSTANTS ===============
 
     /**
      * Name of the hobbit command exchange.
      */
     public static final String HOBBIT_COMMAND_EXCHANGE_NAME = "hobbit.command";
+
+    /**
+     * Name of the hobbit acknowledgement exchange.
+     */
+    public static final String HOBBIT_ACK_EXCHANGE_NAME = "hobbit.ack";
 
     /**
      * Name of the hobbit docker service queue.
