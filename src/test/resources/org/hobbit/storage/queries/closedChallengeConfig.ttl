@@ -97,7 +97,6 @@ hobbit:hasModel "...." ;
 
 # --- Challenge ---
 
-
 <http://example.org/MyChallenge> a	hobbit:Challenge;
 	rdfs:label "My example Challenge"@en;
 	rdfs:comment	"This is an example for a challenge."@en;
@@ -105,7 +104,7 @@ hobbit:hasModel "...." ;
 	hobbit:publicationDate "2016-12-26"^^xsd:date;
 	hobbit:organizer "Michael Roeder"@en;
 	hobbit:visible	"true"^^xsd:boolean;
-    hobbit:closed "true"^^xsd:boolean .
+	hobbit:closed	"true"^^xsd:boolean .
 
 # --- Challenge Task 1 ---
 
@@ -114,10 +113,19 @@ hobbit:hasModel "...." ;
 	rdfs:comment	"Task 1 of my example challenge."@en;
 	hobbit:isTaskOf <http://example.org/MyChallenge>;
 	hobbit:involvesBenchmark bench:BenchmarkX;
+	bench:dataType bench:TrafficData;
 	hobbit:involvesSystemInstance <http://example.org/SystemA>;
 	hobbit:involvesSystemInstance <http://example.org/SystemB> .
 
-bench:BenchmarkX a	hobbit:Benchmark .
+bench:BenchmarkX a	hobbit:Benchmark;
+	hobbit:hasParameter bench:dataType .
+
+bench:dataType a hobbit:ConfigurableParameter;
+    rdfs:range bench:GenerationDataType .
+
+bench:GenerationDataType a owl:Class, rdfs:Class .
+    
+bench:TrafficData a bench:GenerationDataType .
 
 # --- Challenge Task 2 ---
 
@@ -134,9 +142,11 @@ bench:BenchmarkY a	hobbit:Benchmark;
 	hobbit:hasParameter bench:dataSize;
 	hobbit:hasParameter bench:frequency .
 
-bench:dataSize a hobbit:ConfigurableParameter .
+bench:dataSize a hobbit:ConfigurableParameter;
+    rdfs:range xsd:positiveInteger .
 
-bench:frequency a hobbit:ConfigurableParameter .
+bench:frequency a hobbit:ConfigurableParameter;
+    rdfs:range xsd:positiveInteger .
 	
 # --- Challenge 2---
 
