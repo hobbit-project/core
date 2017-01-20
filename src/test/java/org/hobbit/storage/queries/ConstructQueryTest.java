@@ -43,7 +43,7 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
                 SparqlQueries.getExperimentOfTaskQuery("http://w3id.org/hobbit/experiments#LinkingExp10",
                         "http://w3id.org/hobbit/challenges#OAEILinkingChallenge", FIRST_GRAPH_NAME),
-                "org/hobbit/storage/queries/getExperimentResult.ttl" });
+                "org/hobbit/storage/queries/getExperimentOfTaskResult.ttl" });
 
         // Construct challenge graph
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
@@ -85,6 +85,13 @@ public class ConstructQueryTest extends AbstractQueryTest {
                         Arrays.asList("http://w3id.org/system#DoesNotExistV1", "http://w3id.org/system#DoesNotExistV2"),
                         FIRST_GRAPH_NAME),
                 null });
+
+        // Construct challenge publish info graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/closedChallengeConfig.ttl",
+                SparqlQueries.getChallengePublishInfoQuery(null, FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getChallengePublishInfoResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getChallengePublishInfoQuery(null, FIRST_GRAPH_NAME), null });
 
         return testConfigs;
     }
