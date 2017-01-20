@@ -306,6 +306,7 @@ public class SparqlQueries {
     /**
      * An update query that cleans up the graph of containing challenges.
      */
+    @Deprecated
     private static final String CLEAN_UP_CHALLENGE_GRAPH_QUERY = loadQuery(
             "org/hobbit/storage/queries/cleanUpChallengeGraph.query");
 
@@ -318,10 +319,73 @@ public class SparqlQueries {
      *            works like a wildcard.
      * @return the SPARQL update query that performs the deletion or
      *         <code>null</code> if the query hasn't been loaded correctly
+     * @deprecated A single large query does not seem to be supported by all
+     *             triple stores. Use
+     *             {@link #cleanUpChallengeGraphQueries(String)} instead.
      */
+    @Deprecated
     public static final String cleanUpChallengeGraphQuery(String graphUri) {
         return replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERY, new String[] { GRAPH_PLACEHOLDER },
                 new String[] { graphUri });
+    }
+
+    /**
+     * An update query that cleans up the graph of containing challenges.
+     */
+    private static final String CLEAN_UP_CHALLENGE_GRAPH_QUERIES[] = new String[] {
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_Benchmark.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_SystemInstance.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_System.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_API.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_KPI.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpChallengeGraph_Parameter.query") };
+
+    /**
+     * Returns a SPARQL update query for cleaning up the graph of a challenge
+     * configs.
+     * 
+     * @param graphUri
+     *            URI of the challenge configuration graph.
+     * @return the SPARQL update query that performs the deletion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String[] cleanUpChallengeGraphQueries(String graphUri) {
+        String queries[] = new String[CLEAN_UP_CHALLENGE_GRAPH_QUERIES.length];
+        for (int i = 0; i < queries.length; ++i) {
+            queries[i] = replacePlaceholders(CLEAN_UP_CHALLENGE_GRAPH_QUERIES[i], new String[] { GRAPH_PLACEHOLDER },
+                    new String[] { graphUri });
+        }
+        return queries;
+    }
+
+    /**
+     * An update query that cleans up the graph of containing challenges.
+     */
+    private static final String CLEAN_UP_PRIVATE_GRAPH_QUERIES[] = new String[] {
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Benchmark.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_SystemInstance.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_System.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Hardware.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_API.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_KPI.query"),
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Parameter.query")
+            };
+
+    /**
+     * Returns a SPARQL update query for cleaning up the private result graph.
+     * 
+     * @param graphUri
+     *            URI of the private result graph.
+     * @return the SPARQL update query that performs the deletion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String[] cleanUpPrivateGraphQueries(String graphUri) {
+        String queries[] = new String[CLEAN_UP_PRIVATE_GRAPH_QUERIES.length];
+        for (int i = 0; i < queries.length; ++i) {
+            queries[i] = replacePlaceholders(CLEAN_UP_PRIVATE_GRAPH_QUERIES[i], new String[] { GRAPH_PLACEHOLDER },
+                    new String[] { graphUri });
+        }
+        return queries;
     }
 
     /**

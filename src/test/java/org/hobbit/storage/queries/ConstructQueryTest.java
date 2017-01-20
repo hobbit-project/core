@@ -97,12 +97,12 @@ public class ConstructQueryTest extends AbstractQueryTest {
     }
 
     public ConstructQueryTest(String storeContentResource, String query, String expectedResultResource) {
-        super(storeContentResource, query, expectedResultResource);
+        super(storeContentResource, expectedResultResource, query);
     }
 
     @Override
-    protected Model executeQuery(String query, Dataset storeContent) {
-        QueryExecution qe = QueryExecutionFactory.create(query, storeContent);
+    protected Model executeQueries(String[] queries, Dataset storeContent) {
+        QueryExecution qe = QueryExecutionFactory.create(queries[0], storeContent);
         return qe.execConstruct();
     }
 

@@ -153,6 +153,3 @@ WHERE {
 		OPTIONAL {?system	hobbit:hasParameter	?systemPara .}
 	}
 }
-
-
-

@@ -47,19 +47,22 @@ public abstract class AbstractQueryTest {
      * SPARQL query that is executed on the store content to create the expected
      * result model.
      */
-    private String query;
+    private String[] queries;
 
-    public AbstractQueryTest(String storeContentResource, String query, String expectedResultResource) {
+    public AbstractQueryTest(String storeContentResource, String expectedResultResource, String...queries) {
         super();
         this.storeContentResource = storeContentResource;
-        this.query = query;
+        this.queries = queries;
         this.expectedResultResource = expectedResultResource;
     }
 
     @Test
     public void test() {
-        // Make sure the query has been loaded correctly
-        Assert.assertNotNull(query);
+        // Make sure the queries have been loaded correctly
+        Assert.assertNotNull(queries);
+        for (int i = 0; i < queries.length; ++i) {
+            Assert.assertNotNull(queries[i]);
+        }
         // load the models
         Dataset storeContent = DatasetFactory.createTxnMem();
         // If the named graph is not empty, load it
@@ -79,7 +82,7 @@ public abstract class AbstractQueryTest {
         }
 
         // execute query
-        Model result = executeQuery(query, storeContent);
+        Model result = executeQueries(queries, storeContent);
 
         // Compare the models
         String expectedModelString = expectedResult.toString();
@@ -96,7 +99,7 @@ public abstract class AbstractQueryTest {
                 statements.size() == 0);
     }
 
-    protected abstract Model executeQuery(String query, Dataset storeContent);
+    protected abstract Model executeQueries(String[] queries, Dataset storeContent);
 
     protected static Model loadModel(String resourceName) {
         Model model = ModelFactory.createDefaultModel();

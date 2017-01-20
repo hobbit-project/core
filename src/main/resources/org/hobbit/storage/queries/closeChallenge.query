@@ -6,4 +6,5 @@ DELETE { %CHALLENGE_URI% hobbit:closed ?value . }
 INSERT { %CHALLENGE_URI% hobbit:closed "true"^^xsd:boolean . }
 WHERE { 
     %CHALLENGE_URI% a hobbit:Challenge .
+    OPTIONAL { %CHALLENGE_URI% hobbit:closed ?value . }
 }
