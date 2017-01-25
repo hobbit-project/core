@@ -55,6 +55,26 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getChallengeGraphQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null });
 
+        // Construct shallow challenge graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getShallowChallengeGraphQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getShallowChallengeResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getShallowChallengeGraphQuery("http://example.org/MyChallenge", null),
+                "org/hobbit/storage/queries/getShallowChallengeResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getShallowChallengeGraphQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null });
+
+        // Get tasks of challenge
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getChallengeTasksQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getChallengeTasksResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getChallengeTasksQuery("http://example.org/MyChallenge", null),
+                "org/hobbit/storage/queries/getChallengeTasksResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getChallengeTasksQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null });
+
         // Construct experiment from challenge task
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getCreateExperimentFromTaskQuery(Constants.NEW_EXPERIMENT_URI,

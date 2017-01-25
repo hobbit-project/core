@@ -78,6 +78,50 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query that retrieves a shallow of a challenge.
+     */
+    private static final String GET_SHALLOW_CHALLENGE_GRAPH_QUERY = loadQuery("org/hobbit/storage/queries/getShallowChallenge.query");
+
+    /**
+     * Returns a SPARQL query for retrieving a shallow graph of a challenge.
+     * 
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getShallowChallengeGraphQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(GET_SHALLOW_CHALLENGE_GRAPH_QUERY, new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { challengeUri, graphUri });
+    }
+
+    /**
+     * A construct query that retrieves the tasks of a challenge.
+     */
+    private static final String GET_CHALLENGE_TASKS_QUERY = loadQuery("org/hobbit/storage/queries/getChallengeTasks.query");
+
+    /**
+     * Returns a SPARQL query for retrieving the tasks of a challenge.
+     * 
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getChallengeTasksQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(GET_CHALLENGE_TASKS_QUERY, new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { challengeUri, graphUri });
+    }
+
+    /**
      * A construct query that retrieves the graph of a challenge.
      */
     private static final String GET_CHALLENGE_PUBLISH_INFO_QUERY = loadQuery(
