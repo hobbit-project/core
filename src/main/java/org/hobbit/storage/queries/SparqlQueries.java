@@ -80,7 +80,8 @@ public class SparqlQueries {
     /**
      * A construct query that retrieves a shallow of a challenge.
      */
-    private static final String GET_SHALLOW_CHALLENGE_GRAPH_QUERY = loadQuery("org/hobbit/storage/queries/getShallowChallenge.query");
+    private static final String GET_SHALLOW_CHALLENGE_GRAPH_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getShallowChallenge.query");
 
     /**
      * Returns a SPARQL query for retrieving a shallow graph of a challenge.
@@ -95,14 +96,15 @@ public class SparqlQueries {
      *         <code>null</code> if the query hasn't been loaded correctly
      */
     public static final String getShallowChallengeGraphQuery(String challengeUri, String graphUri) {
-        return replacePlaceholders(GET_SHALLOW_CHALLENGE_GRAPH_QUERY, new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER },
-                new String[] { challengeUri, graphUri });
+        return replacePlaceholders(GET_SHALLOW_CHALLENGE_GRAPH_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
     }
 
     /**
      * A construct query that retrieves the tasks of a challenge.
      */
-    private static final String GET_CHALLENGE_TASKS_QUERY = loadQuery("org/hobbit/storage/queries/getChallengeTasks.query");
+    private static final String GET_CHALLENGE_TASKS_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getChallengeTasks.query");
 
     /**
      * Returns a SPARQL query for retrieving the tasks of a challenge.
@@ -189,6 +191,31 @@ public class SparqlQueries {
     public static final String getExperimentGraphQuery(String experimentUri, String graphUri) {
         return replacePlaceholders(GET_EXPERIMENT_QUERY, new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { experimentUri, graphUri });
+    }
+
+    /**
+     * A construct query that selects a shallow graph of an experiment.
+     */
+    private static final String GET_SHALLOW_EXPERIMENT_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getShallowExperiment.query");
+
+    /**
+     * Returns a SPARQL query for retrieving a shallow graph of an experiment
+     * containing the links to the system instance, the benchmark and the
+     * challenge task and the labels of them.
+     * 
+     * @param experimentUri
+     *            URI of the experiment that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getShallowExperimentGraphQuery(String experimentUri, String graphUri) {
+        return replacePlaceholders(GET_SHALLOW_EXPERIMENT_QUERY,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { experimentUri, graphUri });
     }
 
     /**
@@ -412,8 +439,7 @@ public class SparqlQueries {
             loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Hardware.query"),
             loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_API.query"),
             loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_KPI.query"),
-            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Parameter.query")
-            };
+            loadQuery("org/hobbit/storage/queries/cleanUpPrivateGraph_Parameter.query") };
 
     /**
      * Returns a SPARQL update query for cleaning up the private result graph.

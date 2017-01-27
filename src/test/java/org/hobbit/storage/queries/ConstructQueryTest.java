@@ -39,6 +39,17 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
                 .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME), null });
 
+        // Construct shallow experiment graph
+        testConfigs.add(new Object[] {
+                "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
+                        .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getShallowExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
+                SparqlQueries.getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", null),
+                "org/hobbit/storage/queries/getShallowExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
+                .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME), null });
+
         // Construct experiment graph of challenge task
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
                 SparqlQueries.getExperimentOfTaskQuery("http://w3id.org/hobbit/experiments#LinkingExp10",
