@@ -237,27 +237,35 @@ public class SparqlQueries {
         // Replace the system triple in the normal select query by a set of
         // possible systems
         StringBuilder queryBuilder = new StringBuilder();
-        final String SYSTEM_TRIPLE = "%EXPERIMENT_URI% hobbit:involvesSystemInstance ?system";
         int pos = GET_EXPERIMENT_QUERY.indexOf("WHERE");
-        pos = GET_EXPERIMENT_QUERY.indexOf(SYSTEM_TRIPLE, pos);
         if (pos < 0) {
             return null;
         }
+        // Add everything before the WHERE
         queryBuilder.append(GET_EXPERIMENT_QUERY.subSequence(0, pos));
-        queryBuilder.append('{');
-        boolean first = true;
-        for (String systemUri : systemUris) {
-            if (first) {
-                first = false;
-            } else {
-                queryBuilder.append("} UNION {");
+        int oldpos = pos;
+        // For every selection triple, insert the list of systems in front of it
+        final String EXPERIMENT_SELECTION = "%EXPERIMENT_URI% a hobbit:Experiment .";
+        pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos);
+        while (pos > 0) {
+            queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos, pos));
+            queryBuilder.append('{');
+            boolean first = true;
+            for (String systemUri : systemUris) {
+                if (first) {
+                    first = false;
+                } else {
+                    queryBuilder.append("} UNION {");
+                }
+                queryBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
+                queryBuilder.append(systemUri);
+                queryBuilder.append('>');
             }
-            queryBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
-            queryBuilder.append(systemUri);
-            queryBuilder.append('>');
+            queryBuilder.append("} . \n");
+            oldpos = pos;
+            pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos + EXPERIMENT_SELECTION.length());
         }
-        queryBuilder.append("} . \n");
-        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(pos));
+        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos));
         return replacePlaceholders(queryBuilder.toString(), new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { null, graphUri });
     }

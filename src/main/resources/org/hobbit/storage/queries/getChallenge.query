@@ -19,29 +19,37 @@ CONSTRUCT {
 	?system ?systemProp ?systemObject . 
 }
 WHERE {
-  GRAPH %GRAPH_URI% {
-    %CHALLENGE_URI% a hobbit:Challenge .
-	%CHALLENGE_URI% ?challengeProp ?challengeObj .
-	OPTIONAL {
-		?challengeTask a hobbit:ChallengeTask .
-		?challengeTask ?taskProp ?taskObj .
-		?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
-		?challengeTask hobbit:involvesBenchmark ?benchmark .
-		OPTIONAL { ?benchmark ?benchmarkProp ?benchmarkObject . }
-		OPTIONAL {
-			?challengeTask hobbit:involvesSystemInstance ?system .
-			OPTIONAL { ?system ?systemProp ?systemObject . }
-		}
-		OPTIONAL {
-			?challengeTask ?parameterProp ?parameterValue .
-			?benchmark hobbit:hasParameter ?parameterProp .
-			{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
-			OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
-			OPTIONAL { ?parameterProp rdfs:range ?parameterPropRange .
-				OPTIONAL { ?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . }
-				OPTIONAL { ?parameterValue ?parameterValueRangeRelation ?parameterPropRange . }
-			}
-		}
-	}
-  }
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_URI% a hobbit:Challenge .
+	        OPTIONAL {
+		        ?challengeTask a hobbit:ChallengeTask .
+		        ?challengeTask ?taskProp ?taskObj .
+		        ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
+		        ?challengeTask hobbit:involvesBenchmark ?benchmark .
+		        OPTIONAL { ?benchmark ?benchmarkProp ?benchmarkObject . }
+		        OPTIONAL {
+        			?challengeTask hobbit:involvesSystemInstance ?system .
+        			OPTIONAL { ?system ?systemProp ?systemObject . }
+        		}
+        		OPTIONAL {
+        			?challengeTask ?parameterProp ?parameterValue .
+        			?benchmark hobbit:hasParameter ?parameterProp .
+        			{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
+        			OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
+        			OPTIONAL { ?parameterProp rdfs:range ?parameterPropRange .
+        				OPTIONAL { ?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . }
+        				OPTIONAL { ?parameterValue ?parameterValueRangeRelation ?parameterPropRange . }
+        			}
+        		}
+        	}
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_URI% a hobbit:Challenge .
+	        %CHALLENGE_URI% ?challengeProp ?challengeObj .
+        }
+    }
 }
