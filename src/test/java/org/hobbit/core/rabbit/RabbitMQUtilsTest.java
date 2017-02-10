@@ -6,6 +6,8 @@ import java.util.Arrays;
 import org.apache.commons.io.Charsets;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.hobbit.vocab.HOBBIT;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -78,6 +80,23 @@ public class RabbitMQUtilsTest {
         model.add(model.getResource("http://example.org/resource1"), model.getProperty("http://example.org/property3"),
                 model.getResource("http://example.org/resource3"));
         performModelsTest(model);
+
+        // An example that seems to cause problems
+        model = ModelFactory.createDefaultModel();
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"), RDF.type, HOBBIT.Experiment);
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"), HOBBIT.involvesBenchmark,
+                model.getResource("http://w3id.org/hobbit/platform_benchmark/vocab#PlatformBenchmark"));
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"), HOBBIT.involvesSystemInstance,
+                model.getResource("http://w3id.org/hobbit/platform_benchmark/vocab#PlatformBenchmarkSystem"));
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"),
+                model.getProperty("http://w3id.org/hobbit/platform_benchmark/vocab#numberOfDataGenerators"), "2");
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"),
+                model.getProperty("http://w3id.org/hobbit/platform_benchmark/vocab#numberOfQueries"), "1000");
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"),
+                model.getProperty("http://w3id.org/hobbit/platform_benchmark/vocab#numberOfTaskGenerators"), "1");
+        model.add(model.getResource("http://w3id.org/hobbit/experiments#New"),
+                model.getProperty("http://w3id.org/hobbit/platform_benchmark/vocab#seed"), "31");
+        performModelsTest(model);
     }
 
     private void performModelsTest(Model model) {
@@ -85,11 +104,12 @@ public class RabbitMQUtilsTest {
         compareModels(model, RabbitMQUtils.readModel(data));
         data = RabbitMQUtils.writeByteArrays(new byte[][] { data });
         compareModels(model, RabbitMQUtils.readModel(ByteBuffer.wrap(data)));
+        compareModels(model, RabbitMQUtils.readModel(RabbitMQUtils.writeModel2String(model)));
     }
 
     private void compareModels(Model expectedModel, Model actualModel) {
         String expectedModelString = expectedModel.toString();
-        String actualModelString = expectedModel.toString();
+        String actualModelString = actualModel.toString();
 
         Assert.assertEquals("Different number of triples expectedModel=" + expectedModelString + "\nactualModel="
                 + actualModelString, expectedModel.size(), actualModel.size());

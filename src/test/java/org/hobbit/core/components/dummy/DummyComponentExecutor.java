@@ -11,8 +11,8 @@ public class DummyComponentExecutor implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DummyComponentExecutor.class);
     
-    private Component component;
-    private boolean success;
+    protected Component component;
+    protected boolean success;
 
     public DummyComponentExecutor(Component component) {
         this.component = component;
