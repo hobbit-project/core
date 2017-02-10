@@ -393,7 +393,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.error("Interrupted while waiting for the result model mutex. Returning.", e);
         }
         try {
-            if (resultModel == null) {
+            if (this.resultModel == null) {
                 this.resultModel = resultModel;
             } else {
                 this.resultModel.add(resultModel);
