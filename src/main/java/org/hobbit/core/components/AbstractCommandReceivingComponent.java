@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
@@ -27,6 +28,8 @@ import com.rabbitmq.client.QueueingConsumer;
 public abstract class AbstractCommandReceivingComponent extends AbstractComponent implements CommandReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCommandReceivingComponent.class);
+
+    private static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
 
     /**
      * Name of this Docker container.
@@ -197,7 +200,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
-            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery();
+            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(DEFAULT_CMD_RESPONSE_TIMEOUT);
+            Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
             if (delivery.getBody().length > 0) {
                 return RabbitMQUtils.readString(delivery.getBody());
             }

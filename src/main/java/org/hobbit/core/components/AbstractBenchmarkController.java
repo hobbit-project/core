@@ -88,23 +88,23 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
     /**
      * The set of data generator container ids.
      */
-    private Set<String> dataGenContainerIds = new HashSet<String>();
+    protected Set<String> dataGenContainerIds = new HashSet<String>();
     /**
      * The set of task generator container ids.
      */
-    private Set<String> taskGenContainerIds = new HashSet<String>();
+    protected Set<String> taskGenContainerIds = new HashSet<String>();
     /**
      * The container id of the evaluation storage.
      */
-    private String evalStoreContainerId;
+    protected String evalStoreContainerId;
     /**
      * The container id of the evaluation module.
      */
-    private String evalModuleContainerId;
+    protected String evalModuleContainerId;
     /**
      * The container id of the benchmarked system.
      */
-    private String systemContainerId = null;
+    protected String systemContainerId = null;
     /**
      * The exit code of the system container
      */
@@ -274,6 +274,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * storage to send their ready signals.
      */
     protected void waitForComponentsToInitialize() {
+        LOGGER.debug("Waiting for {} Data Generators to be ready.", dataGenContainerIds.size());
         try {
             dataGenReadyMutex.acquire(dataGenContainerIds.size());
         } catch (InterruptedException e) {
@@ -281,6 +282,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
+        LOGGER.debug("Waiting for {} Data Generators to be ready.", taskGenContainerIds.size());
         try {
             taskGenReadyMutex.acquire(taskGenContainerIds.size());
         } catch (InterruptedException e) {
@@ -288,6 +290,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
+        LOGGER.debug("Waiting for Evaluation Storage to be ready.");
         try {
             evalStoreReadyMutex.acquire();
         } catch (InterruptedException e) {
@@ -301,6 +304,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * Waits for the termination of all data generators.
      */
     protected void waitForDataGenToFinish() {
+        LOGGER.debug("Waiting for {} Data Generators to finish.", dataGenContainerIds.size());
         try {
             dataGenTerminatedMutex.acquire(dataGenContainerIds.size());
         } catch (InterruptedException e) {
@@ -321,6 +325,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * Waits for the termination of all task generators.
      */
     protected void waitForTaskGenToFinish() {
+        LOGGER.debug("Waiting for {} Task Generators to finish.", dataGenContainerIds.size());
         try {
             taskGenTerminatedMutex.acquire(taskGenContainerIds.size());
         } catch (InterruptedException e) {
@@ -341,6 +346,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * This method waits for the benchmarked system to terminate.
      */
     protected void waitForSystemToFinish() {
+        LOGGER.debug("Waiting for the benchmarked system to finish.");
         try {
             systemTerminatedMutex.acquire();
         } catch (InterruptedException e) {
@@ -355,6 +361,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * storage.
      */
     protected void waitForEvalComponentsToFinish() {
+        LOGGER.debug("Waiting for the evaluation module to finish.");
         try {
             evalModuleTerminatedMutex.acquire();
         } catch (InterruptedException e) {
@@ -362,6 +369,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
+        LOGGER.debug("Waiting for the evaluation storage to finish.");
         try {
             evalStoreTerminatedMutex.acquire();
         } catch (InterruptedException e) {
@@ -480,14 +488,17 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             break;
         }
         case Commands.DATA_GENERATOR_READY_SIGNAL: {
+            LOGGER.debug("Received DATA_GENERATOR_READY_SIGNAL");
             dataGenReadyMutex.release();
             break;
         }
         case Commands.TASK_GENERATOR_READY_SIGNAL: {
+            LOGGER.debug("Received TASK_GENERATOR_READY_SIGNAL");
             taskGenReadyMutex.release();
             break;
         }
         case Commands.EVAL_STORAGE_READY_SIGNAL: {
+            LOGGER.debug("Received EVAL_STORAGE_READY_SIGNAL");
             evalStoreReadyMutex.release();
             break;
         }

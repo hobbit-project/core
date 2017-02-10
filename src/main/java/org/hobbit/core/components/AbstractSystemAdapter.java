@@ -119,6 +119,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
                         }
                     }
                 });
+        dataGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
 
         taskGen2SystemQueue = createDefaultRabbitQueue(
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
@@ -143,6 +144,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
                         }
                     }
                 });
+        taskGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
 
         system2EvalStoreQueue = createDefaultRabbitQueue(
                 generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));

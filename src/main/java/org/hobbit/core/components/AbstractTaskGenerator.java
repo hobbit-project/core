@@ -12,6 +12,9 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
@@ -29,31 +32,30 @@ import com.rabbitmq.client.QueueingConsumer.Delivery;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent implements
-        GeneratedDataReceivingComponent {
+public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent
+        implements GeneratedDataReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskGenerator.class);
 
-    // /**
-    // * Default value of the {@link #maxParallelProcessedMsgs} attribute.
-    // */
-//    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
+    /**
+     * Default value of the {@link #maxParallelProcessedMsgs} attribute.
+     */
+    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 100;
 
     /**
      * Mutex used to wait for the start signal after the component has been
      * started and initialized.
      */
     private Semaphore startTaskGenMutex = new Semaphore(0);
-    // /**
-    // * Mutex used to wait for the terminate signal.
-    // */
-    // private Semaphore terminateMutex = new Semaphore(0);
-    // /**
-    // * Semaphore used to control the number of messages that can be processed
-    // in
-    // * parallel.
-    // */
-    // private Semaphore currentlyProcessedMessages;
+    /**
+     * Mutex used to wait for the terminate signal.
+     */
+    private Semaphore terminateMutex = new Semaphore(0);
+    /**
+     * Semaphore used to control the number of messages that can be processed in
+     * parallel.
+     */
+    private Semaphore currentlyProcessedMessages;
     /**
      * The id of this generator.
      */
@@ -67,39 +69,12 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      * generator.
      */
     private long nextTaskId;
-    // /**
-    // * The maximum number of incoming messages that are processed in parallel.
-    // * Additional messages have to wait.
-    // */
-    // private int maxParallelProcessedMsgs =
-    // DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
-    // /**
-    // * Name of the incoming queue with which the task generator can receive
-    // data
-    // * from the data generators.
-    // */
-    // protected String dataGen2TaskGenQueueName;
-    // /**
-    // * The Channel of the incoming queue with which the task generator can
-    // * receive data from the data generators.
-    // */
-    // protected Channel dataGen2TaskGen;
-    // /**
-    // * Name of the queue to the system.
-    // */
-    // protected String taskGen2SystemQueueName;
-    // /**
-    // * Channel of the queue to the system.
-    // */
-    // protected Channel taskGen2System;
-    // /**
-    // * Name of the queue to the evaluation storage.
-    // */
-    // protected String taskGen2EvalStoreQueueName;
-    // /**
-    // * Channel of the queue to the evaluation storage.
-    // */
-    // protected Channel taskGen2EvalStore;
+    /**
+     * The maximum number of incoming messages that are processed in parallel.
+     * Additional messages have to wait.
+     */
+    private final int maxParallelProcessedMsgs;
+
     protected RabbitQueue taskGen2SystemQueue;
     protected RabbitQueue taskGen2EvalStoreQueue;
     protected RabbitQueue dataGen2TaskGenQueue;
@@ -107,79 +82,96 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
     protected QueueingConsumer consumer;
     protected boolean runFlag;
 
+    /**
+     * Default constructor creating an {@link AbstractTaskGenerator} processing
+     * up to {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
+     * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES} messages in parallel.
+     */
+    public AbstractTaskGenerator() {
+        this.maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+    }
+
+    /**
+     * Constructor setting the maximum number of parallel processed messages.
+     * Note that this parameter has to be larger or equal to 1 or the
+     * {@link #init()} method will throw an exception. Setting
+     * <code>maxParallelProcessedMsgs=1</code> leads to the usage of a
+     * {@link QueueingConsumer}.
+     * 
+     * @param maxParallelProcessedMsgs
+     *            the number of messaegs that are processed in parallel
+     */
+    public AbstractTaskGenerator(int maxParallelProcessedMsgs) {
+        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+    }
+
     @Override
     public void init() throws Exception {
         super.init();
         Map<String, String> env = System.getenv();
 
         if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_ID_KEY
-                    + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException(
+                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
         }
         try {
             generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_ID_KEY
-                    + "\" from the environment. Aborting.", e);
+            throw new IllegalArgumentException(
+                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
         }
         nextTaskId = generatorId;
 
         if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_COUNT_KEY
-                    + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException(
+                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
         }
         try {
             numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Couldn't get \"" + Constants.GENERATOR_COUNT_KEY
-                    + "\" from the environment. Aborting.", e);
+            throw new IllegalArgumentException(
+                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
         }
 
-        taskGen2SystemQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
-        taskGen2EvalStoreQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
+        taskGen2SystemQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
+        taskGen2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
 
-        // currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
-        // currentlyProcessedMessages = new
-        // Semaphore(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
-
-        // @SuppressWarnings("resource")
-        // GeneratedDataReceivingComponent receiver = this;
-
-        // dataGen2TaskGenQueueName =
-        // generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
-        // dataGen2TaskGen = connection.createChannel();
-        // dataGen2TaskGen.queueDeclare(dataGen2TaskGenQueueName, false, false,
-        // true, null);
-        // consumer = new QueueingConsumer(dataGen2TaskGen);
-        // dataGen2TaskGen.basicConsume(dataGen2TaskGenQueueName, false,
-        // consumer);
-        dataGen2TaskGenQueue = createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
-        consumer = new QueueingConsumer(dataGen2TaskGenQueue.channel);
-        dataGen2TaskGenQueue.channel.basicConsume(dataGen2TaskGenQueue.name, false, consumer);
-
-        // dataGen2TaskGen.basicConsume(dataGen2TaskGenQueueName, true, new
-        // DefaultConsumer(dataGen2TaskGen) {
-        // @Override
-        // public void handleDelivery(String consumerTag, Envelope envelope,
-        // BasicProperties properties, byte[] body)
-        // throws IOException {
-        // LOGGER.info("Received data " + dataCount);
-        // ++dataCount;
-        // try {
-        // currentlyProcessedMessages.acquire();
-        // try {
-        // receiver.receiveGeneratedData(body);
-        // } catch (Exception e) {
-        // LOGGER.error("Got exception while trying to process incoming data.",
-        // e);
-        // } finally {
-        // currentlyProcessedMessages.release();
-        // }
-        // } catch (InterruptedException e) {
-        // throw new IOException("Interrupted while waiting for mutex.", e);
-        // }
-        // }
-        // });
+        dataGen2TaskGenQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        if (maxParallelProcessedMsgs == 1) {
+            consumer = new QueueingConsumer(dataGen2TaskGenQueue.channel);
+            dataGen2TaskGenQueue.channel.basicConsume(dataGen2TaskGenQueue.name, true, consumer);
+        } else if (maxParallelProcessedMsgs > 1) {
+            currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
+            @SuppressWarnings("resource")
+            GeneratedDataReceivingComponent receiver = this;
+            dataGen2TaskGenQueue.channel.basicConsume(dataGen2TaskGenQueue.name, true,
+                    new DefaultConsumer(dataGen2TaskGenQueue.channel) {
+                        @Override
+                        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+                                byte[] body) throws IOException {
+                            // LOGGER.info("Received data " + dataCount);
+                            // ++dataCount;
+                            try {
+                                currentlyProcessedMessages.acquire();
+                                try {
+                                    receiver.receiveGeneratedData(body);
+                                } catch (Exception e) {
+                                    LOGGER.error("Got exception while trying to process incoming data.", e);
+                                } finally {
+                                    currentlyProcessedMessages.release();
+                                }
+                            } catch (InterruptedException e) {
+                                throw new IOException("Interrupted while waiting for mutex.", e);
+                            }
+                        }
+                    });
+        } else {
+            throw new IllegalArgumentException("The maximum number of messages processed in parallel has to be >=1.");
+        }
+        dataGen2TaskGenQueue.channel.basicQos(maxParallelProcessedMsgs);
     }
 
     @Override
@@ -187,39 +179,37 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
-        runFlag = true;
 
-        // terminateMutex.acquire();
-        // // wait until all messages have been read from the queue
-        // while (dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName) > 0) {
-        // LOGGER.info("Waiting for remaining data to be processed: "
-        // + dataGen2TaskGen.messageCount(dataGen2TaskGenQueueName));
-        // Thread.sleep(1000);
-        // }
-        // // Collect all open mutex counts to make sure that there is no
-        // message
-        // // that is still processed
-        // Thread.sleep(1000);
-        // LOGGER.info("Waiting data processing to finish... (" + debugCount +
-        // " tasks generated. "
-        // + currentlyProcessedMessages.availablePermits() + " are available)");
-        // currentlyProcessedMessages.acquire(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
-
-        Delivery delivery;
-        int count = 0;
-        while (runFlag || (dataGen2TaskGenQueue.messageCount() > 0)) {
-            delivery = consumer.nextDelivery(3000);
-            if (delivery != null) {
-                generateTask(delivery.getBody());
-                ++count;
+        if (maxParallelProcessedMsgs == 1) {
+            runFlag = true;
+            Delivery delivery;
+            int count = 0;
+            while (runFlag || (dataGen2TaskGenQueue.messageCount() > 0)) {
+                delivery = consumer.nextDelivery(3000);
+                if (delivery != null) {
+                    generateTask(delivery.getBody());
+                    ++count;
+                }
             }
+            LOGGER.info("Terminating after " + count + " processed messages.");
+        } else {
+            terminateMutex.acquire();
+            // wait until all messages have been read from the queue
+            long messageCount = dataGen2TaskGenQueue.channel.messageCount(dataGen2TaskGenQueue.name);
+            while (messageCount > 0) {
+                LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
+                Thread.sleep(1000);
+            }
+            // Collect all open mutex counts to make sure that there is no
+            // message that is still processed
+            // LOGGER.info("Waiting data processing to finish... (" + debugCount
+            // + " tasks generated. "
+            // + currentlyProcessedMessages.availablePermits() + " are
+            // available)");
+            LOGGER.info("Waiting data processing to finish... ( {} / {} free permits are available)",
+                    currentlyProcessedMessages.availablePermits(), maxParallelProcessedMsgs);
+            currentlyProcessedMessages.acquire(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
         }
-
-//        // Unfortunately, we have to wait until all messages are consumed
-//        while ((taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount()) > 0) {
-//            Thread.sleep(500);
-//        }
-        LOGGER.info("Terminating after " + count + " processed messages.");
     }
 
     @Override
@@ -264,9 +254,12 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
             startTaskGenMutex.release();
         } else if (command == Commands.DATA_GENERATION_FINISHED) {
             LOGGER.info("Received signal to finish.");
-            // release the mutex
-            // terminateMutex.release();
-            runFlag = false;
+            if (maxParallelProcessedMsgs == 1) {
+                runFlag = false;
+            } else {
+                // release the mutex
+                terminateMutex.release();
+            }
         }
     }
 
@@ -290,9 +283,8 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         // RabbitMQUtils.writeByteArrays(null, new byte[][] {
         // RabbitMQUtils.writeString(taskIdString), data },
         // RabbitMQUtils.writeLong(timestamp)));
-        taskGen2EvalStoreQueue.channel.basicPublish("", taskGen2EvalStoreQueue.name,
-                MessageProperties.PERSISTENT_BASIC, RabbitMQUtils.writeByteArrays(null,
-                        new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
+        taskGen2EvalStoreQueue.channel.basicPublish("", taskGen2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
+                RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
                         RabbitMQUtils.writeLong(timestamp)));
     }
 

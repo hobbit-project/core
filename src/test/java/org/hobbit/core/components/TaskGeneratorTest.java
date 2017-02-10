@@ -39,12 +39,20 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
-        // We use only one single data generator
-        testConfigs.add(new Object[] { 1, 10000 });
-        // We use two data generators
-        testConfigs.add(new Object[] { 2, 10000 });
-        // We use ten data generators
-        testConfigs.add(new Object[] { 10, 1000 });
+        // We use only one single data generator without parallel message
+        // processing
+        testConfigs.add(new Object[] { 1, 10000, 1 });
+        // We use only one single data generator with parallel message
+        // processing (max 100)
+        testConfigs.add(new Object[] { 1, 10000, 100 });
+        // We use two data generators without parallel message processing
+        testConfigs.add(new Object[] { 2, 10000, 1 });
+        // We use two data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 2, 10000, 100 });
+        // We use ten data generators without parallel message processing
+        testConfigs.add(new Object[] { 10, 1000, 1 });
+        // We use ten data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 10, 1000, 100 });
         return testConfigs;
     }
 
@@ -57,7 +65,8 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     private int numberOfGenerators;
     private int numberOfMessages;
 
-    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages) {
+    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
+        super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
     }
