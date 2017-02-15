@@ -115,7 +115,6 @@ public class FileStreamingTest implements RabbitQueueFactory {
                 }
             }
         }
-
     }
 
     private void compareFiles(String sendInputDir, String receiveOutputDir) throws IOException {

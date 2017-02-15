@@ -79,6 +79,8 @@ public final class Constants {
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
 	
+	public static final String END_OF_STREAM_MESSAGE_TYPE = "EOS";
+	
 	// =============== GRAPH CONSTANTS ===============
 
     public static final String EXPERIMENT_URI_NS = "http://w3id.org/hobbit/experiments#";
