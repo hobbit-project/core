@@ -195,10 +195,11 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
         } else {
             terminateMutex.acquire();
             // wait until all messages have been read from the queue
-            long messageCount = dataGen2TaskGenQueue.channel.messageCount(dataGen2TaskGenQueue.name);
+            long messageCount = dataGen2TaskGenQueue.messageCount();
             while (messageCount > 0) {
                 LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
                 Thread.sleep(1000);
+                messageCount = dataGen2TaskGenQueue.messageCount();
             }
             // Collect all open mutex counts to make sure that there is no
             // message that is still processed
@@ -209,6 +210,14 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
             LOGGER.info("Waiting data processing to finish... ( {} / {} free permits are available)",
                     currentlyProcessedMessages.availablePermits(), maxParallelProcessedMsgs);
             currentlyProcessedMessages.acquire(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+        }
+
+        // make sure that all messages have been delivered (otherwise they might
+        // be lost)
+        long messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
+        while (messageCount > 0) {
+            Thread.sleep(1000);
+            messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
         }
     }
 

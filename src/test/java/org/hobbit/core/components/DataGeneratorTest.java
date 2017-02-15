@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -40,7 +41,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         // We use two data generators
         testConfigs.add(new Object[] { 2, 10000 });
         // We use ten data generators
-        testConfigs.add(new Object[] { 10, 10000 });
+        testConfigs.add(new Object[] { 10, 20000 });
         return testConfigs;
     }
 
@@ -52,6 +53,8 @@ public class DataGeneratorTest extends AbstractDataGenerator {
     private List<String> sentData = new ArrayList<String>();
     private int numberOfGenerators;
     private int numberOfMessages;
+    private Semaphore taskGensReady = new Semaphore(0);
+    private Semaphore systemReady = new Semaphore(0);
 
     public DataGeneratorTest(int numberOfGenerators, int numberOfMessages) {
         this.numberOfGenerators = numberOfGenerators;
@@ -71,12 +74,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
-    @Test
+    @Test(timeout=30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        
+        init();
 
         DummySystemReceiver system = new DummySystemReceiver();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
@@ -92,9 +97,11 @@ public class DataGeneratorTest extends AbstractDataGenerator {
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();
         }
+        
+        systemReady.acquire();
+        taskGensReady.acquire(numberOfGenerators);
 
         try {
-            init();
             // start dummy
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
@@ -129,4 +136,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        if(command == Commands.TASK_GENERATOR_READY_SIGNAL) {
+            taskGensReady.release();
+        }
+        if (command == Commands.SYSTEM_READY_SIGNAL) {
+            systemReady.release();
+        }
+        super.receiveCommand(command, data);
+    }
 }

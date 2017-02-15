@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -20,6 +21,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the workflow of the {@link AbstractTaskGenerator} class and the
@@ -34,14 +37,17 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
  */
 public class EvaluationModuleTest extends AbstractEvaluationModule {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
+
     private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    private int numberOfMessages = 10000;
+    private int numberOfMessages = 30000;
     private Set<String> receivedResults = new HashSet<>();
+    private Semaphore evalStoreReady = new Semaphore(0);
 
     @Test
     public void test() throws Exception {
@@ -82,8 +88,10 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
 
+        init();
+        evalStoreReady.acquire();
+
         try {
-            init();
 
             run();
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
@@ -106,12 +114,12 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception {
         Assert.assertTrue((expectedData.length + receivedData.length) > 0);
-        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData) : RabbitMQUtils
-                .readString(receivedData);
+        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData)
+                : RabbitMQUtils.readString(receivedData);
         Assert.assertTrue(taskId + " is not known.", expectedResults.containsKey(taskId));
         ResultPairImpl pair = expectedResults.get(taskId);
-        
-        if(expectedData.length == 0){
+
+        if (expectedData.length == 0) {
             Assert.assertNull(pair.getExpected());
             Assert.assertEquals(0, taskSentTimestamp);
         } else {
@@ -119,8 +127,8 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
             Assert.assertArrayEquals(pair.getExpected().getData(), expectedData);
             Assert.assertEquals(pair.getExpected().getSentTimestamp(), taskSentTimestamp);
         }
-        
-        if(receivedData.length == 0){
+
+        if (receivedData.length == 0) {
             Assert.assertNull(pair.getActual());
             Assert.assertEquals(0, responseReceivedTimestamp);
         } else {
@@ -128,7 +136,7 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
             Assert.assertArrayEquals(pair.getActual().getData(), receivedData);
             Assert.assertEquals(pair.getActual().getSentTimestamp(), responseReceivedTimestamp);
         }
-        
+
         receivedResults.add(taskId);
     }
 
@@ -137,4 +145,12 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         return ModelFactory.createDefaultModel();
     }
 
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        LOGGER.info("received command {}", Commands.toString(command));
+        if (command == Commands.EVAL_STORAGE_READY_SIGNAL) {
+            evalStoreReady.release();
+        }
+        super.receiveCommand(command, data);
+    }
 }
