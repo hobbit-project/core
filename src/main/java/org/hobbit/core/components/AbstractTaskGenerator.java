@@ -208,7 +208,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
             // available)");
             LOGGER.info("Waiting data processing to finish... ( {} / {} free permits are available)",
                     currentlyProcessedMessages.availablePermits(), maxParallelProcessedMsgs);
-            currentlyProcessedMessages.acquire(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+            currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
         }
     }
 
