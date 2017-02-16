@@ -53,10 +53,10 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      */
     private Semaphore currentlyProcessedTasks;
     /**
-     * The maximum number of incoming messages that are processed in parallel.
-     * Additional messages have to wait.
+     * The maximum number of incoming messages of a single queue that are
+     * processed in parallel. Additional messages have to wait.
      */
-    private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+    private final int maxParallelProcessedMsgs;
     /**
      * Queue from the data generator to this evaluation storage.
      */
@@ -73,6 +73,25 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      * The RDF model containing the system parameters.
      */
     protected Model systemParamModel;
+
+    /**
+     * Constructor using the {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
+     * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}.
+     */
+    public AbstractSystemAdapter() {
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+    }
+
+    /**
+     * Constructor setting the maximum number of messages processed in parallel.
+     * 
+     * @param maxParallelProcessedMsgs
+     *            The maximum number of incoming messages of a single queue that
+     *            are processed in parallel. Additional messages have to wait.
+     */
+    public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
+        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+    }
 
     @Override
     public void init() throws Exception {
@@ -155,9 +174,10 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
         sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
 
         terminateMutex.acquire();
-        // wait until all messages have been read from the queue
-        while ((taskGen2SystemQueue.channel.messageCount(taskGen2SystemQueue.name)
-                + dataGen2SystemQueue.channel.messageCount(dataGen2SystemQueue.name)) > 0) {
+        // wait until all messages have been read from the queue and all sent
+        // messages have been consumed
+        while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()
+                + system2EvalStoreQueue.messageCount()) > 0) {
             Thread.sleep(1000);
         }
         // Collect all open mutex counts to make sure that there is no message

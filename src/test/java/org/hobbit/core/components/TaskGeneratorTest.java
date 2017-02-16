@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -19,6 +20,8 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the workflow of the {@link AbstractTaskGenerator} class and the
@@ -33,6 +36,8 @@ import org.junit.runners.Parameterized.Parameters;
  */
 @RunWith(Parameterized.class)
 public class TaskGeneratorTest extends AbstractTaskGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskGeneratorTest.class);
 
     private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
@@ -50,9 +55,9 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         // We use two data generators with parallel message processing (max 100)
         testConfigs.add(new Object[] { 2, 10000, 100 });
         // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 1000, 1 });
+        testConfigs.add(new Object[] { 10, 5000, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 1000, 100 });
+        testConfigs.add(new Object[] { 10, 5000, 100 });
         return testConfigs;
     }
 
@@ -64,6 +69,9 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
+    private Semaphore dataGensReady = new Semaphore(0);
+    private Semaphore systemReady = new Semaphore(0);
+    private Semaphore evalStoreReady = new Semaphore(0);
 
     public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
         super(numberOfMessagesInParallel);
@@ -71,12 +79,14 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+
+        init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
@@ -103,8 +113,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
 
+        dataGensReady.acquire(numberOfGenerators);
+        systemReady.acquire();
+        evalStoreReady.acquire();
+
         try {
-            init();
             // start dummy
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
@@ -128,9 +141,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             List<String> receivedData = system.getReceivedtasks();
             Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
+            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
             receivedData = evalStore.getExpectedResponses();
             Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
+            Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
         } finally {
             close();
         }
@@ -164,6 +179,21 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        LOGGER.info("received command {}", Commands.toString(command));
+        if (command == Commands.DATA_GENERATOR_READY_SIGNAL) {
+            dataGensReady.release();
+        }
+        if (command == Commands.SYSTEM_READY_SIGNAL) {
+            systemReady.release();
+        }
+        if (command == Commands.EVAL_STORAGE_READY_SIGNAL) {
+            evalStoreReady.release();
+        }
+        super.receiveCommand(command, data);
     }
 
 }

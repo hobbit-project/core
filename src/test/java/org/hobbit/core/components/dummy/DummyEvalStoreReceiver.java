@@ -17,11 +17,12 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
 
     @Override
     public void receiveResponseData(String taskId, long timestamp, byte[] data) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskId);
-        builder.append(Long.toString(timestamp));
-        builder.append(RabbitMQUtils.readString(data));
-        receivedResponses.add(builder.toString());
+        // StringBuilder builder = new StringBuilder();
+        // builder.append(taskId);
+        // builder.append(Long.toString(timestamp));
+        // builder.append(RabbitMQUtils.readString(data));
+        // receivedResponses.add(builder.toString());
+        receivedResponses.add(RabbitMQUtils.readString(data));
     }
 
     @Override
@@ -39,7 +40,7 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
     }
 
     /**
-     * @return the received responses
+     * @return the received responses (without time stamps and task ids)
      */
     public List<String> getReceivedResponses() {
         return receivedResponses;
