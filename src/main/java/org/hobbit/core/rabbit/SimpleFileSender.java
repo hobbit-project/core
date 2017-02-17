@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.MessageProperties;

@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,7 +37,7 @@ public class DataStreamingTest implements RabbitQueueFactory, IncomingStreamHand
         testConfigs.add(new Object[] {
                 "Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat. Quis aute iure reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint obcaecat cupiditat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
                         .getBytes(Charsets.UTF_8) });
-        
+
         ByteBuffer buffer = ByteBuffer.allocate(4000);
         IntBuffer intBuffer = buffer.asIntBuffer();
         int number = 0;
@@ -46,8 +45,8 @@ public class DataStreamingTest implements RabbitQueueFactory, IncomingStreamHand
             intBuffer.put(number);
             ++number;
         }
-        testConfigs.add(new Object[] {buffer.array()});
-        
+        testConfigs.add(new Object[] { buffer.array() });
+
         return testConfigs;
     }
 
@@ -82,7 +81,8 @@ public class DataStreamingTest implements RabbitQueueFactory, IncomingStreamHand
             String queueName = UUID.randomUUID().toString().replace("-", "");
 
             System.out.println("Starting receiver...");
-            DataReceiver receiver = DataReceiver.create(this, queueName, this);
+            DataReceiverImpl receiver = (new DataReceiverImpl.Builder()).dataHandler(this).maxParallelProcessedMsgs(1)
+                    .queue(this, queueName).build();
 
             System.out.println("Starting sender...");
             DataStreamingTest testInstance = this;
@@ -91,7 +91,7 @@ public class DataStreamingTest implements RabbitQueueFactory, IncomingStreamHand
                 public void run() {
                     DataSender sender = null;
                     try {
-                        sender = DataSenderImpl.create(testInstance, queueName);
+                        sender = (new DataSenderImpl.Builder()).queue(testInstance, queueName).build();
                         sender.sendData(data);
                     } catch (IOException e) {
                         e.printStackTrace();

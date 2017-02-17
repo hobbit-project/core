@@ -19,7 +19,6 @@ import java.util.UUID;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.junit.Assert;
 import org.junit.Before;
@@ -212,7 +211,7 @@ public class FileStreamingTest implements RabbitQueueFactory {
     }
 
     public static String getTempDir() throws IOException {
-        File tempFile = File.createTempFile("FileStreamTest", "Temp");
+        File tempFile = File.createTempFile("junittest", "Temp");
         if (!tempFile.delete()) {
             return null;
         }

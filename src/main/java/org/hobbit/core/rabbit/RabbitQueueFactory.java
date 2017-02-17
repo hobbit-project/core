@@ -1,4 +1,4 @@
-package org.hobbit.core.components;
+package org.hobbit.core.rabbit;
 
 import java.io.IOException;
 
