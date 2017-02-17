@@ -26,6 +26,36 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
 /**
+ * Implementation of the {@link DataReceiver} interface.
+ * 
+ * <p>
+ * Use the internal {@link Builder} class for creating instances of the
+ * {@link DataReceiverImpl} class. <b>Note</b> that the created
+ * {@link DataReceiverImpl} will either use a given {@link RabbitQueue} or
+ * create a new one. In both cases the receiver will become the owner of the
+ * queue, i.e., if the {@link DataReceiverImpl} instance is closed the queue
+ * will be closed as well.
+ * </p>
+ * <p>
+ * Internally, the receiver uses a multithreaded consumer that handles incoming
+ * streams, sorts the messages that belong to these streams and sends the
+ * received data via an {@link InputStream} to the given
+ * {@link IncomingStreamHandler} instance. <b>Note</b> that since the consumer
+ * is multithreaded the
+ * {@link IncomingStreamHandler#handleIncomingStream(String, InputStream)}
+ * should be thread safe since it might be called in parallel. Even setting the
+ * maximum number of parallel processed messages to 1 (via
+ * {@link Builder#maxParallelProcessedMsgs(int)}) the given handler might be
+ * called with several {@link InputStream} instances in parallel.
+ * </p>
+ * <p>
+ * The {@link DataReceiverImpl} owns recources that need to be freed if its work
+ * is done. This can be achieved by closing the receiver. In most cases, this
+ * should be done using the {@link #closeWhenFinished()} method which waits
+ * until all incoming messages are processed and all streams are closed. Note
+ * that using the {@link #close()} method leads to a direct shutdown of the
+ * queue which could lead to data loss and threads getting stuck.
+ * </p>
  * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
@@ -53,6 +83,14 @@ public class DataReceiverImpl implements DataReceiver {
         // able to reject messages
         queue.channel.basicConsume(queue.name, false, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
+        /*
+         * XXX It might be possible to adapt the receiver to an implementation
+         * that is more flexible, i.e., that offers a method to set the handler
+         * and another method that "starts" the receiving by defining the
+         * consumer (the two lines above). Note that setting the handler after
+         * the receiver has been started is not working since the consumer might
+         * encounter NullPointerExceptions
+         */
     }
 
     protected synchronized void increaseErrorCount() {
@@ -63,6 +101,10 @@ public class DataReceiverImpl implements DataReceiver {
         return errorCount;
     }
 
+    /**
+     * This method waits for the data receiver to finish its work and closes the
+     * incoming queue as well as the internal thread pool after that.
+     */
     public void closeWhenFinished() {
         // wait until all messages have been read from the queue
         long messageCount;
@@ -96,6 +138,11 @@ public class DataReceiverImpl implements DataReceiver {
         close(true);
     }
 
+    /**
+     * A rude way to close the receiver. Note that this method directly closes
+     * the incoming queue and only notifies the internal consumer to stop its
+     * work but won't wait for the handler threads to finish their work.
+     */
     public void close() {
         close(false);
     }

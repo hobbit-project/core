@@ -13,9 +13,24 @@ import org.hobbit.core.utils.RandomIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.AlreadyClosedException;
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AlreadyClosedException;
 
+/**
+ * Implementation of the {@link DataSender} interface.
+ * 
+ * <p>
+ * Use the internal {@link Builder} class for creating instances of the
+ * {@link DataSenderImpl} class. <b>Note</b> that the created
+ * {@link DataSenderImpl} will either use a given {@link RabbitQueue} or create
+ * a new one. In both cases the receiver will become the owner of the queue,
+ * i.e., if the {@link DataSenderImpl} instance is closed the queue will be
+ * closed as well.
+ * </p>
+ * 
+ * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+ *
+ */
 public class DataSenderImpl implements DataSender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSenderImpl.class);
