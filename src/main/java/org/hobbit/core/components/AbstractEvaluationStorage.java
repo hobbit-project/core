@@ -1,19 +1,27 @@
 package org.hobbit.core.components;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
-import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
+import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
+import org.hobbit.core.rabbit.paired.PairedDataSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +32,7 @@ import com.rabbitmq.client.Envelope;
 
 /**
  * This abstract class implements basic functions that can be used to implement
- * a task generator.
+ * an evaluation storage.
  * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
@@ -55,11 +63,11 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
     /**
      * The incoming queue from the task generator.
      */
-    protected RabbitQueue taskGen2EvalStoreQueue;
+    protected DataReceiverImpl expResponseReceiver;
     /**
      * The incoming queue from the system.
      */
-    protected RabbitQueue system2EvalStoreQueue;
+    protected DataReceiverImpl systemResponseReceiver;
     /**
      * The incoming queue from the evaluation module.
      */
@@ -68,62 +76,40 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * Channel on which the acknowledgements are send.
      */
     protected Channel ackChannel = null;
+    protected String ackExchangeName = null;
+    protected Map<String, PairedDataSender> replyingSenders = new HashMap<>();
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        @SuppressWarnings("resource")
-        ExpectedResponseReceivingComponent expReceiver = this;
-        taskGen2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
-        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true,
-                new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] data = RabbitMQUtils.readByteArray(buffer);
-                        long timestamp = buffer.getLong();
-                        expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
-                        // taskGen2EvalStoreQueue.channel.basicAck(envelope.getDeliveryTag(),
-                        // false);
-                    }
-                });
+        if (expResponseReceiver == null) {
+            expResponseReceiver = DataReceiverImpl.builder().dataHandler(new ExpectedResponseReceiver())
+                    .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME)).build();
+        } else {
+            // XXX here we could set the data handler if the data receiver would
+            // offer such a method
+        }
 
-        final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-        @SuppressWarnings("resource")
-        ResponseReceivingComponent respReceiver = this;
-        system2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
-        system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true,
-                new DefaultConsumer(system2EvalStoreQueue.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] data = RabbitMQUtils.readByteArray(buffer);
-                        respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
-                        if (ackChannel != null) {
-                            ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
-                        }
-                    }
-                });
+        if (systemResponseReceiver == null) {
+            systemResponseReceiver = DataReceiverImpl.builder().dataHandler(new SystemResponseReceiver())
+                    .queue(this, generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
+        } else {
+            // XXX here we could set the data handler if the data receiver would
+            // offer such a method
+        }
 
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        final RabbitQueueFactory factory = this;
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
                 new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
                             byte[] body) throws IOException {
-                        byte response[] = null;
+                        InputStream response[] = null;
                         // get iterator id
                         ByteBuffer buffer = ByteBuffer.wrap(body);
                         if (buffer.remaining() < 1) {
-                            response = EMPTY_RESPONSE;
+                            response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
                             LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
                         } else {
                             byte iteratorId = buffer.get();
@@ -136,7 +122,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                                 LOGGER.info("Creating new iterator #{}", iteratorId);
                                 resultPairIterators.add(iterator = createIterator());
                             } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                                response = EMPTY_RESPONSE;
+                                response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
                                 LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
                                         + "). Returning emtpy response.");
                             } else {
@@ -144,31 +130,25 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                             }
                             if ((iterator != null) && (iterator.hasNext())) {
                                 ResultPair resultPair = iterator.next();
-                                // set response (iteratorId,
-                                // taskSentTimestamp, expectedData,
-                                // responseReceivedTimestamp, receivedData)
-                                Result expected = resultPair.getExpected();
-                                Result actual = resultPair.getActual();
-
-                                response = RabbitMQUtils
-                                        .writeByteArrays(
-                                                new byte[] {
-                                                        iteratorId },
-                                                new byte[][] {
-                                                        expected != null
-                                                                ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
-                                                                : new byte[0],
-                                                        expected != null ? expected.getData() : new byte[0],
-                                                        actual != null
-                                                                ? RabbitMQUtils.writeLong(actual.getSentTimestamp())
-                                                                : new byte[0],
-                                                        actual != null ? actual.getData() : new byte[0] },
-                                                null);
+                                response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }),
+                                        resultPair.getExpected(), resultPair.getActual() };
                             } else {
-                                response = new byte[] { iteratorId };
+                                response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }) };
                             }
                         }
-                        getChannel().basicPublish("", properties.getReplyTo(), null, response);
+                        PairedDataSender sender = null;
+                        synchronized (replyingSenders) {
+                            if (replyingSenders.containsKey(properties.getReplyTo())) {
+                                sender = replyingSenders.get(properties.getReplyTo());
+                            } else {
+                                sender = PairedDataSender.builder().queue(factory, properties.getReplyTo()).build();
+                                replyingSenders.put(properties.getReplyTo(), sender);
+                            }
+                        }
+                        sender.sendData(response);
+                        for (int i = 0; i < response.length; ++i) {
+                            IOUtils.closeQuietly(response[i]);
+                        }
                     }
                 });
 
@@ -176,12 +156,12 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
             sendAcks = Boolean.getBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
+                ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
                 // Create channel for acknowledgements
                 ackChannel = connection.createChannel();
                 String queueName = ackChannel.queueDeclare().getQueue();
-                ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
-                        false, true, null);
-                ackChannel.queueBind(queueName, generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "");
+                ackChannel.exchangeDeclare(ackExchangeName, "fanout", false, true, null);
+                ackChannel.queueBind(queueName, ackExchangeName, "");
             }
         }
     }
@@ -208,11 +188,105 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         }
     }
 
+    protected void acknowledgeResponse(String taskId) {
+        if (ackChannel != null) {
+            try {
+                ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+            } catch (IOException e) {
+                LOGGER.error("Couldn't send acknowledgement for task {}.", taskId);
+            }
+        }
+    }
+
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(taskGen2EvalStoreQueue);
-        IOUtils.closeQuietly(system2EvalStoreQueue);
+        synchronized (replyingSenders) {
+            // Remove and close all senders
+            for (String replyQueue : replyingSenders.keySet()) {
+                replyingSenders.remove(replyQueue).closeWhenFinished();
+            }
+        }
+        IOUtils.closeQuietly(expResponseReceiver);
+        IOUtils.closeQuietly(systemResponseReceiver);
         IOUtils.closeQuietly(evalModule2EvalStoreQueue);
+        if (ackChannel != null) {
+            try {
+                ackChannel.close();
+            } catch (TimeoutException e) {
+                LOGGER.error("Exception while trying to close the acknowledgement channel. It will be ignored.", e);
+            }
+        }
         super.close();
+    }
+
+    /**
+     * Receiver handling the expected responses.
+     * 
+     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+     *
+     */
+    protected class ExpectedResponseReceiver implements IncomingStreamHandler {
+        @Override
+        public void handleIncomingStream(String streamId, InputStream stream) {
+            long timestamp;
+            try {
+                // Check whether this is the old format
+                if (streamId != null) {
+                    // get taskId/streamId and timestamp
+                    ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
+                    streamId = RabbitMQUtils.readString(buffer);
+                    byte[] data = RabbitMQUtils.readByteArray(buffer);
+                    timestamp = buffer.getLong();
+                    IOUtils.closeQuietly(stream);
+                    // create a new stream containing only the data
+                    stream = new ByteArrayInputStream(data);
+                } else {
+                    // Read the first bytes containing the timestamp
+                    int pos = 0, length = 0;
+                    byte timestampByte[] = new byte[Long.BYTES];
+                    while ((length >= 0) && (pos < Long.BYTES)) {
+                        length = stream.read(timestampByte, pos, timestampByte.length - pos);
+                        pos += length;
+                    }
+                    // -1 comes from the last addition were length=-1
+                    if (pos < (Long.BYTES - 1)) {
+                        LOGGER.error(
+                                "Got a message that did not even contain the necessary timestamp. It will be ignored.");
+                        return;
+                    }
+                    timestamp = RabbitMQUtils.readLong(timestampByte);
+                }
+                receiveExpectedResponseData(streamId, timestamp, stream);
+            } catch (IOException e) {
+                LOGGER.error("IO Error while trying to read incoming expected response.", e);
+            }
+        }
+    }
+
+    /**
+     * Receiver handling the responses coming from the system.
+     * 
+     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+     *
+     */
+    protected class SystemResponseReceiver implements IncomingStreamHandler {
+        @Override
+        public void handleIncomingStream(String streamId, InputStream stream) {
+            try {
+                // Check whether this is the old format
+                if (streamId != null) {
+                    // get taskId/streamId and timestamp
+                    ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
+                    streamId = RabbitMQUtils.readString(buffer);
+                    byte[] data = RabbitMQUtils.readByteArray(buffer);
+                    IOUtils.closeQuietly(stream);
+                    // create a new stream containing only the data
+                    stream = new ByteArrayInputStream(data);
+                }
+                receiveResponseData(streamId, System.currentTimeMillis(), stream);
+            } catch (IOException e) {
+                LOGGER.error("IO Error while trying to read incoming expected response.", e);
+            }
+        }
     }
 }

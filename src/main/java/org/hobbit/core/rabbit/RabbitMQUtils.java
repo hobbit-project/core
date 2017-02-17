@@ -3,6 +3,7 @@ package org.hobbit.core.rabbit;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 import org.apache.commons.io.Charsets;
 import org.apache.jena.rdf.model.Model;
@@ -23,6 +24,7 @@ public class RabbitMQUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQUtils.class);
 
     public static final Lang DEFAULT_RDF_LANG = Lang.JSONLD;
+    public static final Charset STRING_ENCODING = Charsets.UTF_8;
 
     /**
      * Reads a byte array from the given buffer assuming that it is preceded by
@@ -115,7 +117,7 @@ public class RabbitMQUtils {
         if (data == null) {
             return null;
         } else {
-            return new String(data, Charsets.UTF_8);
+            return new String(data, STRING_ENCODING);
         }
     }
 
@@ -134,7 +136,7 @@ public class RabbitMQUtils {
         if (data == null) {
             return null;
         } else {
-            return new String(data, offset, length, Charsets.UTF_8);
+            return new String(data, offset, length, STRING_ENCODING);
         }
     }
 
@@ -150,7 +152,7 @@ public class RabbitMQUtils {
         if (buffer == null) {
             return null;
         } else {
-            return new String(readByteArray(buffer), Charsets.UTF_8);
+            return new String(readByteArray(buffer), STRING_ENCODING);
         }
     }
 
@@ -222,7 +224,7 @@ public class RabbitMQUtils {
         if (string == null) {
             return new byte[0];
         } else {
-            return string.getBytes(Charsets.UTF_8);
+            return string.getBytes(STRING_ENCODING);
         }
     }
 

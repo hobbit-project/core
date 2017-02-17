@@ -5,6 +5,7 @@ package org.hobbit.core.data;
  *
  * @author Ruben Taelman (ruben.taelman@ugent.be)
  */
+@Deprecated
 public interface Result {
 
     public long getSentTimestamp();

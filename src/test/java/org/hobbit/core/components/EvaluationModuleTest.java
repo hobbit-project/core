@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
-import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Assert;
@@ -54,8 +54,9 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         Random rand = new Random();
 
         String taskId;
-        ResultImpl expResult, sysResult;
         ResultPairImpl pair;
+        long timestamp;
+        byte resultData[];
         boolean expResultMissing, sysResultMissing;
         for (int i = 0; i < numberOfMessages; ++i) {
             taskId = Integer.toString(i);
@@ -64,16 +65,18 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
             pair = new ResultPairImpl();
 
             if (!expResultMissing) {
-                expResult = new ResultImpl(rand.nextLong(), RabbitMQUtils.writeString(taskId));
-                evalStore.putResult(true, taskId, expResult.getSentTimestamp(), expResult.getData());
-                pair.setExpected(expResult);
+                timestamp = rand.nextLong();
+                resultData = RabbitMQUtils.writeString(taskId);
+                evalStore.putResult(true, taskId, timestamp, resultData);
+                pair.setExpected(InMemoryEvaluationStore.putTimestampInFront(timestamp, resultData));
             }
 
             if (!sysResultMissing) {
-                sysResult = new ResultImpl(rand.nextLong(), expResultMissing ? RabbitMQUtils.writeString(taskId)
-                        : RabbitMQUtils.writeString(Integer.toString(rand.nextInt())));
-                evalStore.putResult(false, taskId, sysResult.getSentTimestamp(), sysResult.getData());
-                pair.setActual(sysResult);
+                timestamp = rand.nextLong();
+                resultData = expResultMissing ? RabbitMQUtils.writeString(taskId)
+                        : RabbitMQUtils.writeString(Integer.toString(rand.nextInt()));
+                evalStore.putResult(false, taskId, timestamp, resultData);
+                pair.setActual(InMemoryEvaluationStore.putTimestampInFront(timestamp, resultData));
             }
 
             expectedResults.put(taskId, pair);
@@ -106,29 +109,27 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception {
         Assert.assertTrue((expectedData.length + receivedData.length) > 0);
-        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData) : RabbitMQUtils
-                .readString(receivedData);
+        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData)
+                : RabbitMQUtils.readString(receivedData);
         Assert.assertTrue(taskId + " is not known.", expectedResults.containsKey(taskId));
         ResultPairImpl pair = expectedResults.get(taskId);
-        
-        if(expectedData.length == 0){
+
+        if (expectedData.length == 0) {
             Assert.assertNull(pair.getExpected());
             Assert.assertEquals(0, taskSentTimestamp);
         } else {
             Assert.assertNotNull(pair.getExpected());
-            Assert.assertArrayEquals(pair.getExpected().getData(), expectedData);
-            Assert.assertEquals(pair.getExpected().getSentTimestamp(), taskSentTimestamp);
+            Assert.assertArrayEquals(IOUtils.toByteArray(pair.getExpected()), expectedData);
         }
-        
-        if(receivedData.length == 0){
+
+        if (receivedData.length == 0) {
             Assert.assertNull(pair.getActual());
             Assert.assertEquals(0, responseReceivedTimestamp);
         } else {
             Assert.assertNotNull(pair.getActual());
-            Assert.assertArrayEquals(pair.getActual().getData(), receivedData);
-            Assert.assertEquals(pair.getActual().getSentTimestamp(), responseReceivedTimestamp);
+            Assert.assertArrayEquals(IOUtils.toByteArray(pair.getActual()), receivedData);
         }
-        
+
         receivedResults.add(taskId);
     }
 

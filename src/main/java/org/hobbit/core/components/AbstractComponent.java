@@ -6,6 +6,7 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

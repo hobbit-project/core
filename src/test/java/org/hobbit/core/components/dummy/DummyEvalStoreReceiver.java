@@ -1,9 +1,12 @@
 package org.hobbit.core.components.dummy;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -16,20 +19,28 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
     private final List<String> expectedResponses = new ArrayList<String>();
 
     @Override
-    public void receiveResponseData(String taskId, long timestamp, byte[] data) {
+    public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
         StringBuilder builder = new StringBuilder();
         builder.append(taskId);
         builder.append(Long.toString(timestamp));
-        builder.append(RabbitMQUtils.readString(data));
+        try {
+            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         receivedResponses.add(builder.toString());
     }
 
     @Override
-    public void receiveExpectedResponseData(String taskId, long timestamp, byte[] data) {
+    public void receiveExpectedResponseData(String taskId, long timestamp, InputStream stream) {
         StringBuilder builder = new StringBuilder();
         builder.append(taskId);
         builder.append(Long.toString(timestamp));
-        builder.append(RabbitMQUtils.readString(data));
+        try {
+            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         expectedResponses.add(builder.toString());
     }
 

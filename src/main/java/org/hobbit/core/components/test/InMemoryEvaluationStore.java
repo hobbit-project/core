@@ -1,11 +1,15 @@
 package org.hobbit.core.components.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.AbstractEvaluationStorage;
-import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 
 /**
@@ -23,13 +27,21 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
     private Map<String, ResultPair> results = new HashMap<String, ResultPair>();
 
     @Override
-    public void receiveResponseData(String taskId, long timestamp, byte[] data) {
-        putResult(false, taskId, timestamp, data);
+    public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
+        try {
+            putResult(false, taskId, timestamp, IOUtils.toByteArray(stream));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void receiveExpectedResponseData(String taskId, long timestamp, byte[] data) {
-        putResult(true, taskId, timestamp, data);
+    public void receiveExpectedResponseData(String taskId, long timestamp, InputStream stream) {
+        try {
+            putResult(true, taskId, timestamp, IOUtils.toByteArray(stream));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -54,15 +66,29 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
             results.put(taskId, pair);
         }
         if (isExpectedResult) {
-            pair.setExpected(new ResultImpl(timestamp, data));
+            pair.setExpected(putTimestampInFront(timestamp, data));
         } else {
-            pair.setActual(new ResultImpl(timestamp, data));
+            pair.setActual(putTimestampInFront(timestamp, data));
         }
     }
 
     @Override
     protected Iterator<ResultPair> createIterator() {
         return results.values().iterator();
+    }
+    
+    /**
+     * Copies timestamp and data in one single byte array starting with the timestamp.
+     * 
+     * @param timestamp a timestamp that belongs to the given data
+     * @param data
+     * @return a single array containing both
+     */
+    public static byte[] putTimestampInFront(long timestamp, byte[] data) {
+        byte[] storedData = new byte[data.length + Long.BYTES];
+        ByteBuffer.wrap(storedData).putLong(timestamp);
+        System.arraycopy(data, 0, storedData, Long.BYTES, data.length);
+        return storedData;
     }
 
     /**
@@ -73,61 +99,26 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
      */
     public static class ResultPairImpl implements ResultPair {
 
-        private Result actual;
-        private Result expected;
+        private byte[] actual;
+        private byte[] expected;
 
-        public void setActual(Result actual) {
+        public void setActual(byte[] actual) {
             this.actual = actual;
         }
 
-        public void setExpected(Result expected) {
+        public void setExpected(byte[] expected) {
             this.expected = expected;
         }
 
         @Override
-        public Result getActual() {
-            return actual;
+        public InputStream getActual() {
+            return new ByteArrayInputStream(actual);
         }
 
         @Override
-        public Result getExpected() {
-            return expected;
+        public InputStream getExpected() {
+            return new ByteArrayInputStream(expected);
         }
     }
 
-    /**
-     * A simple structure implementing the {@link Result} interface
-     * 
-     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
-     *
-     */
-    public static class ResultImpl implements Result {
-
-        private long sentTimestamp;
-        private byte[] data;
-
-        public ResultImpl(long sentTimestamp, byte[] data) {
-            this.sentTimestamp = sentTimestamp;
-            this.data = data;
-        }
-
-        public void setSentTimestamp(long sentTimestamp) {
-            this.sentTimestamp = sentTimestamp;
-        }
-
-        public void setData(byte[] data) {
-            this.data = data;
-        }
-
-        @Override
-        public long getSentTimestamp() {
-            return sentTimestamp;
-        }
-
-        @Override
-        public byte[] getData() {
-            return data;
-        }
-
-    }
 }

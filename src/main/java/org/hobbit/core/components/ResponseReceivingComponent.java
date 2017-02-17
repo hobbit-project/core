@@ -1,5 +1,7 @@
 package org.hobbit.core.components;
 
+import java.io.InputStream;
+
 /**
  * This interface is implemented by components that want to receive the
  * responses from the system.
@@ -17,9 +19,9 @@ public interface ResponseReceivingComponent extends Component {
 	 * @param timestamp
 	 *            the time at which the response has been received from the
 	 *            system
-	 * @param data
+	 * @param stream
 	 *            the data received from a data generator
 	 */
-	public void receiveResponseData(String taskId, long timestamp, byte[] data);
+	public void receiveResponseData(String taskId, long timestamp, InputStream stream);
 
 }

@@ -1,5 +1,7 @@
 package org.hobbit.core.components;
 
+import java.io.InputStream;
+
 /**
  * This interface is implemented by components that want to receive the expected
  * responses from the task generator component.
@@ -20,6 +22,6 @@ public interface ExpectedResponseReceivingComponent extends Component {
 	 * @param data
 	 *            the data received from a task generator
 	 */
-	public void receiveExpectedResponseData(String taskId, long timestamp, byte[] data);
+	public void receiveExpectedResponseData(String taskId, long timestamp, InputStream stream);
 
 }

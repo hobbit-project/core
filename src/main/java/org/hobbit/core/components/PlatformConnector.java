@@ -1,6 +1,7 @@
 package org.hobbit.core.components;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
 
 /**
  * This interface should be implemented by components if they want to offer

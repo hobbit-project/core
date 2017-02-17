@@ -56,7 +56,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      * The maximum number of incoming messages that are processed in parallel.
      * Additional messages have to wait.
      */
-    private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+    private final int maxParallelProcessedMsgs;
     /**
      * Queue from the data generator to this evaluation storage.
      */
@@ -73,6 +73,14 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      * The RDF model containing the system parameters.
      */
     protected Model systemParamModel;
+
+    public AbstractSystemAdapter() {
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+    }
+
+    public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
+        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+    }
 
     @Override
     public void init() throws Exception {
