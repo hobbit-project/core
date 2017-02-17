@@ -127,6 +127,15 @@ public class DataSenderImpl implements DataSender {
         IOUtils.closeQuietly(queue);
     }
 
+    /**
+     * Returns a newly created {@link Builder}.
+     * 
+     * @return a new {@link Builder} instance
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static final class Builder {
 
         private static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataSender. Either a queue or a name and a factory to create a new queue are mandatory.";

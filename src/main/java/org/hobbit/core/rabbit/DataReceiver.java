@@ -30,4 +30,7 @@ public interface DataReceiver extends Closeable {
      */
     public void closeWhenFinished();
 
+    public void increaseErrorCount();
+    
+    public IncomingStreamHandler getDataHandler();
 }
