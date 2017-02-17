@@ -1,11 +1,13 @@
-package org.hobbit.core.rabbit.consume;
+package org.hobbit.core.rabbit.paired;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,22 +18,25 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.data.DataReceiveState;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.consume.MessageConsumer;
+import org.hobbit.core.rabbit.consume.MessageConsumerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 
-public class MessageConsumerImpl extends MessageConsumer {
+public class PairedConsumerImpl extends MessageConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MessageConsumerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PairedConsumerImpl.class);
 
     private static final int MAX_MESSAGE_BUFFER_SIZE = 50;
     /**
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
     protected static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-//    public static final int NO_MAX_HANDLING = -1;
+    // public static final int NO_MAX_HANDLING = -1;
 
     /**
      * Semaphore used to control the number of messages that can be processed in
@@ -41,27 +46,19 @@ public class MessageConsumerImpl extends MessageConsumer {
 
     protected Map<String, DataReceiveState> streamStats = new HashMap<>();
 
-    private boolean oldFormatWarningPrinted = false;
-
-    public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
-            /*,
-            int maxParallelHandledMessages*/
-            ) {
+    public PairedConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
+    /*
+     * , int maxParallelHandledMessages
+     */
+    ) {
         super(receiver, channel, maxParallelProcessedMsgs);
     }
 
     protected boolean handleMessage(BasicProperties properties, byte[] body) throws IOException {
         // check if we have to handle the deprecated v0.0.1 format
-        if ((properties.getCorrelationId() == null) && (properties.getMessageId() == null)) {
-            if (!oldFormatWarningPrinted) {
-                LOGGER.info("Encountered old, deprecated message format!");
-                oldFormatWarningPrinted = true;
-            }
-            // In this old format, every incoming message is a single
-            // stream, i.e., we can simply forward it
-            InputStream stream = new ByteArrayInputStream(body);
-            receiver.getDataHandler().handleIncomingStream(null, stream);
-            IOUtils.closeQuietly(stream);
+        if ((properties.getCorrelationId() == null) || (properties.getMessageId() == null)) {
+            LOGGER.error("Received a message without the needed correlation and message Ids. It will be ignored.");
+            return true;
         }
         String streamId = properties.getCorrelationId();
         int messageId = -1;
@@ -78,21 +75,44 @@ public class MessageConsumerImpl extends MessageConsumer {
                 state = streamStats.get(streamId);
             } else {
                 if (messageId == 0) {
-                    try {
-                        final PipedInputStream pis = new PipedInputStream();
-                        state = new DataReceiveState(streamId, new PipedOutputStream(pis));
-                        streamStats.put(streamId, state);
-                        executor.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                receiver.getDataHandler().handleIncomingStream(streamId, pis);
-                                IOUtils.closeQuietly(pis);
+                    String clusterId = properties.getClusterId();
+                    // If this is a head message
+                    if (clusterId != null) {
+                        String streamIds[] = null;
+                        try {
+                            streamIds = readStreamIds(body);
+                        } catch (Exception e) {
+                            LOGGER.error("Couldn't read stream Ids from the head message. Message will be ignored.", e);
+                            receiver.increaseErrorCount();
+                            return true;
+                        }
+                        try {
+                            final PipedInputStream streams[] = new PipedInputStream[streamIds.length];
+                            for (int i = 0; i < streams.length; ++i) {
+                                streams[i] = new PipedInputStream();
+                                state = new DataReceiveState(streamIds[i], new PipedOutputStream(streams[i]));
+                                streamStats.put(streamIds[i], state);
                             }
-                        });
-                    } catch (Exception e) {
-                        LOGGER.error("Couldn't create stream for incoming data. Message will be ignored.", e);
-                        receiver.increaseErrorCount();
+                            executor.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((PairedStreamHandler) receiver.getDataHandler()).handleIncomingStreams(streamId,
+                                            streams);
+                                    for (int i = 0; i < streams.length; ++i) {
+                                        IOUtils.closeQuietly(streams[i]);
+                                    }
+                                }
+                            });
+                        } catch (Exception e) {
+                            LOGGER.error("Couldn't create stream for incoming data. Message will be ignored.", e);
+                            receiver.increaseErrorCount();
+                        }
+                        // We have consumed the head message and can resume
                         return true;
+                    } else {
+                        // This message is the beginning of a stream for which
+                        // we have not seen a head message before
+                        return false;
                     }
                 } else {
                     return false;
@@ -115,6 +135,16 @@ public class MessageConsumerImpl extends MessageConsumer {
             }
         }
         return true;
+    }
+
+    private String[] readStreamIds(byte[] body) throws Exception {
+        ByteBuffer buffer = ByteBuffer.wrap(body);
+        List<String> streamIds = new ArrayList<String>();
+        while (buffer.hasRemaining()) {
+            streamIds.add(RabbitMQUtils.readString(buffer));
+        }
+        Collections.sort(streamIds);
+        return streamIds.toArray(new String[streamIds.size()]);
     }
 
     protected void processMessageData(byte[] messageData, DataReceiveState state) {
@@ -178,13 +208,13 @@ public class MessageConsumerImpl extends MessageConsumer {
             LOGGER.error("Interrupted while waiting for termination.", e);
         }
     }
-    
+
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static class Builder implements MessageConsumerBuilder {
-        
+
         private int maxParallelProcessedMsgs = MessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
 
         @Override
@@ -195,8 +225,8 @@ public class MessageConsumerImpl extends MessageConsumer {
 
         @Override
         public MessageConsumer build(DataReceiverImpl receiver, Channel channel) {
-            return new MessageConsumerImpl(receiver, channel, maxParallelProcessedMsgs);
+            return new PairedConsumerImpl(receiver, channel, maxParallelProcessedMsgs);
         }
-        
+
     }
 }

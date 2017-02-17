@@ -38,7 +38,7 @@ public class DataSenderImpl implements DataSender {
     private static final int DEFAULT_MESSAGE_SIZE = 65536;
     private static final int DEFAULT_DELIVERY_MODE = 2;
 
-    private IdGenerator idGenerator = new RandomIdGenerator();
+    protected IdGenerator idGenerator = new RandomIdGenerator();
     private RabbitQueue queue;
     private final int messageSize;
     private final int maxMessageSize;
@@ -69,11 +69,14 @@ public class DataSenderImpl implements DataSender {
 
     @Override
     public void sendData(InputStream is, String dataId) throws IOException {
+        sendData(is, dataId, new BasicProperties.Builder());
+    }
+
+    protected void sendData(InputStream is, String dataId, BasicProperties.Builder probBuilder) throws IOException {
         int messageId = 0;
         int length = 0;
         int dataPos = 0;
         byte[] buffer = new byte[maxMessageSize];
-        BasicProperties.Builder probBuilder = new BasicProperties.Builder();
         probBuilder.correlationId(dataId);
         probBuilder.deliveryMode(deliveryMode);
         while (true) {
@@ -136,16 +139,16 @@ public class DataSenderImpl implements DataSender {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
 
-        private static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataSender. Either a queue or a name and a factory to create a new queue are mandatory.";
+        protected static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataSender. Either a queue or a name and a factory to create a new queue are mandatory.";
 
-        private IdGenerator idGenerator = new RandomIdGenerator();
-        private RabbitQueue queue;
-        private String queueName;
-        private RabbitQueueFactory factory;
-        private int messageSize = DEFAULT_MESSAGE_SIZE;
-        private int deliveryMode = DEFAULT_DELIVERY_MODE;
+        protected IdGenerator idGenerator = new RandomIdGenerator();
+        protected RabbitQueue queue;
+        protected String queueName;
+        protected RabbitQueueFactory factory;
+        protected int messageSize = DEFAULT_MESSAGE_SIZE;
+        protected int deliveryMode = DEFAULT_DELIVERY_MODE;
 
         public Builder() {
         };
