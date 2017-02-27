@@ -51,6 +51,9 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
             ConnectionFactory factory = new ConnectionFactory();
             rabbitMQHostName = System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY);
             factory.setHost(rabbitMQHostName);
+            factory.setAutomaticRecoveryEnabled(true);
+            // attempt recovery every 10 seconds
+            factory.setNetworkRecoveryInterval(10000);
             for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
                 try {
                     connection = factory.newConnection();
