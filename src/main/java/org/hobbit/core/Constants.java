@@ -97,6 +97,8 @@ public final class Constants {
     public static final String CONTAINER_TYPE_BENCHMARK = "BENCHMARK";
 
     public static final String CONTAINER_TYPE_SYSTEM = "SYSTEM";
+
+    public static final String CONTAINER_TYPE_DATABASE = "DATABASE";
     
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
 	

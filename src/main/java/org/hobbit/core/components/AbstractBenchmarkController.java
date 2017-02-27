@@ -261,7 +261,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      *            environment variables that should be given to the component
      */
     protected void createEvaluationStorage(String evalStorageImageName, String[] envVariables) {
-        evalStoreContainerId = createContainer(evalStorageImageName, envVariables);
+        evalStoreContainerId = createContainer(evalStorageImageName, Constants.CONTAINER_TYPE_DATABASE, envVariables);
         if (evalStoreContainerId == null) {
             String errorMsg = "Couldn't create evaluation storage. Aborting.";
             LOGGER.error(errorMsg);
