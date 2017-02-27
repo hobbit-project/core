@@ -199,8 +199,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * create and start an instance of the given image using the given
      * environment variables.
      * 
-     * <p>
-     * Note that the containerType parameter should have one of the following
+     * <p>Note that the containerType parameter should have one of the following
      * values.
      * <ul>
      * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
@@ -209,7 +208,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * of a benchmark but should be located on a storage node.</li>
      * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
      * a benchmarked system.</li>
-     * </p>
+     * </ul>
      * 
      * @param imageName
      *            the name of the image of the docker container
