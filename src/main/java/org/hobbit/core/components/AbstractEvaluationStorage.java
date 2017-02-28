@@ -68,6 +68,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * Channel on which the acknowledgements are send.
      */
     protected Channel ackChannel = null;
+    
+    public AbstractEvaluationStorage() {
+        defaultContainerType = Constants.CONTAINER_TYPE_DATABASE;
+    }
 
     @Override
     public void init() throws Exception {

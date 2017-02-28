@@ -117,6 +117,10 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * The URI of the experiment.
      */
     protected String experimentUri;
+    
+    public AbstractBenchmarkController() {
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
+    }
 
     @Override
     public void init() throws Exception {

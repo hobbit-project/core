@@ -88,7 +88,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES} messages in parallel.
      */
     public AbstractTaskGenerator() {
-        this.maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
     }
 
     /**
@@ -103,6 +103,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
      */
     public AbstractTaskGenerator(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
     @Override

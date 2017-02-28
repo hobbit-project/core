@@ -50,9 +50,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected Channel cmdChannel = null;
     /**
-     * Type of this container.
+     * Default type of containers created by this container
      */
-    protected String containerType = "";
+    protected String defaultContainerType = "";
     /**
      * Set of command headers that are expected by this component.
      */
@@ -191,7 +191,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @return the name of the container instance or null if an error occurred
      */
     protected String createContainer(String imageName, String[] envVariables) {
-        return createContainer(imageName, this.containerType, envVariables);
+        return createContainer(imageName, this.defaultContainerType, envVariables);
     }
 
     /**

@@ -23,6 +23,10 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     private int numberOfGenerators;
     protected RabbitQueue dataGen2TaskGenQueue;
     protected RabbitQueue dataGen2SystemQueue;
+    
+    public AbstractDataGenerator() {
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
+    }
 
     @Override
     public void init() throws Exception {

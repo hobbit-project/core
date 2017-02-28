@@ -47,6 +47,10 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
      * The URI of the experiment.
      */
     protected String experimentUri;
+    
+    public AbstractEvaluationModule() {
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
+    }
 
     @Override
     public void init() throws Exception {

@@ -91,6 +91,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
      */
     public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+        defaultContainerType = Constants.CONTAINER_TYPE_SYSTEM;
     }
 
     @Override
