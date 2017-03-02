@@ -30,6 +30,7 @@
 			<url>https://www.gnu.org/licenses/gpl-2.0.txt</url>
 		</license>
 	</licenses>
+    <inceptionYear>2017</inceptionYear>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -161,8 +162,8 @@
 				<configuration>
 					<header>com/mycila/maven/plugin/license/templates/GPL-3.txt</header>
 					<properties>
-						<owner>Agile Knowledge Engineering and Semantic Web (AKSW)
-							(ngonga@informatik.uni-leipzig.de)</owner>
+						<owner>Semantic Data Management Unit (InfAI)</owner>
+						<email>ngonga@informatik.uni-leipzig.de</email>
 					</properties>
 					<excludes>
 						<exclude>**/README</exclude>
