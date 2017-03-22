@@ -95,13 +95,13 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        
+
         init();
 
         Thread[] dataGenThreads = new Thread[numberOfDataGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfDataGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages);
+            DummyDataCreator dataGenerator = new DummyDataCreator(i, numberOfDataGenerators, numberOfMessages);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {

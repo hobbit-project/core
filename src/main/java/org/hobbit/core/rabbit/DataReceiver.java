@@ -2,6 +2,8 @@ package org.hobbit.core.rabbit;
 
 import java.io.Closeable;
 
+import org.hobbit.core.data.RabbitQueue;
+
 /**
  * An interface for a class that receives data and offers methods to close the
  * receiving when it is finished and to check the receiver for errors that might
@@ -33,4 +35,6 @@ public interface DataReceiver extends Closeable {
     public void increaseErrorCount();
     
     public IncomingStreamHandler getDataHandler();
+    
+    public RabbitQueue getQueue();
 }

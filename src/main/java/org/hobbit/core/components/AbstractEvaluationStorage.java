@@ -20,7 +20,6 @@ import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.paired.PairedDataSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +33,19 @@ import com.rabbitmq.client.Envelope;
  * This abstract class implements basic functions that can be used to implement
  * an evaluation storage.
  * 
+ * 
+ * Incoming messages should have the structure:<br>
+ * {@code timestamp length id data}<br>
+ * where
+ * <ul>
+ * <li>{@code timestamp} is a {@code long} value (only expected if the message
+ * is received from a task generator)</li>
+ * <li>{@code length} is an {@code int} value containing the length of the
+ * following id string</li>
+ * <li>{@code id} is a string with the given {@code length}</li>
+ * <li>{@code data} is the remaining bytes that are received</li>
+ * </ul>
+ * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -41,6 +53,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         implements ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
+
+    public static final int ITERATOR_ID_STREAM_ID = 0;
+    public static final int EXPECTED_RESPONSE_STREAM_ID = 1;
+    public static final int RECEIVED_RESPONSE_STREAM_ID = 2;
 
     /**
      * If a request contains this iterator ID, a new iterator is created and its
@@ -99,58 +115,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             // offer such a method
         }
 
-        final RabbitQueueFactory factory = this;
+        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
-                new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        InputStream response[] = null;
-                        // get iterator id
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
-                        if (buffer.remaining() < 1) {
-                            response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
-                            LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-                        } else {
-                            byte iteratorId = buffer.get();
-
-                            // get the iterator
-                            Iterator<ResultPair> iterator = null;
-                            if (iteratorId == NEW_ITERATOR_ID) {
-                                // create and save a new iterator
-                                iteratorId = (byte) resultPairIterators.size();
-                                LOGGER.info("Creating new iterator #{}", iteratorId);
-                                resultPairIterators.add(iterator = createIterator());
-                            } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                                response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
-                                LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-                                        + "). Returning emtpy response.");
-                            } else {
-                                iterator = resultPairIterators.get(iteratorId);
-                            }
-                            if ((iterator != null) && (iterator.hasNext())) {
-                                ResultPair resultPair = iterator.next();
-                                response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }),
-                                        resultPair.getExpected(), resultPair.getActual() };
-                            } else {
-                                response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }) };
-                            }
-                        }
-                        PairedDataSender sender = null;
-                        synchronized (replyingSenders) {
-                            if (replyingSenders.containsKey(properties.getReplyTo())) {
-                                sender = replyingSenders.get(properties.getReplyTo());
-                            } else {
-                                sender = PairedDataSender.builder().queue(factory, properties.getReplyTo()).build();
-                                replyingSenders.put(properties.getReplyTo(), sender);
-                            }
-                        }
-                        sender.sendData(response);
-                        for (int i = 0; i < response.length; ++i) {
-                            IOUtils.closeQuietly(response[i]);
-                        }
-                    }
-                });
+                new IterationRequestReceiver(evalModule2EvalStoreQueue.channel));
 
         boolean sendAcks = false;
         if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
@@ -177,6 +145,8 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
     public void run() throws Exception {
         sendToCmdQueue(Commands.EVAL_STORAGE_READY_SIGNAL);
         terminationMutex.acquire();
+        expResponseReceiver.closeWhenFinished();
+        systemResponseReceiver.closeWhenFinished();
     }
 
     @Override
@@ -229,34 +199,30 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
         @Override
         public void handleIncomingStream(String streamId, InputStream stream) {
             long timestamp;
+            String taskId;
             try {
-                // Check whether this is the old format
+                /*
+                 * Check whether this is the old format (backwards compatibility
+                 * to version 1.0.0 in which the timestamp is placed behind(!)
+                 * the data)
+                 */
                 if (streamId != null) {
                     // get taskId/streamId and timestamp
                     ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
-                    streamId = RabbitMQUtils.readString(buffer);
+                    taskId = RabbitMQUtils.readString(buffer);
                     byte[] data = RabbitMQUtils.readByteArray(buffer);
                     timestamp = buffer.getLong();
                     IOUtils.closeQuietly(stream);
                     // create a new stream containing only the data
                     stream = new ByteArrayInputStream(data);
                 } else {
-                    // Read the first bytes containing the timestamp
-                    int pos = 0, length = 0;
-                    byte timestampByte[] = new byte[Long.BYTES];
-                    while ((length >= 0) && (pos < Long.BYTES)) {
-                        length = stream.read(timestampByte, pos, timestampByte.length - pos);
-                        pos += length;
-                    }
-                    // -1 comes from the last addition were length=-1
-                    if (pos < (Long.BYTES - 1)) {
-                        LOGGER.error(
-                                "Got a message that did not even contain the necessary timestamp. It will be ignored.");
-                        return;
-                    }
-                    timestamp = RabbitMQUtils.readLong(timestampByte);
+                    // get taskId and timestamp
+                    timestamp = RabbitMQUtils.readLong(stream);
+                    int length = RabbitMQUtils.readInt(stream);
+                    taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
                 }
-                receiveExpectedResponseData(streamId, timestamp, stream);
+
+                receiveExpectedResponseData(taskId, timestamp, stream);
             } catch (IOException e) {
                 LOGGER.error("IO Error while trying to read incoming expected response.", e);
             }
@@ -272,21 +238,91 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
     protected class SystemResponseReceiver implements IncomingStreamHandler {
         @Override
         public void handleIncomingStream(String streamId, InputStream stream) {
+            String taskId;
             try {
-                // Check whether this is the old format
+                /*
+                 * Check whether this is the old format (backwards compatibility
+                 * to version 1.0.0 in which the data is preceded by its length)
+                 */
                 if (streamId != null) {
                     // get taskId/streamId and timestamp
                     ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
-                    streamId = RabbitMQUtils.readString(buffer);
+                    taskId = RabbitMQUtils.readString(buffer);
                     byte[] data = RabbitMQUtils.readByteArray(buffer);
                     IOUtils.closeQuietly(stream);
                     // create a new stream containing only the data
                     stream = new ByteArrayInputStream(data);
+                } else {
+                    // get taskId
+                    int length = RabbitMQUtils.readInt(stream);
+                    taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
                 }
-                receiveResponseData(streamId, System.currentTimeMillis(), stream);
+                receiveResponseData(taskId, System.currentTimeMillis(), stream);
             } catch (IOException e) {
                 LOGGER.error("IO Error while trying to read incoming expected response.", e);
             }
         }
     }
+
+    protected class IterationRequestReceiver extends DefaultConsumer {
+
+        public IterationRequestReceiver(Channel channel) {
+            super(channel);
+        }
+
+        @Override
+        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+                throws IOException {
+            InputStream response[] = null;
+            // get iterator id
+            ByteBuffer buffer = ByteBuffer.wrap(body);
+            if (buffer.remaining() < 1) {
+                response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
+                LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+            } else {
+                byte iteratorId = buffer.get();
+
+                // get the iterator
+                Iterator<ResultPair> iterator = null;
+                if (iteratorId == NEW_ITERATOR_ID) {
+                    // create and save a new iterator
+                    iteratorId = (byte) resultPairIterators.size();
+                    LOGGER.info("Creating new iterator #{}", iteratorId);
+                    resultPairIterators.add(iterator = createIterator());
+                } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                    response = new InputStream[] { new ByteArrayInputStream(EMPTY_RESPONSE) };
+                    LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                            + "). Returning emtpy response.");
+                } else {
+                    iterator = resultPairIterators.get(iteratorId);
+                }
+                if ((iterator != null) && (iterator.hasNext())) {
+                    ResultPair resultPair = iterator.next();
+                    // The order of the streams is defined by
+                    // ITERATOR_ID_STREAM_ID,
+                    // EXPECTED_RESPONSE_STREAM_ID and
+                    // RECEIVED_RESPONSE_STREAM_ID
+                    response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }),
+                            resultPair.getExpected(), resultPair.getActual() };
+                } else {
+                    response = new InputStream[] { new ByteArrayInputStream(new byte[] { iteratorId }) };
+                }
+            }
+            PairedDataSender sender = null;
+            synchronized (replyingSenders) {
+                if (replyingSenders.containsKey(properties.getReplyTo())) {
+                    sender = replyingSenders.get(properties.getReplyTo());
+                } else {
+                    sender = PairedDataSender.builder().queue(AbstractEvaluationStorage.this, properties.getReplyTo())
+                            .build();
+                    replyingSenders.put(properties.getReplyTo(), sender);
+                }
+            }
+            sender.sendData(response);
+            for (int i = 0; i < response.length; ++i) {
+                IOUtils.closeQuietly(response[i]);
+            }
+        }
+    }
+
 }

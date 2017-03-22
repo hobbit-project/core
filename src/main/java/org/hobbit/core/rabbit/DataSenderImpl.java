@@ -10,6 +10,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.utils.IdGenerator;
 import org.hobbit.core.utils.RandomIdGenerator;
+import org.hobbit.core.utils.SteppingIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class DataSenderImpl implements DataSender {
     private static final int DEFAULT_MESSAGE_SIZE = 65536;
     private static final int DEFAULT_DELIVERY_MODE = 2;
 
-    protected IdGenerator idGenerator = new RandomIdGenerator();
+    protected IdGenerator idGenerator = new SteppingIdGenerator();
     private RabbitQueue queue;
     private final int messageSize;
     private final int maxMessageSize;

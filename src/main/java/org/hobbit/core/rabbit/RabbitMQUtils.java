@@ -1,5 +1,7 @@
 package org.hobbit.core.rabbit;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -20,7 +22,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class RabbitMQUtils {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQUtils.class);
 
     public static final Lang DEFAULT_RDF_LANG = Lang.JSONLD;
@@ -48,6 +50,53 @@ public class RabbitMQUtils {
                 return data;
             }
         }
+    }
+
+    /**
+     * Reads a byte array from the given stream assuming that it is preceded by
+     * an int value containing the length of the byte array.
+     * 
+     * @param stream
+     *            the {@link InputStream} which provides {@link Integer#BYTES} =
+     *            {@value Integer#BYTES} which are interpreted as the array
+     *            length and additionally to that at least the number of bytes
+     *            needed for the byte array
+     * @throws IOException
+     *             if an IO error occurs during reading from stream
+     * @throws IllegalArgumentException
+     *             if the stream does not provide enough bytes
+     */
+    public static byte[] readByteArray(InputStream stream) throws IOException, IllegalArgumentException {
+        return readByteArray(stream, readInt(stream));
+    }
+
+    /**
+     * Reads a byte array of the given size from the given stream.
+     * 
+     * @param stream
+     *            the {@link InputStream} which provides at least the number of
+     *            bytes needed for the byte array
+     * @param size
+     *            the number of bytes that should be read from the given stream
+     * @throws IOException
+     *             if an IO error occurs during reading from stream
+     * @throws IllegalArgumentException
+     *             if the stream does not provide enough bytes
+     */
+    public static byte[] readByteArray(InputStream stream, int size) throws IOException, IllegalArgumentException {
+        // Read the first bytes containing the timestamp
+        int pos = 0, length = 0;
+        byte bytes[] = new byte[size];
+        while ((length >= 0) && (pos < size)) {
+            length = stream.read(bytes, pos, bytes.length - pos);
+            pos += length;
+        }
+        // -1 comes from the last addition were length=-1
+        if (pos < (size - 1)) {
+            throw new IllegalArgumentException(
+                    "The given input stream does not provide the expected " + size + " bytes.");
+        }
+        return bytes;
     }
 
     /**
@@ -299,11 +348,55 @@ public class RabbitMQUtils {
      * @return the value read from the array
      */
     public static long readLong(byte[] data, int offset, int length) {
-        if(length < Long.BYTES) {
+        if (length < Long.BYTES) {
             LOGGER.error("Cant read a long value from {} bytes. Returning 0.", length);
             return 0;
         }
         ByteBuffer buffer = ByteBuffer.wrap(data, offset, length);
         return buffer.getLong();
+    }
+
+    /**
+     * Reads a {@code long} value from the given {@link InputStream}.
+     * 
+     * @param stream
+     *            the {@link InputStream} which provides the bytes of the
+     *            {@code long} value
+     * @return the {@code long} value that have been read from the stream
+     * @throws IOException
+     *             if an IO error occurs during reading from stream
+     * @throws IllegalArgumentException
+     *             if the stream does not provide enough bytes for a {@code long} value
+     */
+    public static long readLong(InputStream stream) throws IOException, IllegalArgumentException {
+        return RabbitMQUtils.readLong(readByteArray(stream, Long.BYTES));
+    }
+
+    /**
+     * Reads a {@code int} value from the given byte array.
+     * 
+     * @param data
+     *            a serialized {@code int} value
+     * @return the value read from the array
+     */
+    public static int readInt(byte[] data) {
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        return buffer.getInt();
+    }
+
+    /**
+     * Reads an {@code int} value from the given {@link InputStream}.
+     * 
+     * @param stream
+     *            the {@link InputStream} which provides the bytes of the
+     *            {@code int} value
+     * @return the {@code int} value that have been read from the stream
+     * @throws IOException
+     *             if an IO error occurs during reading from stream
+     * @throws IllegalArgumentException
+     *             if the stream does not provide enough bytes for a long value
+     */
+    public static int readInt(InputStream stream) throws IOException, IllegalArgumentException {
+        return RabbitMQUtils.readInt(readByteArray(stream, Integer.BYTES));
     }
 }

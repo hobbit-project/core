@@ -16,6 +16,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.data.DataReceiveState;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class MessageConsumerImpl extends MessageConsumer {
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
     protected static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-//    public static final int NO_MAX_HANDLING = -1;
+    // public static final int NO_MAX_HANDLING = -1;
 
     /**
      * Semaphore used to control the number of messages that can be processed in
@@ -44,14 +45,15 @@ public class MessageConsumerImpl extends MessageConsumer {
     private boolean oldFormatWarningPrinted = false;
 
     public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
-            /*,
-            int maxParallelHandledMessages*/
-            ) {
+    /*
+     * , int maxParallelHandledMessages
+     */
+    ) {
         super(receiver, channel, maxParallelProcessedMsgs);
     }
 
     protected boolean handleMessage(BasicProperties properties, byte[] body) throws IOException {
-        // check if we have to handle the deprecated v0.0.1 format
+        // check if we have to handle the deprecated v1.0.0 format
         if ((properties.getCorrelationId() == null) && (properties.getMessageId() == null)) {
             if (!oldFormatWarningPrinted) {
                 LOGGER.info("Encountered old, deprecated message format!");
@@ -59,9 +61,7 @@ public class MessageConsumerImpl extends MessageConsumer {
             }
             // In this old format, every incoming message is a single
             // stream, i.e., we can simply forward it
-            InputStream stream = new ByteArrayInputStream(body);
-            receiver.getDataHandler().handleIncomingStream(null, stream);
-            IOUtils.closeQuietly(stream);
+            return handleSimpleMessage(body);
         }
         String streamId = properties.getCorrelationId();
         int messageId = -1;
@@ -82,13 +82,7 @@ public class MessageConsumerImpl extends MessageConsumer {
                         final PipedInputStream pis = new PipedInputStream();
                         state = new DataReceiveState(streamId, new PipedOutputStream(pis));
                         streamStats.put(streamId, state);
-                        executor.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                receiver.getDataHandler().handleIncomingStream(streamId, pis);
-                                IOUtils.closeQuietly(pis);
-                            }
-                        });
+                        executor.submit(new StreamHandlerCall(streamId, pis, receiver.getDataHandler()));
                     } catch (Exception e) {
                         LOGGER.error("Couldn't create stream for incoming data. Message will be ignored.", e);
                         receiver.increaseErrorCount();
@@ -114,6 +108,19 @@ public class MessageConsumerImpl extends MessageConsumer {
                 }
             }
         }
+        return true;
+    }
+
+    /**
+     * 
+     * 
+     * @param properties
+     * @param body
+     * @return
+     * @throws IOException
+     */
+    protected boolean handleSimpleMessage(byte[] body) throws IOException {
+        executor.submit(new StreamHandlerCall(null, new ByteArrayInputStream(body), receiver.getDataHandler()));
         return true;
     }
 
@@ -178,13 +185,13 @@ public class MessageConsumerImpl extends MessageConsumer {
             LOGGER.error("Interrupted while waiting for termination.", e);
         }
     }
-    
+
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static class Builder implements MessageConsumerBuilder {
-        
+
         private int maxParallelProcessedMsgs = MessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
 
         @Override
@@ -197,6 +204,34 @@ public class MessageConsumerImpl extends MessageConsumer {
         public MessageConsumer build(DataReceiverImpl receiver, Channel channel) {
             return new MessageConsumerImpl(receiver, channel, maxParallelProcessedMsgs);
         }
-        
+
+    }
+
+    /**
+     * A simple {@link Runnable} implementation that calls the given
+     * {@link IncomingStreamHandler} with the given {@link InputStream} and
+     * stream ID.
+     * 
+     * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
+     *
+     */
+    public static class StreamHandlerCall implements Runnable {
+
+        private String streamId;
+        private InputStream stream;
+        private IncomingStreamHandler handler;
+
+        public StreamHandlerCall(String streamId, InputStream stream, IncomingStreamHandler handler) {
+            this.streamId = streamId;
+            this.stream = stream;
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+            handler.handleIncomingStream(streamId, stream);
+            IOUtils.closeQuietly(stream);
+        }
+
     }
 }

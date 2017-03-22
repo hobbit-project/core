@@ -92,6 +92,10 @@ public class DataReceiverImpl implements DataReceiver {
     public int getErrorCount() {
         return errorCount;
     }
+    
+    public RabbitQueue getQueue() {
+        return queue;
+    }
 
     /**
      * This method waits for the data receiver to finish its work and closes the

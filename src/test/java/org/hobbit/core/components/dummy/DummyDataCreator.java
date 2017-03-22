@@ -9,7 +9,9 @@ public class DummyDataCreator extends AbstractDataGenerator {
 
     private int dataSize;
 
-    public DummyDataCreator(int dataSize) {
+    public DummyDataCreator(int generatorId, int numberOfGenerators, int dataSize) {
+        this.generatorId = generatorId;
+        this.numberOfGenerators = numberOfGenerators;
         this.dataSize = dataSize;
     }
 

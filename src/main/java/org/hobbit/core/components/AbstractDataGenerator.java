@@ -1,60 +1,90 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
-import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.AlreadyClosedException;
-import com.rabbitmq.client.MessageProperties;
+import org.hobbit.core.rabbit.DataSender;
+import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.utils.SteppingIdGenerator;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataGenerator.class);
-
+    /**
+     * Semaphore used to wait for the start signal of the benchmark controller.
+     */
     private Semaphore startDataGenMutex = new Semaphore(0);
-    private int generatorId;
-    private int numberOfGenerators;
-    protected RabbitQueue dataGen2TaskGenQueue;
-    protected RabbitQueue dataGen2SystemQueue;
+    /**
+     * The ID of this generator.
+     */
+    protected int generatorId = -1;
+    /**
+     * The number of data generators that might be running in parallel.
+     */
+    protected int numberOfGenerators = -1;
+    /**
+     * Sender for transferring data to the task generators.
+     */
+    protected DataSender sender2TaskGen;
+    /**
+     * Sender for transferring data to the benchmarked system.
+     */
+    protected DataSender sender2System;
+
+    public AbstractDataGenerator() {
+    }
+
+    public AbstractDataGenerator(DataSender sender2TaskGen, DataSender sender2System) {
+        this.sender2TaskGen = sender2TaskGen;
+        this.sender2System = sender2System;
+    }
 
     @Override
     public void init() throws Exception {
         super.init();
         Map<String, String> env = System.getenv();
 
-        if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
-        }
-
-        if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
+        // If the generator ID is not predefined
+        if (generatorId < 0) {
+            if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
+                throw new IllegalArgumentException(
+                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
+            }
+            try {
+                generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
+            }
         }
 
-        dataGen2TaskGenQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
-        dataGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
+        // If the number of generators is not predefined
+        if (numberOfGenerators < 0) {
+            if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
+                throw new IllegalArgumentException(
+                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
+            }
+            try {
+                numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
+            }
+        }
+
+        if (sender2TaskGen == null) {
+            sender2TaskGen = DataSenderImpl.builder()
+                    .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
+                    .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+        }
+        if (sender2System == null) {
+            sender2System = DataSenderImpl.builder()
+                    .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
+                    .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
+        }
     }
 
     @Override
@@ -66,26 +96,8 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         generateData();
 
         // Unfortunately, we have to wait until all messages are consumed
-        try {
-            while (dataGen2SystemQueue.messageCount() > 0) {
-                Thread.sleep(500);
-            }
-        } catch (AlreadyClosedException e) {
-            LOGGER.info("The queue to the system is already closed. Assuming that all messages have been consumed.");
-        } catch (Exception e) {
-            LOGGER.warn("Exception while trying to check whether all messages have been consumed. It will be ignored.",
-                    e);
-        }
-        try {
-            while (dataGen2TaskGenQueue.messageCount() > 0) {
-                Thread.sleep(500);
-            }
-        } catch (AlreadyClosedException e) {
-            LOGGER.info("The queue to the system is already closed. Assuming that all messages have been consumed.");
-        } catch (Exception e) {
-            LOGGER.warn("Exception while trying to check whether all messages have been consumed. It will be ignored.",
-                    e);
-        }
+        sender2System.closeWhenFinished();
+        sender2TaskGen.closeWhenFinished();
     }
 
     protected abstract void generateData() throws Exception;
@@ -100,13 +112,19 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     }
 
     protected void sendDataToTaskGenerator(byte[] data) throws IOException {
-        dataGen2TaskGenQueue.channel.basicPublish("", dataGen2TaskGenQueue.name, MessageProperties.PERSISTENT_BASIC,
-                data);
+        sender2TaskGen.sendData(data);
+    }
+
+    protected void sendDataToTaskGenerator(InputStream stream) throws IOException {
+        sender2TaskGen.sendData(stream);
     }
 
     protected void sendDataToSystemAdapter(byte[] data) throws IOException {
-        dataGen2SystemQueue.channel.basicPublish("", dataGen2SystemQueue.name, MessageProperties.PERSISTENT_BASIC,
-                data);
+        sender2TaskGen.sendData(data);
+    }
+
+    protected void sendDataToSystemAdapter(InputStream stream) throws IOException {
+        sender2TaskGen.sendData(stream);
     }
 
     public int getGeneratorId() {
@@ -119,8 +137,8 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(dataGen2TaskGenQueue);
-        IOUtils.closeQuietly(dataGen2SystemQueue);
+        sender2TaskGen.close();
+        sender2System.close();
         super.close();
     }
 }

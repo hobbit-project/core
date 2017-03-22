@@ -62,8 +62,8 @@ public interface DataSender extends Closeable {
     public void sendData(InputStream is, String dataId) throws IOException;
 
     /**
-     * Closes the sender when its work is done, i.e., all messages have been
-     * consumed by receivers from the queue.
+     * A blocking method that closes the sender when its work is done, i.e., all
+     * messages have been consumed by receivers from the queue.
      */
     public void closeWhenFinished();
 

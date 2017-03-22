@@ -1,24 +1,9 @@
 package org.hobbit.core.components;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Map;
+import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.vocabulary.RDF;
-import org.hobbit.core.Commands;
-import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
-import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.vocab.HOBBIT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.QueueingConsumer;
+import org.hobbit.core.components.stream.AbstractStreamingEvaluationModule;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -27,106 +12,12 @@ import com.rabbitmq.client.QueueingConsumer;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractEvaluationModule extends AbstractCommandReceivingComponent {
+public abstract class AbstractEvaluationModule extends AbstractStreamingEvaluationModule {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
-
-    /**
-     * Consumer used to receive the responses from the evaluation storage.
-     */
-    protected QueueingConsumer consumer;
-    /**
-     * Queue to the evaluation storage.
-     */
-    protected RabbitQueue evalModule2EvalStoreQueue;
-    /**
-     * Incoming queue from the evaluation storage.
-     */
-    protected RabbitQueue evalStore2EvalModuleQueue;
-    /**
-     * The URI of the experiment.
-     */
-    protected String experimentUri;
-
-    @Override
-    public void init() throws Exception {
-        super.init();
-
-        Map<String, String> env = System.getenv();
-        // Get the experiment URI
-        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
-            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
-        } else {
-            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
-                    + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
-
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
-        evalStore2EvalModuleQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME));
-
-        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
-        evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
-    }
-
-    @Override
-    public void run() throws Exception {
-        sendToCmdQueue(Commands.EVAL_MODULE_READY_SIGNAL);
-        collectResponses();
-        Model model = summarizeEvaluation();
-        LOGGER.info("The result model has " + model.size() + " triples.");
-        sendResultModel(model);
-    }
-
-    /**
-     * This method communicates with the evaluation storage to collect all
-     * response pairs. For every pair the
-     * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
-     * 
-     * @throws Exception
-     *             if a communication error occurs.
-     */
-    protected void collectResponses() throws Exception {
-        byte[] expectedData;
-        byte[] receivedData;
-        long taskSentTimestamp;
-        long responseReceivedTimestamp;
-
-        BasicProperties props;
-        byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
-        ByteBuffer buffer;
-
-        while (true) {
-            // request next response pair
-            props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
-            evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-            // parse the response
-            buffer = ByteBuffer.wrap(delivery.getBody());
-            // if the response is empty
-            if (buffer.remaining() == 0) {
-                LOGGER.error("Got a completely empty response from the evaluation storage.");
-                return;
-            }
-            requestBody[0] = buffer.get();
-
-            // if the response is empty
-            if (buffer.remaining() == 0) {
-                return;
-            }
-            byte[] data = RabbitMQUtils.readByteArray(buffer);
-            taskSentTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            expectedData = RabbitMQUtils.readByteArray(buffer);
-
-            data = RabbitMQUtils.readByteArray(buffer);
-            responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            receivedData = RabbitMQUtils.readByteArray(buffer);
-
-            evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-        }
+    protected void evaluateResponse(InputStream expectedData, InputStream receivedData, long taskSentTimestamp,
+            long responseReceivedTimestamp) throws Exception {
+        evaluateResponse(IOUtils.toByteArray(expectedData), IOUtils.toByteArray(receivedData), taskSentTimestamp,
+                responseReceivedTimestamp);
     }
 
     /**
@@ -147,51 +38,4 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
     protected abstract void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception;
 
-    /**
-     * Summarizes the evaluation and generates an RDF model containing the
-     * evaluation results.
-     * 
-     * @return an RDF model containing the evaluation results
-     * @throws Exception
-     *             if a sever error occurs
-     */
-    protected abstract Model summarizeEvaluation() throws Exception;
-
-    /**
-     * Sends the model to the benchmark controller.
-     * 
-     * @param model
-     *            the model that should be sent
-     * @throws IOException
-     *             if an error occurs during the commmunication
-     */
-    private void sendResultModel(Model model) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        model.write(outputStream, "JSONLD");
-        sendToCmdQueue(Commands.EVAL_MODULE_FINISHED_SIGNAL, outputStream.toByteArray());
-    }
-
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        // Nothing to do
-    }
-
-    @Override
-    public void close() throws IOException {
-        IOUtils.closeQuietly(evalModule2EvalStoreQueue);
-        IOUtils.closeQuietly(evalStore2EvalModuleQueue);
-        // if (evalModule2EvalStore != null) {
-        // try {
-        // evalModule2EvalStore.close();
-        // } catch (Exception e) {
-        // }
-        // }
-        super.close();
-    }
-
-    protected Model createDefaultModel() {
-        Model resultModel = ModelFactory.createDefaultModel();
-        resultModel.add(resultModel.createResource(experimentUri), RDF.type, HOBBIT.Experiment);
-        return resultModel;
-    }
 }

@@ -1,6 +1,8 @@
-package org.hobbit.core.components;
+package org.hobbit.core.components.stream;
 
-import org.hobbit.core.components.stream.StreamingTaskReceivingComponent;
+import java.io.InputStream;
+
+import org.hobbit.core.components.Component;
 
 /**
  * This interface is implemented by components that want to receive task data
@@ -9,16 +11,16 @@ import org.hobbit.core.components.stream.StreamingTaskReceivingComponent;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public interface TaskReceivingComponent extends StreamingTaskReceivingComponent {
+public interface StreamingTaskReceivingComponent extends Component {
 
     /**
      * This method is called if a task is received from a task generator.
      * 
      * @param taskId
      *            the id of the received task
-     * @param data
+     * @param dataStream
      *            the data received from a data generator
      */
-    public void receiveGeneratedTask(String taskId, byte[] data);
+    public void receiveGeneratedTask(String taskId, InputStream dataStream);
 
 }

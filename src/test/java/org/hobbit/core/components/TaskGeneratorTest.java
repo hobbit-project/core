@@ -41,18 +41,20 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 10000, 1 });
+        testConfigs.add(new Object[] { 1, 1000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 10000, 100 });
-        // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 10000, 1 });
-        // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 10000, 100 });
-        // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 1000, 1 });
-        // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 1000, 100 });
+        // testConfigs.add(new Object[] { 1, 1000, 100 });
+        // // We use two data generators without parallel message processing
+        // testConfigs.add(new Object[] { 2, 1000, 1 });
+        // // We use two data generators with parallel message processing (max
+        // 100)
+        // testConfigs.add(new Object[] { 2, 1000, 100 });
+        // // We use ten data generators without parallel message processing
+        // testConfigs.add(new Object[] { 10, 100, 1 });
+        // // We use ten data generators with parallel message processing (max
+        // 100)
+        // testConfigs.add(new Object[] { 10, 100, 100 });
         return testConfigs;
     }
 
@@ -81,7 +83,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages);
+            DummyDataCreator dataGenerator = new DummyDataCreator(i, numberOfGenerators, numberOfMessages);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -160,6 +162,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         if (terminationCount == numberOfGenerators) {
             try {
                 sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
+                this.handleCmd(new byte[] { Commands.DATA_GENERATION_FINISHED }, null);
             } catch (IOException e) {
                 e.printStackTrace();
             }
