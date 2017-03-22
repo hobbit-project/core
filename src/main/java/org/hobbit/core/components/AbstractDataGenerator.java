@@ -120,11 +120,11 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     }
 
     protected void sendDataToSystemAdapter(byte[] data) throws IOException {
-        sender2TaskGen.sendData(data);
+        sender2System.sendData(data);
     }
 
     protected void sendDataToSystemAdapter(InputStream stream) throws IOException {
-        sender2TaskGen.sendData(stream);
+        sender2System.sendData(stream);
     }
 
     public int getGeneratorId() {

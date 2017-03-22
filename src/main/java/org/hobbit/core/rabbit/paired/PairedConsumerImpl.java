@@ -152,7 +152,7 @@ public class PairedConsumerImpl extends MessageConsumer {
         try {
             state.outputStream.write(messageData);
         } catch (IOException e) {
-            LOGGER.error("Couldn't write message data to file.", e);
+            LOGGER.error("Couldn't write message data to stream.", e);
             receiver.increaseErrorCount();
         }
         ++state.nextMessageId;

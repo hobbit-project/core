@@ -40,7 +40,8 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    private int numberOfMessages = 10000;
+    // private int numberOfMessages = 10000;
+    private int numberOfMessages = 10;
     private Set<String> receivedResults = new HashSet<>();
 
     @Test
@@ -108,29 +109,34 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     @Override
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception {
-        Assert.assertTrue((expectedData.length + receivedData.length) > 0);
-        String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData)
-                : RabbitMQUtils.readString(receivedData);
-        Assert.assertTrue(taskId + " is not known.", expectedResults.containsKey(taskId));
-        ResultPairImpl pair = expectedResults.get(taskId);
+        try {
+            Assert.assertTrue((expectedData.length + receivedData.length) > 0);
+            String taskId = expectedData.length > 0 ? RabbitMQUtils.readString(expectedData)
+                    : RabbitMQUtils.readString(receivedData);
+            Assert.assertTrue(taskId + " is not known.", expectedResults.containsKey(taskId));
+            ResultPairImpl pair = expectedResults.get(taskId);
 
-        if (expectedData.length == 0) {
-            Assert.assertNull(pair.getExpected());
-            Assert.assertEquals(0, taskSentTimestamp);
-        } else {
-            Assert.assertNotNull(pair.getExpected());
-            Assert.assertArrayEquals(IOUtils.toByteArray(pair.getExpected()), expectedData);
+            if (expectedData.length == 0) {
+                Assert.assertNull(pair.getExpected());
+                Assert.assertEquals(0, taskSentTimestamp);
+            } else {
+                Assert.assertNotNull(pair.getExpected());
+                Assert.assertArrayEquals(IOUtils.toByteArray(pair.getExpected()), expectedData);
+            }
+
+            if (receivedData.length == 0) {
+                Assert.assertNull(pair.getActual());
+                Assert.assertEquals(0, responseReceivedTimestamp);
+            } else {
+                Assert.assertNotNull(pair.getActual());
+                Assert.assertArrayEquals(IOUtils.toByteArray(pair.getActual()), receivedData);
+            }
+
+            receivedResults.add(taskId);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.exit(1);
         }
-
-        if (receivedData.length == 0) {
-            Assert.assertNull(pair.getActual());
-            Assert.assertEquals(0, responseReceivedTimestamp);
-        } else {
-            Assert.assertNotNull(pair.getActual());
-            Assert.assertArrayEquals(IOUtils.toByteArray(pair.getActual()), receivedData);
-        }
-
-        receivedResults.add(taskId);
     }
 
     @Override

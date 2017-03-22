@@ -76,11 +76,13 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
     protected Iterator<ResultPair> createIterator() {
         return results.values().iterator();
     }
-    
+
     /**
-     * Copies timestamp and data in one single byte array starting with the timestamp.
+     * Copies timestamp and data in one single byte array starting with the
+     * timestamp.
      * 
-     * @param timestamp a timestamp that belongs to the given data
+     * @param timestamp
+     *            a timestamp that belongs to the given data
      * @param data
      * @return a single array containing both
      */
@@ -112,12 +114,12 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
         @Override
         public InputStream getActual() {
-            return new ByteArrayInputStream(actual);
+            return new ByteArrayInputStream(actual != null ? actual : new byte[0]);
         }
 
         @Override
         public InputStream getExpected() {
-            return new ByteArrayInputStream(expected);
+            return new ByteArrayInputStream(expected != null ? expected : new byte[0]);
         }
     }
 

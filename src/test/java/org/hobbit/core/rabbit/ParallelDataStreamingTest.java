@@ -42,6 +42,7 @@ public class ParallelDataStreamingTest implements IncomingStreamHandler {
          testConfigs.add(new Object[] { 1, 2, 5 });
          testConfigs.add(new Object[] { 5, 2, 5 });
          testConfigs.add(new Object[] { 5, 2, 20 });
+         testConfigs.add(new Object[] { 5, 3, 50 });
         return testConfigs;
     }
 

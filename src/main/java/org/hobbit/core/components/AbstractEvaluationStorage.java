@@ -21,6 +21,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.paired.PairedDataSender;
+import org.hobbit.core.utils.SteppingIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,7 +207,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                  * to version 1.0.0 in which the timestamp is placed behind(!)
                  * the data)
                  */
-                if (streamId != null) {
+                if (streamId == null) {
                     // get taskId/streamId and timestamp
                     ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
                     taskId = RabbitMQUtils.readString(buffer);
@@ -244,7 +245,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                  * Check whether this is the old format (backwards compatibility
                  * to version 1.0.0 in which the data is preceded by its length)
                  */
-                if (streamId != null) {
+                if (streamId == null) {
                     // get taskId/streamId and timestamp
                     ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
                     taskId = RabbitMQUtils.readString(buffer);
@@ -314,7 +315,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                     sender = replyingSenders.get(properties.getReplyTo());
                 } else {
                     sender = PairedDataSender.builder().queue(AbstractEvaluationStorage.this, properties.getReplyTo())
-                            .build();
+                            .idGenerator(new SteppingIdGenerator(0, 1)).build();
                     replyingSenders.put(properties.getReplyTo(), sender);
                 }
             }

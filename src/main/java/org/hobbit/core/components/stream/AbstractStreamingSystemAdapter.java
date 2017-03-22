@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
@@ -103,7 +104,7 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractCommandRece
                 // offer such a method
             }
             if (taskReceiver == null) {
-                taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler())
+                taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler())
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                         .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
             } else {
@@ -189,7 +190,30 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractCommandRece
 
         @Override
         public void handleIncomingStream(String streamId, InputStream stream) {
-            receiveGeneratedTask(streamId, stream);
+            try {
+                String taskId;
+                /*
+                 * Check whether this is the old format (backwards compatibility
+                 * to version 1.0.0 in which the data is preceded by its length)
+                 */
+                if (streamId == null) {
+                    // get taskId/streamId and timestamp
+                    ByteBuffer buffer;
+                    buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
+                    taskId = RabbitMQUtils.readString(buffer);
+                    byte[] data = RabbitMQUtils.readByteArray(buffer);
+                    IOUtils.closeQuietly(stream);
+                    // create a new stream containing only the data
+                    stream = new ByteArrayInputStream(data);
+                } else {
+                    // get taskId
+                    int length = RabbitMQUtils.readInt(stream);
+                    taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
+                }
+                receiveGeneratedTask(taskId, stream);
+            } catch (Exception e) {
+                LOGGER.error("Exception while handling generated task. It will be ignored.", e);
+            }
         }
     }
 }
