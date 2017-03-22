@@ -36,11 +36,11 @@ public class ParallelDataStreamingTest implements IncomingStreamHandler {
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
-        testConfigs.add(new Object[] { 1, 1, 1 });
-        testConfigs.add(new Object[] { 2, 2, 5 });
-         testConfigs.add(new Object[] { 3, 1, 5 });
-         testConfigs.add(new Object[] { 1, 2, 5 });
-         testConfigs.add(new Object[] { 5, 2, 5 });
+//        testConfigs.add(new Object[] { 1, 1, 1 });
+//        testConfigs.add(new Object[] { 2, 2, 5 });
+//         testConfigs.add(new Object[] { 3, 1, 5 });
+//         testConfigs.add(new Object[] { 1, 2, 5 });
+//         testConfigs.add(new Object[] { 5, 2, 5 });
          testConfigs.add(new Object[] { 5, 2, 20 });
         return testConfigs;
     }

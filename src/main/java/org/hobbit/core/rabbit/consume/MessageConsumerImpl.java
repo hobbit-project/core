@@ -5,8 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +33,7 @@ public class MessageConsumerImpl extends MessageConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageConsumerImpl.class);
 
     private static final int MAX_MESSAGE_BUFFER_SIZE = 50;
+    private static final int MAX_CLOSED_STREAM_BUFFER_SIZE = 100;
     /**
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
@@ -89,11 +95,18 @@ public class MessageConsumerImpl extends MessageConsumer {
                         return true;
                     }
                 } else {
+                    // this message should be consumed by somebody else
                     return false;
                 }
             }
         }
         synchronized (state) {
+            // If this stream is already closed and this message is only a copy
+            // that has been received a second time
+            if (state.outputStream == null) {
+                // consume it to make sure that it is not sent again
+                return true;
+            }
             // If this message is marked as the last message of this stream
             if (Constants.END_OF_STREAM_MESSAGE_TYPE.equals(properties.getType())) {
                 state.lastMessageId = messageId;
@@ -142,6 +155,9 @@ public class MessageConsumerImpl extends MessageConsumer {
             // if this is the last message for this stream
             IOUtils.closeQuietly(state.outputStream);
             state.outputStream = null;
+            // clear all remaining messages (they should have been removed
+            // before. However, maybe a message has been sent a second time)
+            state.messageBuffer.clear();
             LOGGER.debug("Received last message for stream \"{}\".", state.name);
             if (state.messageBuffer.size() > 0) {
                 LOGGER.error("Closed the stream \"{}\" while there are still {} messages in its data buffer",

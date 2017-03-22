@@ -17,8 +17,9 @@ import com.rabbitmq.client.AMQP.BasicProperties;
 
 public class PairedDataSender extends DataSenderImpl {
 
-    protected PairedDataSender(RabbitQueue queue, IdGenerator idGenerator, int messageSize, int deliveryMode) {
-        super(queue, idGenerator, messageSize, deliveryMode);
+    protected PairedDataSender(RabbitQueue queue, IdGenerator idGenerator, int messageSize, int deliveryMode,
+            int messageConfirmBuffer) {
+        super(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer);
     }
 
     public void sendData(InputStream[] is) throws IOException {
@@ -111,6 +112,27 @@ public class PairedDataSender extends DataSenderImpl {
         }
 
         /**
+         * <p>
+         * Sets the number of messages that are buffered while waiting for a
+         * confirmation that they have been received by the broker. Note that if
+         * the message buffer has reached is maximum size, the sender will block
+         * until confirmations are received.
+         * </p>
+         * <p>
+         * If the given message buffer size is {@code <1} the usage of
+         * confirmation messages is turned off.
+         * </p>
+         * 
+         * @param messageConfirmBuffer
+         *            the size of the messages buffer
+         * @return this builder instance
+         */
+        public Builder messageBuffer(int messageConfirmBuffer) {
+            this.messageConfirmBuffer = messageConfirmBuffer;
+            return this;
+        }
+
+        /**
          * Sets the delivery mode used for the RabbitMQ messages. Please have a
          * look into the RabbitMQ documentation to see the different meanings of
          * the values. By default, the sender uses
@@ -144,7 +166,7 @@ public class PairedDataSender extends DataSenderImpl {
                     queue = factory.createDefaultRabbitQueue(queueName);
                 }
             }
-            return new PairedDataSender(queue, idGenerator, messageSize, deliveryMode);
+            return new PairedDataSender(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer);
         }
     }
 
