@@ -36,6 +36,7 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -62,6 +63,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private QueueingConsumer responseConsumer = null;
     /**
+     * Connection on which the commands are received. It is separated from the
+     * #dataConnection since otherwise the component can get stuck waiting for a
+     * command while the connection is busy handling incoming data.
+     */
+    protected Connection cmdConnection;
+    /**
      * Channel that is used for the command queue.
      */
     protected Channel cmdChannel = null;
@@ -82,7 +89,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     public void init() throws Exception {
         super.init();
         addCommandHeaderId(getHobbitSessionId());
-        cmdChannel = connection.createChannel();
+
+        cmdConnection = connectionFactory.newConnection();
+        cmdChannel = dataConnection.createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
@@ -215,7 +224,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * create and start an instance of the given image using the given
      * environment variables.
      * 
-     * <p>Note that the containerType parameter should have one of the following
+     * <p>
+     * Note that the containerType parameter should have one of the following
      * values.
      * <ul>
      * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
@@ -297,6 +307,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 cmdChannel.close();
             } catch (Exception e) {
             }
+        }
+        try {
+            cmdConnection.close();
+        } catch (Exception e) {
         }
         super.close();
     }

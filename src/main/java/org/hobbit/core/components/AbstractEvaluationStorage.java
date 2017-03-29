@@ -84,7 +84,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
      * Channel on which the acknowledgements are send.
      */
     protected Channel ackChannel = null;
-    
+
     public AbstractEvaluationStorage() {
         defaultContainerType = Constants.CONTAINER_TYPE_DATABASE;
     }
@@ -126,9 +126,11 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                         String taskId = RabbitMQUtils.readString(buffer);
                         byte[] data = RabbitMQUtils.readByteArray(buffer);
                         respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
+                        // If we should send acknowledgments (and there was no
+                        // error until now)
                         if (ackChannel != null) {
                             ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
-                            LOGGER.debug("Sent ack{}.", taskId);
+                            LOGGER.trace("Sent ack{}.", taskId);
                         }
                     }
                 });
@@ -198,11 +200,9 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
                 // Create channel for acknowledgements
-                ackChannel = connection.createChannel();
-                String queueName = ackChannel.queueDeclare().getQueue();
+                ackChannel = cmdConnection.createChannel();
                 ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
                         false, true, null);
-                ackChannel.queueBind(queueName, generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "");
             }
         }
     }

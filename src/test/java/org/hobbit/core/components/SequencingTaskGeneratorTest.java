@@ -46,15 +46,15 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         testConfigs.add(new Object[] { 1, 1000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-//        testConfigs.add(new Object[] { 1, 1000, 100 });
-//        // We use two data generators without parallel message processing
-//        testConfigs.add(new Object[] { 2, 1000, 1 });
-//        // We use two data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 2, 1000, 100 });
-//        // We use ten data generators without parallel message processing
-//        testConfigs.add(new Object[] { 10, 100, 1 });
-//        // We use ten data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 10, 100, 100 });
+        testConfigs.add(new Object[] { 1, 1000, 100 });
+        // We use two data generators without parallel message processing
+        testConfigs.add(new Object[] { 2, 1000, 1 });
+        // We use two data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 2, 1000, 100 });
+        // We use ten data generators without parallel message processing
+        testConfigs.add(new Object[] { 10, 100, 1 });
+        // We use ten data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 10, 100, 100 });
         return testConfigs;
     }
 
@@ -66,7 +66,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
-    private Semaphore tasksGeneratedInParallel = new Semaphore(100);
     private Semaphore systemReady = new Semaphore(0);
 
     public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
@@ -75,7 +74,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test
+    @Test(timeout=30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
@@ -93,6 +92,19 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
                 @Override
                 public void run() {
                     super.run();
+                    /*
+                     * FIXME this break shouldn't be necessary. Unfortunately,
+                     * the outstanding message do not seem to be processed
+                     * correctly. Maybe the broker has not added the messages to
+                     * the queue which would explain that the data generator
+                     * does not wait for them to be processed (since the message
+                     * count is 0)
+                     */
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     dataGeneratorTerminated();
                 }
             };
@@ -151,12 +163,9 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
     @Override
     protected void generateTask(byte[] data) throws Exception {
-        tasksGeneratedInParallel.acquire();
-        Assert.assertEquals(99, tasksGeneratedInParallel.availablePermits());
         String taskIdString = getNextTaskId();
-        setTaskIdToWaitFor(taskIdString);
+        sendTaskToSystemAdapterInSequence(taskIdString, data);
         long timestamp = System.currentTimeMillis();
-        sendTaskToSystemAdapter(taskIdString, data);
         String dataString = RabbitMQUtils.readString(data);
         StringBuilder builder = new StringBuilder();
         builder.append(taskIdString);
@@ -169,9 +178,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         builder.append(Long.toString(timestamp));
         builder.append(dataString);
         expectedResponses.add(builder.toString());
-
-        waitForAck();
-        tasksGeneratedInParallel.release();
     }
 
     protected synchronized void dataGeneratorTerminated() {
@@ -185,10 +191,10 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             }
         }
     }
-    
+
     @Override
     public void receiveCommand(byte command, byte[] data) {
-        if(command == Commands.SYSTEM_READY_SIGNAL) {
+        if (command == Commands.SYSTEM_READY_SIGNAL) {
             systemReady.release();
         }
         super.receiveCommand(command, data);

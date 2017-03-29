@@ -48,10 +48,21 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
     public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
 
     private String hobbitSessionId;
-
-    protected Connection connection = null;
-
+    /**
+     * The connection to the RabbitMQ broker. In most cases it will be used for
+     * handling data.
+     */
+    protected Connection dataConnection = null;
+    /**
+     * The host name of the RabbitMQ broker.
+     */
     protected String rabbitMQHostName;
+    /**
+     * The factory that can be used to create additional connections. However,
+     * in most cases it is sufficient to create a new channel using the already
+     * established {@link #dataConnection}.
+     */
+    protected ConnectionFactory connectionFactory;
 
     @Override
     public void init() throws Exception {
@@ -64,15 +75,15 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
         }
 
         if (System.getenv().containsKey(Constants.RABBIT_MQ_HOST_NAME_KEY)) {
-            ConnectionFactory factory = new ConnectionFactory();
+            connectionFactory = new ConnectionFactory();
             rabbitMQHostName = System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY);
-            factory.setHost(rabbitMQHostName);
-            factory.setAutomaticRecoveryEnabled(true);
+            connectionFactory.setHost(rabbitMQHostName);
+            connectionFactory.setAutomaticRecoveryEnabled(true);
             // attempt recovery every 10 seconds
-            factory.setNetworkRecoveryInterval(10000);
-            for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
+            connectionFactory.setNetworkRecoveryInterval(10000);
+            for (int i = 0; (dataConnection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
                 try {
-                    connection = factory.newConnection();
+                    dataConnection = connectionFactory.newConnection();
                 } catch (Exception e) {
                     if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
                         long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
@@ -87,7 +98,7 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
                     }
                 }
             }
-            if (connection == null) {
+            if (dataConnection == null) {
                 String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
                         + " retries.";
                 LOGGER.error(msg);
@@ -103,9 +114,9 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
 
     @Override
     public void close() throws IOException {
-        if (connection != null) {
+        if (dataConnection != null) {
             try {
-                connection.close();
+                dataConnection.close();
             } catch (Exception e) {
             }
         }
@@ -120,9 +131,9 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
     }
 
     /**
-     * This method opens a channel using the established {@link #connection} to
-     * RabbitMQ and creates a new queue using the given name and the following
-     * configuration:
+     * This method opens a channel using the established {@link #dataConnection}
+     * to RabbitMQ and creates a new queue using the given name and the
+     * following configuration:
      * <ul>
      * <li>The channel number is automatically derived from the connection.</li>
      * <li>The queue is not durable.</li>
@@ -140,7 +151,7 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
      */
     @Override
     public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = connection.createChannel();
+        Channel channel = dataConnection.createChannel();
         channel.queueDeclare(name, false, false, true, null);
         return new RabbitQueue(channel, name);
     }
