@@ -34,6 +34,12 @@ import com.rabbitmq.client.ConfirmListener;
  * closed as well.
  * </p>
  * 
+ * <p>
+ * <b>Note</b> that choosing a message buffer size smaller than
+ * {@link #DEFAULT_MESSAGE_BUFFER_SIZE}={@value #DEFAULT_MESSAGE_BUFFER_SIZE}
+ * might lead the sender to get stuck since confirmations might be sent rarely
+ * by the RabbitMQ broker.
+ * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -42,7 +48,7 @@ public class DataSenderImpl implements DataSender {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSenderImpl.class);
 
     private static final int DEFAULT_MESSAGE_SIZE = 65536;
-    private static final int DEFAULT_MESSAGE_BUFFER_SIZE = 100;
+    private static final int DEFAULT_MESSAGE_BUFFER_SIZE = 1000;
     private static final int DEFAULT_DELIVERY_MODE = 2;
 
     protected IdGenerator idGenerator = new SteppingIdGenerator();
@@ -338,7 +344,8 @@ public class DataSenderImpl implements DataSender {
         public synchronized void sendDataWithConfirmation(BasicProperties properties, byte[] data) throws IOException {
             synchronized (unconfirmedMsgs) {
                 try {
-                    System.out.println(DataSenderImpl.this.toString() + "\tavailable\t" + maxBufferedMessageCount.availablePermits());
+                    LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
+                            maxBufferedMessageCount.availablePermits());
                     maxBufferedMessageCount.acquire();
                 } catch (InterruptedException e) {
                     throw new IOException(
@@ -354,7 +361,7 @@ public class DataSenderImpl implements DataSender {
             // data
             synchronized (queue.channel) {
                 long sequenceNumber = queue.channel.getNextPublishSeqNo();
-                System.out.println(DataSenderImpl.this.toString() + "\tsending\t" + sequenceNumber);
+                LOGGER.trace("{}\tsending\t{}", DataSenderImpl.this.toString(), sequenceNumber);
                 unconfirmedMsgs.put(sequenceNumber, message);
                 try {
                     sendData(message.properties, message.data);
@@ -376,12 +383,14 @@ public class DataSenderImpl implements DataSender {
                     int ackMsgCount = negativeMsgs.size();
                     negativeMsgs.clear();
                     maxBufferedMessageCount.release(ackMsgCount);
-                    System.out.println(DataSenderImpl.this.toString() + "\tack\t" + deliveryTag + "+\t" + maxBufferedMessageCount.availablePermits());
+                    LOGGER.trace("{}\tack\t{}+\t{}", DataSenderImpl.this.toString(), deliveryTag,
+                            maxBufferedMessageCount.availablePermits());
                 } else {
                     // Remove the message
                     unconfirmedMsgs.remove(deliveryTag);
                     maxBufferedMessageCount.release();
-                    System.out.println(DataSenderImpl.this.toString() + "\tack\t" + deliveryTag + "\t" + maxBufferedMessageCount.availablePermits());
+                    LOGGER.trace("{}\tack\t{}\t{}", DataSenderImpl.this.toString(), deliveryTag,
+                            maxBufferedMessageCount.availablePermits());
                 }
             }
         }
@@ -389,7 +398,7 @@ public class DataSenderImpl implements DataSender {
         @Override
         public void handleNack(long deliveryTag, boolean multiple) throws IOException {
             synchronized (unconfirmedMsgs) {
-                System.out.println("nack " + deliveryTag + (multiple ? "+" : ""));
+                LOGGER.trace("nack\t{}{}", deliveryTag, (multiple ? "+" : ""));
                 if (multiple) {
                     // Resend all lost messages
                     SortedMap<Long, Message> negativeMsgs = unconfirmedMsgs.headMap(deliveryTag + 1);
