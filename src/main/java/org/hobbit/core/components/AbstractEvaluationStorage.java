@@ -128,6 +128,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
                         respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
                         if (ackChannel != null) {
                             ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                            LOGGER.debug("Sent ack{}.", taskId);
                         }
                     }
                 });
@@ -194,7 +195,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         boolean sendAcks = false;
         if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
-            sendAcks = Boolean.getBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
+            sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
                 // Create channel for acknowledgements
                 ackChannel = connection.createChannel();

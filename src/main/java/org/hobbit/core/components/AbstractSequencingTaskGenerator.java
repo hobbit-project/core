@@ -78,6 +78,14 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      */
     protected Channel ackChannel;
 
+    public AbstractSequencingTaskGenerator() {
+        super();
+    }
+
+    public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
+        super(numberOfMessagesInParallel);
+    }
+
     @Override
     public void init() throws Exception {
         super.init();
@@ -109,6 +117,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      */
     protected void handleAck(byte[] body) {
         String ackTaskId = RabbitMQUtils.readString(body);
+        LOGGER.debug("Received ack{}.", taskId);
         if ((taskId != null) && (taskId.equals(ackTaskId))) {
             taskId = null;
             taskIdMutex.release();
@@ -135,6 +144,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      *         has been interrupted.
      */
     protected boolean waitForAck() {
+        LOGGER.debug("Waiting for ack{}.", taskId);
         boolean ack = false;
         try {
             ack = taskIdMutex.tryAcquire(ackTimeout, TimeUnit.MILLISECONDS);
