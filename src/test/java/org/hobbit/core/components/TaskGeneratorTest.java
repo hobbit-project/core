@@ -3,6 +3,7 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.hobbit.core.Commands;
@@ -44,25 +45,23 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         testConfigs.add(new Object[] { 1, 1000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        // testConfigs.add(new Object[] { 1, 1000, 100 });
-        // // We use two data generators without parallel message processing
-        // testConfigs.add(new Object[] { 2, 1000, 1 });
-        // // We use two data generators with parallel message processing (max
-        // 100)
-        // testConfigs.add(new Object[] { 2, 1000, 100 });
-        // // We use ten data generators without parallel message processing
-        // testConfigs.add(new Object[] { 10, 100, 1 });
-        // // We use ten data generators with parallel message processing (max
-        // 100)
-        // testConfigs.add(new Object[] { 10, 100, 100 });
+        testConfigs.add(new Object[] { 1, 1000, 100 });
+        // We use two data generators without parallel message processing
+        testConfigs.add(new Object[] { 2, 1000, 1 });
+        // We use two data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 2, 1000, 100 });
+        // We use ten data generators without parallel message processing
+        testConfigs.add(new Object[] { 10, 100, 1 });
+        // We use ten data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 10, 100, 100 });
         return testConfigs;
     }
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private List<String> sentTasks = new ArrayList<String>();
-    private List<String> expectedResponses = new ArrayList<String>();
+    private List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
+    private List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
@@ -127,10 +126,14 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Assert.assertTrue(systemExecutor.isSuccess());
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
+            Collections.sort(sentTasks);
             List<String> receivedData = system.getReceivedtasks();
+            Collections.sort(receivedData);
             Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
             receivedData = evalStore.getExpectedResponses();
+            Collections.sort(receivedData);
+            Collections.sort(expectedResponses);
             Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
         } finally {

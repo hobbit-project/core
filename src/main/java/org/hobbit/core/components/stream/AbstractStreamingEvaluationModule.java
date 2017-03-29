@@ -132,6 +132,29 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractCommandR
             // message
             if (streams.length == 1) {
                 iterationFinished = true;
+                int readByte;
+                // Make sure that the received message contains the correct byte
+                // (Additionally, this makes sure that we wait for the consumer
+                // to write the data from the message to the stream. Without
+                // waiting for this, we would create an exception inside the
+                // consumer)
+                try {
+                    readByte = streams[AbstractEvaluationStorage.ITERATOR_ID_STREAM_ID].read();
+                    if (readByte < 0) {
+                        LOGGER.warn(
+                                "Couldn't read the iterator id from the stream of the termination message. The stream is empty. This problem will be ignored.");
+                    } else {
+                        if (iteratorId != (byte) readByte) {
+                            LOGGER.warn(
+                                    "The termination message did not contain the iterator Id as it has been expected. Iterator id = {} content of message = {}. This problem will be ignored.",
+                                    iteratorId, readByte);
+                        }
+                    }
+                } catch (IOException e1) {
+                    LOGGER.warn(
+                            "Couldn't read the iterator id from the stream of the termination message. This problem will be ignored.",
+                            e1);
+                }
             } else {
                 // Get the iterator ID
                 int readByte;

@@ -1,12 +1,14 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
@@ -71,7 +73,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private List<String> receivedData = new ArrayList<String>();
+    private List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
     private int dataTerminationCount = 0;
     private int taskTerminationCount = 0;
     private int numberOfDataGenerators;
@@ -92,8 +94,6 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
     @Test(timeout = 30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
         init();
@@ -115,7 +115,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         Thread[] taskGenThreads = new Thread[numberOfTaskGenerators];
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfTaskGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            DummyTaskGenerator taskGenerator = new DummyTaskGenerator();
+            DummyTaskGenerator taskGenerator = new DummyTaskGenerator(i, numberOfTaskGenerators);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGenerator) {
                 @Override
                 public void run() {
@@ -127,13 +127,16 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
             taskGenThreads[i].start();
         }
 
-        // DummySystemReceiver system = new DummySystemReceiver();
-        // DummyComponentExecutor systemExecutor = new
-        // DummyComponentExecutor(system);
-        // Thread systemThread = new Thread(systemExecutor);
-        // systemThread.start();
-
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver() {
+            @Override
+            public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
+                try {
+                    receivedResponses.add(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
