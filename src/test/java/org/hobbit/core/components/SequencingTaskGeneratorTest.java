@@ -21,6 +21,8 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the workflow of the {@link AbstractSequencingTaskGenerator} class and
@@ -36,25 +38,27 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator {
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
+    private static final Logger LOGGER = LoggerFactory.getLogger(SequencingTaskGeneratorTest.class);
+
+    private static final String RABBIT_HOST_NAME = "192.168.99.102";
 
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 1000, 1 });
+        testConfigs.add(new Object[] { 1, 5000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 1000, 100 });
+        testConfigs.add(new Object[] { 1, 5000, 100 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 1000, 1 });
+        testConfigs.add(new Object[] { 2, 5000, 1 });
         // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 1000, 100 });
+        testConfigs.add(new Object[] { 2, 5000, 100 });
         // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 100, 1 });
+        testConfigs.add(new Object[] { 10, 500, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 100, 100 });
+        testConfigs.add(new Object[] { 10, 500, 100 });
         return testConfigs;
     }
 
@@ -66,7 +70,9 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
+    private Semaphore dataGensReady = new Semaphore(0);
     private Semaphore systemReady = new Semaphore(0);
+    private Semaphore evalStoreReady = new Semaphore(0);
 
     public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
         super(numberOfMessagesInParallel);
@@ -74,7 +80,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
@@ -83,6 +89,8 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
         // Set the acknowledgement flag to true (read by the evaluation storage)
         environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
+
+        init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
@@ -101,7 +109,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
                      * count is 0)
                      */
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(20000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -112,19 +120,21 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             dataGenThreads[i].start();
         }
 
+        DummySystem system = new DummySystem();
+        DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
+        Thread systemThread = new Thread(systemExecutor);
+        systemThread.start();
+
         DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
 
-        try {
-            init();
+        dataGensReady.acquire(numberOfGenerators);
+        systemReady.acquire();
+        evalStoreReady.acquire();
 
-            DummySystem system = new DummySystem();
-            DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
-            Thread systemThread = new Thread(systemExecutor);
-            systemThread.start();
-            systemReady.acquire();
+        try {
             // start dummy
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
@@ -150,6 +160,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             Collections.sort(receivedData);
             Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
+            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
             receivedData = evalStore.getExpectedResponses();
             Collections.sort(receivedData);
             Collections.sort(expectedResponses);
@@ -185,7 +196,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         if (terminationCount == numberOfGenerators) {
             try {
                 sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
-                this.handleCmd(new byte[] { Commands.DATA_GENERATION_FINISHED }, null);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -194,8 +204,15 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
+        LOGGER.info("received command {}", Commands.toString(command));
+        if (command == Commands.DATA_GENERATOR_READY_SIGNAL) {
+            dataGensReady.release();
+        }
         if (command == Commands.SYSTEM_READY_SIGNAL) {
             systemReady.release();
+        }
+        if (command == Commands.EVAL_STORAGE_READY_SIGNAL) {
+            evalStoreReady.release();
         }
         super.receiveCommand(command, data);
     }
