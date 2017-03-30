@@ -44,7 +44,7 @@ import com.rabbitmq.client.MessageProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComponent
+public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorComponent
         implements GeneratedDataReceivingComponent, TaskReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSystemAdapter.class);
@@ -211,6 +211,7 @@ public abstract class AbstractSystemAdapter extends AbstractCommandReceivingComp
             // release the mutex
             terminateMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     /**

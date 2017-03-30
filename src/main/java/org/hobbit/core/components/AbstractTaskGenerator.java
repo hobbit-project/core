@@ -48,7 +48,7 @@ import com.rabbitmq.client.QueueingConsumer.Delivery;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComponent
+public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorComponent
         implements GeneratedDataReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskGenerator.class);
@@ -287,6 +287,7 @@ public abstract class AbstractTaskGenerator extends AbstractCommandReceivingComp
                 terminateMutex.release();
             }
         }
+        super.receiveCommand(command, data);
     }
 
     /**
