@@ -35,6 +35,7 @@ import java.util.UUID;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.junit.Assert;
@@ -47,15 +48,12 @@ import com.rabbitmq.client.ConnectionFactory;
 
 public class FileStreamingTest implements RabbitQueueFactory {
 
-    // TODO find a better way to define the host
-    public static final String RABBIT_HOST = "192.168.99.100";
-
     private Connection connection = null;
 
     @Before
     public void before() throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(RABBIT_HOST);
+        factory.setHost(TestConstants.RABBIT_HOST);
         connection = factory.newConnection();
     }
 

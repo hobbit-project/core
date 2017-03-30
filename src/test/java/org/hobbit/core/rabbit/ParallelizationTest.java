@@ -22,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 
+import org.hobbit.core.TestConstants;
 import org.junit.Test;
 
 import com.rabbitmq.client.Connection;
@@ -40,7 +41,6 @@ import com.rabbitmq.client.ConnectionFactory;
  */
 public class ParallelizationTest {
 
-    public static final String RABBIT_HOST = "192.168.99.100";
     public static final String REQUEST_QUEUE_NAME = "requestQueue";
 
     private static final int NUMBER_OF_CLIENTS = 5;
@@ -50,7 +50,7 @@ public class ParallelizationTest {
     @Test
     public void test() throws InterruptedException, IOException, TimeoutException {
 
-        EchoServer server = new EchoServer(RABBIT_HOST, REQUEST_QUEUE_NAME);
+        EchoServer server = new EchoServer(TestConstants.RABBIT_HOST, REQUEST_QUEUE_NAME);
 
         Thread serverThread = new Thread(server);
         serverThread.start();
@@ -63,7 +63,7 @@ public class ParallelizationTest {
         long time;
         try {
             ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(RABBIT_HOST);
+            factory.setHost(TestConstants.RABBIT_HOST);
             connection = factory.newConnection();
             client = RabbitRpcClient.create(connection, REQUEST_QUEUE_NAME);
             for (int i = 0; i < clientThreads.length; ++i) {

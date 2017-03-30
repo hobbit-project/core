@@ -50,7 +50,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
-    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0";
+    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.1";
     protected static final String[] DEFAULT_EVAL_STORAGE_PARAMETERS = new String[] { "HOBBIT_RIAK_NODES=1" };
 
     /**

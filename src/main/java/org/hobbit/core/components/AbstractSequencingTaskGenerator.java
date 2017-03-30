@@ -79,12 +79,13 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     protected Channel ackChannel;
 
     public AbstractSequencingTaskGenerator() {
-        super();
+        // TODO remove this 1 from the constructor
+        super(1);
     }
-
-    public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
-        super(numberOfMessagesInParallel);
-    }
+    // TODO reactivate this constructor
+    // public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
+    // super(numberOfMessagesInParallel);
+    // }
 
     @Override
     public void init() throws Exception {

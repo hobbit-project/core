@@ -29,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Assert;
@@ -49,7 +50,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkControllerTest.class);
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
     private static final String HOBBIT_SESSION_ID = "123";
     private static final String SYSTEM_CONTAINER_ID = "systemContainerId";
     private static final String DATA_GEN_IMAGE = "datagenimage";
@@ -82,7 +82,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     @Test
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
         environmentVariables.set(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
                 "{ \"@id\" : \"http://w3id.org/hobbit/experiments#New\", \"@type\" : \"http://w3id.org/hobbit/vocab#Experiment\" }");
@@ -96,8 +96,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             DummyComponentExecutor dummyPlatformExecutor = new DummyComponentExecutor(dummyPlatformController);
             Thread dummyPlatformThread = new Thread(dummyPlatformExecutor);
             dummyPlatformThread.start();
-            // wait for the dummy platform controller to start
-            Thread.sleep(1000);
+            dummyPlatformController.waitForControllerBeingReady();
 
             AbstractBenchmarkController controller = this;
             DummyComponentExecutor controllerExecutor = new DummyComponentExecutor(controller);
@@ -133,7 +132,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             controllerThread.join(5000);
             Assert.assertFalse(controllerThread.isAlive());
         } finally {
-            dummyPlatformController.cmdChannel.exchangeDelete(Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
             dummyPlatformController.terminate();
             for (DummyComponentExecutor executor : dummyPlatformController.dataGenExecutors) {
                 try {
@@ -206,6 +204,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         public List<DummyComponentExecutor> taskGenExecutors = new ArrayList<DummyComponentExecutor>();
         public List<Thread> taskGenThreads = new ArrayList<>();
         public Random random = new Random();
+        private boolean readyFlag = false;
 
         private String sessionId;
         private Semaphore terminationMutex = new Semaphore(0);
@@ -333,6 +332,12 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             }
         }
 
+        public void waitForControllerBeingReady() throws InterruptedException {
+            while (!readyFlag) {
+                Thread.sleep(500);
+            }
+        }
+
         public void sendToCmdQueue(String address, byte command, byte data[], BasicProperties props)
                 throws IOException {
             byte sessionIdBytes[] = RabbitMQUtils.writeString(address);
@@ -359,6 +364,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
         @Override
         public void run() throws Exception {
+            readyFlag = true;
             terminationMutex.acquire();
         }
 

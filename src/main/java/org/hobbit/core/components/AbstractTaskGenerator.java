@@ -199,9 +199,12 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
         if (maxParallelProcessedMsgs == 1) {
             runFlag = true;
-            Delivery delivery;
+            Delivery delivery = null;
             int count = 0;
-            while (runFlag || (dataGen2TaskGenQueue.messageCount() > 0)) {
+            // As long as a) this component should run or b) there are still
+            // messages in the queue or c) the last delivery was not empty
+            // (i.e., there could be another deliverable waiting)
+            while (runFlag || (dataGen2TaskGenQueue.messageCount() > 0) || (delivery != null)) {
                 delivery = consumer.nextDelivery(3000);
                 if (delivery != null) {
                     generateTask(delivery.getBody());

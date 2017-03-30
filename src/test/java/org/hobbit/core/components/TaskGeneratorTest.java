@@ -24,6 +24,7 @@ import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
@@ -54,8 +55,6 @@ import org.slf4j.LoggerFactory;
 public class TaskGeneratorTest extends AbstractTaskGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskGeneratorTest.class);
-
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -97,7 +96,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
 
     @Test(timeout = 60000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");

@@ -28,6 +28,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
@@ -55,8 +56,6 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
-
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
@@ -67,7 +66,7 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     @Test
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
         environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
 

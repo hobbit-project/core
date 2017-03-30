@@ -9,6 +9,7 @@ import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
@@ -40,8 +41,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SequencingTaskGeneratorTest.class);
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.102";
-
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
@@ -50,15 +49,15 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         testConfigs.add(new Object[] { 1, 5000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 5000, 100 });
+//        testConfigs.add(new Object[] { 1, 5000, 100 });
         // We use two data generators without parallel message processing
         testConfigs.add(new Object[] { 2, 5000, 1 });
         // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 5000, 100 });
+//        testConfigs.add(new Object[] { 2, 5000, 100 });
         // We use ten data generators without parallel message processing
         testConfigs.add(new Object[] { 10, 500, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 500, 100 });
+//        testConfigs.add(new Object[] { 10, 500, 100 });
         return testConfigs;
     }
 
@@ -75,14 +74,14 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
     private Semaphore evalStoreReady = new Semaphore(0);
 
     public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
-        super(numberOfMessagesInParallel);
+        // TODO add me super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
     }
 
     @Test(timeout = 60000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
@@ -100,19 +99,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
                 @Override
                 public void run() {
                     super.run();
-                    /*
-                     * FIXME this break shouldn't be necessary. Unfortunately,
-                     * the outstanding message do not seem to be processed
-                     * correctly. Maybe the broker has not added the messages to
-                     * the queue which would explain that the data generator
-                     * does not wait for them to be processed (since the message
-                     * count is 0)
-                     */
-                    try {
-                        Thread.sleep(20000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     dataGeneratorTerminated();
                 }
             };
