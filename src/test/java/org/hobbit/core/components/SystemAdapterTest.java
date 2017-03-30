@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.io.IOException;
@@ -11,6 +27,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
@@ -41,8 +58,6 @@ import org.slf4j.LoggerFactory;
 public class SystemAdapterTest extends AbstractSystemAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemAdapterTest.class);
-
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -93,7 +108,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
 
     @Test(timeout = 30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
         init();
@@ -137,6 +152,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
                 }
             }
         };
+
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();

@@ -1,12 +1,30 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenReceiver;
@@ -44,14 +62,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         return testConfigs;
     }
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
-
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private List<String> sentData = new ArrayList<String>();
     private int numberOfGenerators;
     private int numberOfMessages;
+    private Semaphore taskGensReady = new Semaphore(0);
+    private Semaphore systemReady = new Semaphore(0);
 
     public DataGeneratorTest(int numberOfGenerators, int numberOfMessages) {
         this.numberOfGenerators = numberOfGenerators;
@@ -71,12 +89,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
-    @Test
+    @Test(timeout=30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        
+        init();
 
         DummySystemReceiver system = new DummySystemReceiver();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
@@ -92,9 +112,11 @@ public class DataGeneratorTest extends AbstractDataGenerator {
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();
         }
+        
+        systemReady.acquire();
+        taskGensReady.acquire(numberOfGenerators);
 
         try {
-            init();
             // start dummy
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
@@ -130,4 +152,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        if(command == Commands.TASK_GENERATOR_READY_SIGNAL) {
+            taskGensReady.release();
+        }
+        if (command == Commands.SYSTEM_READY_SIGNAL) {
+            systemReady.release();
+        }
+        super.receiveCommand(command, data);
+    }
 }

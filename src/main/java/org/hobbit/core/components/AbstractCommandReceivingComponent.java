@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.io.IOException;
@@ -20,6 +36,7 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -46,13 +63,19 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private QueueingConsumer responseConsumer = null;
     /**
+     * Connection on which the commands are received. It is separated from the
+     * #dataConnection since otherwise the component can get stuck waiting for a
+     * command while the connection is busy handling incoming data.
+     */
+    protected Connection cmdConnection;
+    /**
      * Channel that is used for the command queue.
      */
     protected Channel cmdChannel = null;
     /**
-     * Type of this container.
+     * Default type of containers created by this container
      */
-    protected String containerType = "";
+    protected String defaultContainerType = "";
     /**
      * Set of command headers that are expected by this component.
      */
@@ -66,7 +89,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     public void init() throws Exception {
         super.init();
         addCommandHeaderId(getHobbitSessionId());
-        cmdChannel = connection.createChannel();
+
+        cmdConnection = connectionFactory.newConnection();
+        cmdChannel = dataConnection.createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
@@ -191,6 +216,36 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @return the name of the container instance or null if an error occurred
      */
     protected String createContainer(String imageName, String[] envVariables) {
+        return createContainer(imageName, this.defaultContainerType, envVariables);
+    }
+
+    /**
+     * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
+     * create and start an instance of the given image using the given
+     * environment variables.
+     * 
+     * <p>
+     * Note that the containerType parameter should have one of the following
+     * values.
+     * <ul>
+     * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
+     * of a benchmark.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_DATABASE} if this container is part
+     * of a benchmark but should be located on a storage node.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
+     * a benchmarked system.</li>
+     * </ul>
+     * 
+     * @param imageName
+     *            the name of the image of the docker container
+     * @param containerType
+     *            the type of the container
+     * @param envVariables
+     *            environment variables that should be added to the created
+     *            container
+     * @return the name of the container instance or null if an error occurred
+     */
+    protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
             envVariables = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2) : new String[2];
             envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
@@ -252,6 +307,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 cmdChannel.close();
             } catch (Exception e) {
             }
+        }
+        try {
+            cmdConnection.close();
+        } catch (Exception e) {
         }
         super.close();
     }

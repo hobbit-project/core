@@ -13,7 +13,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.AbstractCommandReceivingComponent;
+import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.components.TaskReceivingComponent;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractStreamingSystemAdapter extends AbstractCommandReceivingComponent
+public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformConnectorComponent
         implements StreamingGeneratedDataReceivingComponent, TaskReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStreamingSystemAdapter.class);
@@ -65,6 +65,16 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractCommandRece
 
     public AbstractStreamingSystemAdapter(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+        defaultContainerType = Constants.CONTAINER_TYPE_SYSTEM;
+    }
+
+    public AbstractStreamingSystemAdapter(DataSender sender2EvalStore, DataReceiver dataReceiver,
+            DataReceiver taskReceiver) {
+        this.sender2EvalStore = sender2EvalStore;
+        this.dataReceiver = dataReceiver;
+        this.taskReceiver = taskReceiver;
+        defaultContainerType = Constants.CONTAINER_TYPE_SYSTEM;
+        maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
     }
 
     @Override
@@ -134,6 +144,7 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractCommandRece
             // release the mutex
             terminateMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     /**

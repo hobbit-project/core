@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.rabbit;
 
 import java.io.IOException;
@@ -6,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 
+import org.hobbit.core.TestConstants;
 import org.junit.Test;
 
 import com.rabbitmq.client.Connection;
@@ -24,7 +41,6 @@ import com.rabbitmq.client.ConnectionFactory;
  */
 public class ParallelizationTest {
 
-    public static final String RABBIT_HOST = "192.168.99.100";
     public static final String REQUEST_QUEUE_NAME = "requestQueue";
 
     private static final int NUMBER_OF_CLIENTS = 5;
@@ -34,7 +50,7 @@ public class ParallelizationTest {
     @Test
     public void test() throws InterruptedException, IOException, TimeoutException {
 
-        EchoServer server = new EchoServer(RABBIT_HOST, REQUEST_QUEUE_NAME);
+        EchoServer server = new EchoServer(TestConstants.RABBIT_HOST, REQUEST_QUEUE_NAME);
 
         Thread serverThread = new Thread(server);
         serverThread.start();
@@ -47,7 +63,7 @@ public class ParallelizationTest {
         long time;
         try {
             ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(RABBIT_HOST);
+            factory.setHost(TestConstants.RABBIT_HOST);
             connection = factory.newConnection();
             client = RabbitRpcClient.create(connection, REQUEST_QUEUE_NAME);
             for (int i = 0; i < clientThreads.length; ++i) {

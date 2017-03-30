@@ -22,34 +22,54 @@ WHERE {
     {
         GRAPH %GRAPH_URI% {
             %CHALLENGE_URI% a hobbit:Challenge .
-	        OPTIONAL {
-		        ?challengeTask a hobbit:ChallengeTask .
-		        ?challengeTask ?taskProp ?taskObj .
-		        ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
-		        ?challengeTask hobbit:involvesBenchmark ?benchmark .
-		        OPTIONAL { ?benchmark ?benchmarkProp ?benchmarkObject . }
-		        OPTIONAL {
-        			?challengeTask hobbit:involvesSystemInstance ?system .
-        			OPTIONAL { ?system ?systemProp ?systemObject . }
-        		}
-        		OPTIONAL {
-        			?challengeTask ?parameterProp ?parameterValue .
-        			?benchmark hobbit:hasParameter ?parameterProp .
-        			{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
-        			OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
-        			OPTIONAL { ?parameterProp rdfs:range ?parameterPropRange .
-        				OPTIONAL { ?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . }
-        				OPTIONAL { ?parameterValue ?parameterValueRangeRelation ?parameterPropRange . }
-        			}
-        		}
-        	}
+	        %CHALLENGE_URI% ?challengeProp ?challengeObj .
         }
     }
     UNION
     {
         GRAPH %GRAPH_URI% {
             %CHALLENGE_URI% a hobbit:Challenge .
-	        %CHALLENGE_URI% ?challengeProp ?challengeObj .
+            ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
+            ?challengeTask a hobbit:ChallengeTask .
+            ?challengeTask ?taskProp ?taskObj .
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_URI% a hobbit:Challenge .
+            ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
+            ?challengeTask a hobbit:ChallengeTask .
+            ?challengeTask hobbit:involvesBenchmark ?benchmark .
+            OPTIONAL { ?benchmark ?benchmarkProp ?benchmarkObject . }
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_URI% a hobbit:Challenge .
+            ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
+            ?challengeTask a hobbit:ChallengeTask .
+            ?challengeTask hobbit:involvesSystemInstance ?system .
+            OPTIONAL { ?system ?systemProp ?systemObject . }
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_URI% a hobbit:Challenge .
+            ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
+            ?challengeTask a hobbit:ChallengeTask .
+            ?challengeTask hobbit:involvesBenchmark ?benchmark .
+            ?benchmark hobbit:hasParameter ?parameterProp .
+            ?challengeTask ?parameterProp ?parameterValue .
+        	{?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
+        	OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
+        	OPTIONAL { 
+                ?parameterProp rdfs:range ?parameterPropRange .
+                OPTIONAL { ?parameterPropRange ?parameterPropRangeProp ?parameterPropRangeObject . }
+                OPTIONAL { ?parameterValue ?parameterValueRangeRelation ?parameterPropRange . }
+        	}
         }
     }
 }

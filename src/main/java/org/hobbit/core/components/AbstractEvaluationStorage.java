@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.io.ByteArrayInputStream;
@@ -50,7 +66,7 @@ import com.rabbitmq.client.Envelope;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent
+public abstract class AbstractEvaluationStorage extends AbstractPlatformConnectorComponent
         implements ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
@@ -96,6 +112,10 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
     protected String ackExchangeName = null;
     protected Map<String, PairedDataSender> replyingSenders = new HashMap<>();
 
+    public AbstractEvaluationStorage() {
+        defaultContainerType = Constants.CONTAINER_TYPE_DATABASE;
+    }
+
     @Override
     public void init() throws Exception {
         super.init();
@@ -123,14 +143,12 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
 
         boolean sendAcks = false;
         if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
-            sendAcks = Boolean.getBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
+            sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
-                ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
                 // Create channel for acknowledgements
-                ackChannel = connection.createChannel();
-                String queueName = ackChannel.queueDeclare().getQueue();
-                ackChannel.exchangeDeclare(ackExchangeName, "fanout", false, true, null);
-                ackChannel.queueBind(queueName, ackExchangeName, "");
+                ackChannel = cmdConnection.createChannel();
+                ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
+                        false, true, null);
             }
         }
     }
@@ -157,6 +175,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             // release the mutex
             terminationMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     protected void acknowledgeResponse(String taskId) {

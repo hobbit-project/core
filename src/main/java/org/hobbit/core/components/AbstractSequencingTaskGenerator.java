@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.io.IOException;
@@ -52,25 +68,35 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     /**
      * Id of the task the generator is waiting for an acknowledgement.
      */
-    private String taskId = null;
+    private String seqTaskId = null;
     /**
      * Semaphore used to wait for the acknowledgement.
      */
     private Semaphore taskIdMutex = new Semaphore(0);
     /**
-     * Channel on which the acknowledgements are received.
+     * Channel on which the acknowledgments are received.
      */
     protected Channel ackChannel;
+
+    public AbstractSequencingTaskGenerator() {
+        // TODO remove this 1 from the constructor
+        super(1);
+    }
+    // TODO reactivate this constructor
+    // public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
+    // super(numberOfMessagesInParallel);
+    // }
 
     @Override
     public void init() throws Exception {
         super.init();
-        // Create channel for incoming acknowledgements
-        ackChannel = connection.createChannel();
+        // Create channel for incoming acknowledgments using the command
+        // connection (not the data connection!)
+        ackChannel = cmdConnection.createChannel();
         String queueName = ackChannel.queueDeclare().getQueue();
-        ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout", false, true,
-                null);
-        ackChannel.queueBind(queueName, generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "");
+        String exchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+        ackChannel.exchangeDeclare(exchangeName, "fanout", false, true, null);
+        ackChannel.queueBind(queueName, exchangeName, "");
         Consumer consumer = new DefaultConsumer(ackChannel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
@@ -83,6 +109,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
             }
         };
         ackChannel.basicConsume(queueName, true, consumer);
+        ackChannel.basicQos(1);
     }
 
     /**
@@ -93,9 +120,51 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      */
     protected void handleAck(byte[] body) {
         String ackTaskId = RabbitMQUtils.readString(body);
-        if ((taskId != null) && (taskId.equals(ackTaskId))) {
-            taskId = null;
-            taskIdMutex.release();
+        LOGGER.trace("Received ack{}.", ackTaskId);
+        // Make sure that the task id is not changed while we work with it
+        synchronized (this) {
+            if ((seqTaskId != null) && (seqTaskId.equals(ackTaskId))) {
+                seqTaskId = null;
+                taskIdMutex.release();
+            }
+        }
+    }
+
+    /**
+     * Sends the given task with the given task id and data to the system and
+     * blocks until an acknowledgement has been received for the task or the
+     * timeout has been reached. If an information is needed which of these two
+     * cases happened {@link #sendTaskToSystemAdapterInSequence(String, byte[])}
+     * should be used.
+     */
+    @Override
+    protected void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
+        sendTaskToSystemAdapterInSequence(taskIdString, data);
+    }
+
+    /**
+     * Sends the given task with the given task id and data to the system and
+     * blocks until an acknowledgement has been received for the task or the
+     * timeout has been reached. The return value shows which of these two cases
+     * happened.
+     * 
+     * @param taskIdString
+     * @param data
+     * @return <code>true</code> if the acknowledgement has been received,
+     *         <code>false</code> if the timeout has been reached or the method
+     *         has been interrupted.
+     * @throws IOException
+     *             if there is an error during the sending
+     */
+    protected boolean sendTaskToSystemAdapterInSequence(String taskIdString, byte[] data) throws IOException {
+        // make sure that only one thread can send and wait for the mutex at the
+        // same time
+        synchronized (taskIdMutex) {
+            synchronized (this) {
+                this.seqTaskId = taskIdString;
+            }
+            super.sendTaskToSystemAdapter(taskIdString, data);
+            return waitForAck();
         }
     }
 
@@ -106,9 +175,15 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      * @param taskId
      *            id of the task for which the acknowledgement should be
      *            received
+     * 
+     * @deprecated It is not necessary anymore since its usage has been
+     *             integrated into the
+     *             {@link #sendTaskToSystemAdapterInSequence(String, byte[])}
+     *             method.
      */
+    @Deprecated
     protected void setTaskIdToWaitFor(String taskId) {
-        this.taskId = taskId;
+        this.seqTaskId = taskId;
     }
 
     /**
@@ -118,7 +193,8 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      *         <code>false</code> if the timeout has been reached or the method
      *         has been interrupted.
      */
-    protected boolean waitForAck() {
+    private boolean waitForAck() {
+        LOGGER.trace("Waiting for ack{}.", seqTaskId);
         boolean ack = false;
         try {
             ack = taskIdMutex.tryAcquire(ackTimeout, TimeUnit.MILLISECONDS);
@@ -126,6 +202,17 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
             LOGGER.info("Interrupted while waiting for acknowledgement.", e);
         }
         return ack;
+    }
+
+    /**
+     * Setter for the maximum time the task generator waits for an
+     * acknowledgement.
+     * 
+     * @param ackTimeout
+     *            the new timeout in milliseconds
+     */
+    public void setAckTimeout(long ackTimeout) {
+        this.ackTimeout = ackTimeout;
     }
 
     @Override

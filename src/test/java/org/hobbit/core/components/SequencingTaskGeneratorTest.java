@@ -29,7 +29,7 @@ import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
-import org.hobbit.core.components.dummy.DummySystemReceiver;
+import org.hobbit.core.components.dummy.DummySystem;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -42,38 +42,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests the workflow of the {@link AbstractTaskGenerator} class and the
- * communication between the {@link AbstractDataGenerator},
+ * Tests the workflow of the {@link AbstractSequencingTaskGenerator} class and
+ * the communication between the {@link AbstractDataGenerator},
  * {@link AbstractSystemAdapter}, {@link AbstractEvaluationStorage} and
- * {@link AbstractTaskGenerator} classes. Note that this test needs a running
- * RabbitMQ instance. Its host name can be set using the
+ * {@link AbstractSequencingTaskGenerator} classes. Note that this test needs a
+ * running RabbitMQ instance. Its host name can be set using the
  * {@link #RABBIT_HOST_NAME} parameter.
  * 
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
 @RunWith(Parameterized.class)
-public class TaskGeneratorTest extends AbstractTaskGenerator {
+public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskGeneratorTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SequencingTaskGeneratorTest.class);
 
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 10000, 1 });
+        testConfigs.add(new Object[] { 1, 5000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 10000, 100 });
+//        testConfigs.add(new Object[] { 1, 5000, 100 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 10000, 1 });
+        testConfigs.add(new Object[] { 2, 5000, 1 });
         // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 10000, 100 });
+//        testConfigs.add(new Object[] { 2, 5000, 100 });
         // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 5000, 1 });
+        testConfigs.add(new Object[] { 10, 500, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 5000, 100 });
+//        testConfigs.add(new Object[] { 10, 500, 100 });
         return testConfigs;
     }
 
@@ -89,8 +89,8 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     private Semaphore systemReady = new Semaphore(0);
     private Semaphore evalStoreReady = new Semaphore(0);
 
-    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
-        super(numberOfMessagesInParallel);
+    public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
+        // TODO add me super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
     }
@@ -101,6 +101,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+
+        // Set the acknowledgement flag to true (read by the evaluation storage)
+        environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
+
+        init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
@@ -117,7 +122,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             dataGenThreads[i].start();
         }
 
-        DummySystemReceiver system = new DummySystemReceiver();
+        DummySystem system = new DummySystem();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
@@ -163,7 +168,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Collections.sort(expectedResponses);
             Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
+            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
         } finally {
             close();
         }
@@ -172,8 +177,8 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     @Override
     protected void generateTask(byte[] data) throws Exception {
         String taskIdString = getNextTaskId();
+        sendTaskToSystemAdapterInSequence(taskIdString, data);
         long timestamp = System.currentTimeMillis();
-        sendTaskToSystemAdapter(taskIdString, data);
         String dataString = RabbitMQUtils.readString(data);
         StringBuilder builder = new StringBuilder();
         builder.append(taskIdString);

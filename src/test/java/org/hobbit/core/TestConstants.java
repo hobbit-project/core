@@ -14,26 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with core.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.hobbit.core.components;
+package org.hobbit.core;
 
-/**
- * This interface is implemented by components that want to receive and process
- * commands from the hobbit command queue.
- * 
- * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
- *
- */
-public interface CommandReceivingComponent extends Component {
+import org.junit.Ignore;
 
-	/**
-	 * This method is called if a command is received and might be interesting
-	 * for this particular component.
-	 * 
-	 * @param command
-	 *            the byte encoding the command
-	 * @param data
-	 *            additional data that was sent together with the command
-	 */
-	public void receiveCommand(byte command, byte[] data);
+@Ignore
+public class TestConstants {
 
+    public static final String RABBIT_HOST = "192.168.99.102";
 }

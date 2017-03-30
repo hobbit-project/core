@@ -14,26 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with core.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.hobbit.core.components;
+package org.hobbit.core.components.dummy;
 
-/**
- * This interface is implemented by components that want to receive and process
- * commands from the hobbit command queue.
- * 
- * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
- *
- */
-public interface CommandReceivingComponent extends Component {
+import java.io.IOException;
 
-	/**
-	 * This method is called if a command is received and might be interesting
-	 * for this particular component.
-	 * 
-	 * @param command
-	 *            the byte encoding the command
-	 * @param data
-	 *            additional data that was sent together with the command
-	 */
-	public void receiveCommand(byte command, byte[] data);
+import org.junit.Ignore;
+
+@Ignore
+public class DummySystem extends DummySystemReceiver {
+
+    @Override
+    public void receiveGeneratedTask(String taskId, byte[] data) {
+        super.receiveGeneratedTask(taskId, data);
+        try {
+            sendResultToEvalStorage(taskId, data);
+        } catch (IOException e) {
+            new RuntimeException(e);
+        }
+    }
 
 }

@@ -13,8 +13,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.AbstractEvaluationStorage;
+import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -33,7 +33,7 @@ import com.rabbitmq.client.AMQP.BasicProperties;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractStreamingEvaluationModule extends AbstractCommandReceivingComponent
+public abstract class AbstractStreamingEvaluationModule extends AbstractPlatformConnectorComponent
         implements PairedStreamHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStreamingEvaluationModule.class);
@@ -54,6 +54,10 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractCommandR
     protected Semaphore requestNextResultPair = new Semaphore(0);
 
     protected boolean iterationFinished;
+    
+    public AbstractStreamingEvaluationModule() {
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
+    }
 
     @Override
     public void init() throws Exception {
@@ -246,7 +250,7 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractCommandR
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
-        // Nothing to do
+        super.receiveCommand(command, data);
     }
 
     @Override

@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.io.IOException;
@@ -30,11 +46,11 @@ import org.slf4j.LoggerFactory;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractBenchmarkController extends AbstractCommandReceivingComponent {
+public abstract class AbstractBenchmarkController extends AbstractPlatformConnectorComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
-    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.1.0";
+    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.1";
     protected static final String[] DEFAULT_EVAL_STORAGE_PARAMETERS = new String[] { "HOBBIT_RIAK_NODES=1" };
 
     /**
@@ -117,6 +133,10 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      * The URI of the experiment.
      */
     protected String experimentUri;
+    
+    public AbstractBenchmarkController() {
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
+    }
 
     @Override
     public void init() throws Exception {
@@ -261,7 +281,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
      *            environment variables that should be given to the component
      */
     protected void createEvaluationStorage(String evalStorageImageName, String[] envVariables) {
-        evalStoreContainerId = createContainer(evalStorageImageName, envVariables);
+        evalStoreContainerId = createContainer(evalStorageImageName, Constants.CONTAINER_TYPE_DATABASE, envVariables);
         if (evalStoreContainerId == null) {
             String errorMsg = "Couldn't create evaluation storage. Aborting.";
             LOGGER.error(errorMsg);
@@ -514,6 +534,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.info("model size = " + resultModel.size());
         }
         }
+        super.receiveCommand(command, data);
     }
 
     /**

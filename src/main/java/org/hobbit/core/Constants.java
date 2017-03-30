@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core;
 
 import java.util.TimeZone;
@@ -39,6 +55,8 @@ public final class Constants {
     
     public static final String ACKNOWLEDGEMENT_FLAG_KEY = "ACKNOWLEDGEMENT_FLAG";
     
+    public static final String END_OF_STREAM_MESSAGE_TYPE = "EOS";
+    
     // =============== RABBIT CONSTANTS ===============
 
     /**
@@ -79,8 +97,6 @@ public final class Constants {
 	
 	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
 	
-	public static final String END_OF_STREAM_MESSAGE_TYPE = "EOS";
-	
 	// =============== GRAPH CONSTANTS ===============
 
     public static final String EXPERIMENT_URI_NS = "http://w3id.org/hobbit/experiments#";
@@ -96,9 +112,11 @@ public final class Constants {
 
     public static final String HOBBIT_SESSION_ID_FOR_BROADCASTS = "BROADCAST";
 
-    public static final String CONTAINER_TYPE_BENCHMARK = "BENCHMARK";
+    public static final String CONTAINER_TYPE_BENCHMARK = "benchmark";
 
-    public static final String CONTAINER_TYPE_SYSTEM = "SYSTEM";
+    public static final String CONTAINER_TYPE_SYSTEM = "system";
+
+    public static final String CONTAINER_TYPE_DATABASE = "data";
     
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
 	

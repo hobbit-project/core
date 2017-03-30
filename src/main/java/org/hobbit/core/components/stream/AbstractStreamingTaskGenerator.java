@@ -10,7 +10,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.AbstractCommandReceivingComponent;
+import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
@@ -35,7 +35,7 @@ import com.rabbitmq.client.QueueingConsumer;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractStreamingTaskGenerator extends AbstractCommandReceivingComponent
+public abstract class AbstractStreamingTaskGenerator extends AbstractPlatformConnectorComponent
         implements StreamingGeneratedDataReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStreamingTaskGenerator.class);
@@ -91,7 +91,7 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractCommandRece
      * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES} messages in parallel.
      */
     public AbstractStreamingTaskGenerator() {
-        this.maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
     }
 
     /**
@@ -106,6 +106,7 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractCommandRece
      */
     public AbstractStreamingTaskGenerator(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
+        defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
     @Override
@@ -227,6 +228,7 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractCommandRece
             // release the mutex
             terminateMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     /**

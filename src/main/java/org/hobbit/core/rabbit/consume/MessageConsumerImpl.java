@@ -5,13 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +28,7 @@ public class MessageConsumerImpl extends MessageConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageConsumerImpl.class);
 
     private static final int MAX_MESSAGE_BUFFER_SIZE = 50;
-    private static final int MAX_CLOSED_STREAM_BUFFER_SIZE = 100;
+    // private static final int MAX_CLOSED_STREAM_BUFFER_SIZE = 100;
     /**
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */

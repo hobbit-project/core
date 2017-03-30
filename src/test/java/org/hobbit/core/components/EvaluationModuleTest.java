@@ -1,3 +1,19 @@
+/**
+ * This file is part of core.
+ *
+ * core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with core.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.hobbit.core.components;
 
 import java.util.Arrays;
@@ -6,20 +22,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
+
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the workflow of the {@link AbstractTaskGenerator} class and the
@@ -34,19 +55,19 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
  */
 public class EvaluationModuleTest extends AbstractEvaluationModule {
 
-    private static final String RABBIT_HOST_NAME = "192.168.99.100";
+    private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    // private int numberOfMessages = 10000;
-    private int numberOfMessages = 10;
+    private int numberOfMessages = 30000;
     private Set<String> receivedResults = new HashSet<>();
+    private Semaphore evalStoreReady = new Semaphore(0);
 
     @Test
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, RABBIT_HOST_NAME);
+        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
         environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
 
@@ -55,6 +76,7 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         Random rand = new Random();
 
         String taskId;
+
         ResultPairImpl pair;
         long timestamp;
         byte resultData[];
@@ -86,9 +108,10 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
 
-        try {
-            init();
+        init();
+        evalStoreReady.acquire();
 
+        try {
             run();
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
 
@@ -144,4 +167,12 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         return ModelFactory.createDefaultModel();
     }
 
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        LOGGER.info("received command {}", Commands.toString(command));
+        if (command == Commands.EVAL_STORAGE_READY_SIGNAL) {
+            evalStoreReady.release();
+        }
+        super.receiveCommand(command, data);
+    }
 }
