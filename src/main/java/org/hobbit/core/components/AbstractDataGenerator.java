@@ -117,6 +117,7 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
             // release the mutex
             startDataGenMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     protected void sendDataToTaskGenerator(byte[] data) throws IOException {

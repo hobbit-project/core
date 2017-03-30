@@ -52,9 +52,7 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
             return null;
         }
         String containerName = createContainer(imageName, envVariables);
-        if (containerName != null) {
-            containerObservers.put(containerName, observer);
-        }
+        addContainerObserver(containerName, observer);
         return containerName;
     }
 
@@ -74,6 +72,12 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
     @Override
     public void stopContainer(String containerName) {
         super.stopContainer(containerName);
+    }
+
+    protected void addContainerObserver(String containerName, ContainerStateObserver observer) {
+        if ((containerName != null) && (observer != null)) {
+            containerObservers.put(containerName, observer);
+        }
     }
 
 }

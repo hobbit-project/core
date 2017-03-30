@@ -45,7 +45,7 @@ import com.rabbitmq.client.Envelope;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractEvaluationStorage extends AbstractCommandReceivingComponent
+public abstract class AbstractEvaluationStorage extends AbstractPlatformConnectorComponent
         implements ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
@@ -226,6 +226,7 @@ public abstract class AbstractEvaluationStorage extends AbstractCommandReceiving
             // release the mutex
             terminationMutex.release();
         }
+        super.receiveCommand(command, data);
     }
 
     @Override

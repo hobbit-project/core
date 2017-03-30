@@ -43,7 +43,7 @@ import com.rabbitmq.client.QueueingConsumer;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractEvaluationModule extends AbstractCommandReceivingComponent {
+public abstract class AbstractEvaluationModule extends AbstractPlatformConnectorComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationModule.class);
 
@@ -193,7 +193,7 @@ public abstract class AbstractEvaluationModule extends AbstractCommandReceivingC
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
-        // Nothing to do
+        super.receiveCommand(command, data);
     }
 
     @Override

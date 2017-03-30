@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractBenchmarkController extends AbstractCommandReceivingComponent {
+public abstract class AbstractBenchmarkController extends AbstractPlatformConnectorComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
@@ -534,6 +534,7 @@ public abstract class AbstractBenchmarkController extends AbstractCommandReceivi
             LOGGER.info("model size = " + resultModel.size());
         }
         }
+        super.receiveCommand(command, data);
     }
 
     /**
