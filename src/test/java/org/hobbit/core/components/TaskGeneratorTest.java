@@ -62,18 +62,18 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 10000, 1 });
+        testConfigs.add(new Object[] { 1, 1000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 10000, 100 });
+        testConfigs.add(new Object[] { 1, 1000, 100 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 10000, 1 });
+        testConfigs.add(new Object[] { 2, 1000, 1 });
         // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 10000, 100 });
+        testConfigs.add(new Object[] { 2, 1000, 100 });
         // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 5000, 1 });
+        testConfigs.add(new Object[] { 10, 500, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 5000, 100 });
+        testConfigs.add(new Object[] { 10, 500, 100 });
         return testConfigs;
     }
 
@@ -101,6 +101,8 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        
+        init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
@@ -128,8 +130,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         evalStoreThread.start();
 
         dataGensReady.acquire(numberOfGenerators);
+        System.out.println("data gen ready");
         systemReady.acquire();
+        System.out.println("system ready");
         evalStoreReady.acquire();
+        System.out.println("eval store ready");
 
         try {
             // start dummy
@@ -190,9 +195,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
 
     protected synchronized void dataGeneratorTerminated() {
         ++terminationCount;
+        System.out.println("data gen terminated");
         if (terminationCount == numberOfGenerators) {
             try {
                 sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
+                System.out.println("data gen finished");
             } catch (IOException e) {
                 e.printStackTrace();
             }

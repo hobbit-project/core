@@ -16,6 +16,7 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.utils.IdGenerator;
 import org.hobbit.core.utils.SteppingIdGenerator;
 import org.junit.Assert;
@@ -26,9 +27,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ParallelDataStreamingTest implements IncomingStreamHandler {
-
-    // TODO find a better way to define the host
-    public static final String RABBIT_HOST = "192.168.99.100";
 
     private static final String TEST_RESOURCES_DIR = "src/test/resources/org/hobbit/storage/queries";
     private static final int MESSAGE_SIZE = 256;
@@ -87,7 +85,7 @@ public class ParallelDataStreamingTest implements IncomingStreamHandler {
                         SimpleRabbitQueueFactory factory = null;
                         DataReceiver receiver = null;
                         try {
-                            factory = SimpleRabbitQueueFactory.create(RABBIT_HOST);
+                            factory = SimpleRabbitQueueFactory.create(TestConstants.RABBIT_HOST);
                             receiver = (new DataReceiverImpl.Builder()).dataHandler(testInstance)
                                     .maxParallelProcessedMsgs(100).queue(factory, queueName).build();
                             receiverStartedSemaphore.release();
@@ -118,7 +116,7 @@ public class ParallelDataStreamingTest implements IncomingStreamHandler {
                         SimpleRabbitQueueFactory factory = null;
                         DataSender sender = null;
                         try {
-                            factory = SimpleRabbitQueueFactory.create(RABBIT_HOST);
+                            factory = SimpleRabbitQueueFactory.create(TestConstants.RABBIT_HOST);
                             sender = (new DataSenderImpl.Builder()).queue(factory, queueName).idGenerator(null)
                                     .messageSize(MESSAGE_SIZE).build();
                             InputStream is = null;

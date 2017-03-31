@@ -153,7 +153,7 @@ public class MessageConsumerImpl extends MessageConsumer {
             // clear all remaining messages (they should have been removed
             // before. However, maybe a message has been sent a second time)
             state.messageBuffer.clear();
-            LOGGER.debug("Received last message for stream \"{}\".", state.name);
+            LOGGER.trace("Received last message for stream \"{}\".", state.name);
             if (state.messageBuffer.size() > 0) {
                 LOGGER.error("Closed the stream \"{}\" while there are still {} messages in its data buffer",
                         state.name, state.messageBuffer.size());
