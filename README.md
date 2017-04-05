@@ -23,7 +23,7 @@ This library offers some main functionalities and utilities for the Hobbit platf
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>core</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
     ...
 	<dependencies>
