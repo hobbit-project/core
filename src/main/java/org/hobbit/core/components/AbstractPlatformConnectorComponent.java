@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 
@@ -37,6 +38,12 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
         implements PlatformConnector {
 
     private Map<String, ContainerStateObserver> containerObservers = new HashMap<String, ContainerStateObserver>();
+
+    public AbstractPlatformConnectorComponent() {
+        // We have to add the broadcast command header to receive messages about
+        // terminated containers
+        addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
+    }
 
     /**
      * {@inheritDoc}
