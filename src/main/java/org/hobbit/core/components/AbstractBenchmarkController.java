@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.jena.rdf.model.Model;
@@ -133,7 +134,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * The URI of the experiment.
      */
     protected String experimentUri;
-    
+
     public AbstractBenchmarkController() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -363,6 +364,33 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
+     * This method waits for the benchmarked system to terminate or times out
+     * after the given amount of time (in milliseconds).
+     * 
+     * @param maxWaitingTime
+     *            maximum waiting time in milliseconds
+     * @return {@code true} if the system has been terminated or {@code false}
+     *         if the method timed out
+     */
+    protected boolean waitForSystemToFinish(long maxWaitingTime) {
+        LOGGER.debug("Waiting for the benchmarked system to finish.");
+        try {
+            if (systemTerminatedMutex.tryAcquire(1, maxWaitingTime, TimeUnit.MILLISECONDS)) {
+                return true;
+            } else {
+                LOGGER.warn(
+                        "Didn't got a message that the system has been terminated. Stopped waiting after {} milliseconds.",
+                        maxWaitingTime);
+                return false;
+            }
+        } catch (InterruptedException e) {
+            String errorMsg = "Interrupted while waiting for the system to terminate.";
+            LOGGER.error(errorMsg);
+            throw new IllegalStateException(errorMsg, e);
+        }
+    }
+
+    /**
      * This method waits for the benchmarked system to terminate.
      */
     protected void waitForSystemToFinish() {
@@ -586,7 +614,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     protected void containerCrashed(String containerName) {
-        LOGGER.error("A data generator crashed (\"{}\"). Terminating.", containerName);
+        LOGGER.error("A component crashed (\"{}\"). Terminating.", containerName);
         generateErrorResultModel();
         sendResultModel(resultModel);
         System.exit(1);

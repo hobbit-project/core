@@ -17,6 +17,7 @@
 package org.hobbit.core.components.dummy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,8 +29,8 @@ import org.junit.Ignore;
 @Ignore
 public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
 
-    private final List<String> receivedResponses = new ArrayList<String>();
-    private final List<String> expectedResponses = new ArrayList<String>();
+    private final List<String> receivedResponses = Collections.synchronizedList(new ArrayList<String>());
+    private final List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
 
     @Override
     public void receiveResponseData(String taskId, long timestamp, byte[] data) {

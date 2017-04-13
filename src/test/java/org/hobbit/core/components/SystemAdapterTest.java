@@ -86,7 +86,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private List<String> receivedData = new ArrayList<String>();
+    private List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
     private int dataTerminationCount = 0;
     private int taskTerminationCount = 0;
     private int numberOfDataGenerators;
