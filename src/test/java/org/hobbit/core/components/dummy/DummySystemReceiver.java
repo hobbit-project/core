@@ -17,6 +17,7 @@
 package org.hobbit.core.components.dummy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.hobbit.core.components.AbstractSystemAdapter;
@@ -26,8 +27,8 @@ import org.junit.Ignore;
 @Ignore
 public class DummySystemReceiver extends AbstractSystemAdapter {
 
-    private final List<String> receivedData = new ArrayList<String>();
-    private final List<String> receivedTasks = new ArrayList<String>();
+    private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
+    private final List<String> receivedTasks = Collections.synchronizedList(new ArrayList<String>());
 
     @Override
     public void receiveGeneratedData(byte[] data) {

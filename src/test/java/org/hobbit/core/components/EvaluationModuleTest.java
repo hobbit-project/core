@@ -17,6 +17,7 @@
 package org.hobbit.core.components;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,10 +62,10 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
     private int numberOfMessages = 30000;
-    private Set<String> receivedResults = new HashSet<>();
+    private Set<String> receivedResults = Collections.synchronizedSet(new HashSet<>());
     private Semaphore evalStoreReady = new Semaphore(0);
 
-    @Test
+    @Test(timeout = 60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");

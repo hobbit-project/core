@@ -17,6 +17,7 @@
 package org.hobbit.core.components.dummy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
@@ -26,7 +27,7 @@ import org.junit.Ignore;
 @Ignore
 public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
-    private final List<String> receivedData = new ArrayList<String>();
+    private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
 
     @Override
     protected void generateTask(byte[] data) throws Exception {

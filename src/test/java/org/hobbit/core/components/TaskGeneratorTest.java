@@ -19,6 +19,7 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -70,17 +71,17 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         // We use two data generators with parallel message processing (max 100)
         testConfigs.add(new Object[] { 2, 10000, 100 });
         // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 5000, 1 });
+        testConfigs.add(new Object[] { 6, 5000, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 5000, 100 });
+        testConfigs.add(new Object[] { 6, 5000, 100 });
         return testConfigs;
     }
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private List<String> sentTasks = new ArrayList<String>();
-    private List<String> expectedResponses = new ArrayList<String>();
+    private List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
+    private List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
