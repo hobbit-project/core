@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
  * Resources representing Hobbit errors.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -32,7 +32,7 @@ public class HobbitErrors {
 
     /**
      * returns the URI for this schema
-     * 
+     *
      * @return the URI for this schema
      */
     public static String getURI() {

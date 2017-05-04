@@ -45,12 +45,12 @@ import com.rabbitmq.client.Envelope;
  * {@link #sendTaskToEvalStorage(String, long, byte[])}</li>
  * <li>wait for the acknowledgement using {@link #waitForAck()}</li>
  * </ul>
- * 
+ *
  * <p>
  * <b>Note</b> that the acknowledgements only work if the evaluation storage is
  * configured to send acknowledgements for the single tasks.
  * </p>
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -114,7 +114,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
 
     /**
      * Handles the acknowledgement messages.
-     * 
+     *
      * @param body
      *            the body of the acknowledgement message
      */
@@ -147,7 +147,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      * blocks until an acknowledgement has been received for the task or the
      * timeout has been reached. The return value shows which of these two cases
      * happened.
-     * 
+     *
      * @param taskIdString
      * @param data
      * @return <code>true</code> if the acknowledgement has been received,
@@ -171,11 +171,11 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     /**
      * Method to set the task id for which the task generator will wait when
      * calling {@link #waitForAck()}.
-     * 
+     *
      * @param taskId
      *            id of the task for which the acknowledgement should be
      *            received
-     * 
+     *
      * @deprecated It is not necessary anymore since its usage has been
      *             integrated into the
      *             {@link #sendTaskToSystemAdapterInSequence(String, byte[])}
@@ -188,7 +188,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
 
     /**
      * Method to wait for the acknowledgement of a task with the given Id.
-     * 
+     *
      * @return <code>true</code> if the acknowledgement has been received,
      *         <code>false</code> if the timeout has been reached or the method
      *         has been interrupted.
@@ -207,7 +207,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     /**
      * Setter for the maximum time the task generator waits for an
      * acknowledgement.
-     * 
+     *
      * @param ackTimeout
      *            the new timeout in milliseconds
      */

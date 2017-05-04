@@ -39,7 +39,7 @@ import com.rabbitmq.client.MessageProperties;
  * This is a test that simulates the workflow of the
  * {@link DockerBasedMimickingAlg} class simulating the platform controller that
  * would normally create a docker container.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

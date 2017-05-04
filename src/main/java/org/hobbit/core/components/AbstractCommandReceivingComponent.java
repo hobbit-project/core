@@ -119,7 +119,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     /**
      * Sends the given command to the command queue.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @throws IOException
@@ -132,7 +132,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Sends the given command to the command queue with the given data
      * appended.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @param data
@@ -147,7 +147,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Sends the given command to the command queue with the given data appended
      * and using the given properties.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @param data
@@ -179,7 +179,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Adds the given session id to the set of ids this component is reacting
      * to.
-     * 
+     *
      * @param sessionId
      *            session id that should be added to the set of accepted ids.
      */
@@ -207,7 +207,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
      * create and start an instance of the given image using the given
      * environment variables.
-     * 
+     *
      * @param imageName
      *            the name of the image of the docker container
      * @param envVariables
@@ -223,7 +223,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
      * create and start an instance of the given image using the given
      * environment variables.
-     * 
+     *
      * <p>
      * Note that the containerType parameter should have one of the following
      * values.
@@ -235,7 +235,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
      * a benchmarked system.</li>
      * </ul>
-     * 
+     *
      * @param imageName
      *            the name of the image of the docker container
      * @param containerType
@@ -270,7 +270,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * This method sends a {@link Commands#DOCKER_CONTAINER_STOP} command to
      * stop the container with the given id.
-     * 
+     *
      * @param containerName
      *            the name of the container instance that should be stopped
      */
@@ -286,7 +286,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Internal method for initializing the {@link #responseQueueName} and the
      * {@link #responseConsumer} if they haven't been initialized before.
-     * 
+     *
      * @throws IOException
      *             if a communication problem occurs
      */

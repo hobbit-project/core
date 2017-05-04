@@ -9,11 +9,11 @@
 @prefix bench: <http://w3id.org/bench#> .
 
 exp:LinkingExp10 a hobbit:Experiment ;
-	hobbit:involvesSystemInstance sys:limesV1;
-	hobbit:involvesBenchmark bench:lance;
-	hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge>.
-    
-    
+  hobbit:involvesSystemInstance sys:limesV1;
+  hobbit:involvesBenchmark bench:lance;
+  hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge>.
+
+
 #	hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
 #	hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
 #	hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
@@ -25,9 +25,9 @@ exp:LinkingExp10 a hobbit:Experiment ;
 
 bench:lance a	hobbit:Benchmark;
     rdfs:label "Lance Benchmark"@en .
-    
-sys:limesV1 a  hobbit:SystemInstance ; 
-	rdfs:label	"Limes"@en .
+
+sys:limesV1 a  hobbit:SystemInstance ;
+  rdfs:label	"Limes"@en .
 
 <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> a hobbit:ChallengeTask ;
-		rdfs:label	"Linking"@en .
+    rdfs:label	"Linking"@en .

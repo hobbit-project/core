@@ -5,6 +5,6 @@ SELECT (count(distinct ?experiment) as ?count)
 WHERE {
   GRAPH %GRAPH_URI% {
     ?experiment a hobbit:Experiment .
-	?experiment hobbit:isPartOf %CHALLENGE_TASK_URI% .
-	}
+    ?experiment hobbit:isPartOf %CHALLENGE_TASK_URI% .
+    }
 }

@@ -41,7 +41,7 @@ import com.rabbitmq.client.Envelope;
 /**
  * This abstract class implements basic functions that can be used to implement
  * a task generator.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -209,7 +209,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
     /**
      * Creates a new iterator that iterates over the response pairs.
-     * 
+     *
      * @return a new iterator or null if an error occurred
      */
     protected abstract Iterator<ResultPair> createIterator();

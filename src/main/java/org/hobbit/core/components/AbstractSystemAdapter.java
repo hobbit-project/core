@@ -40,7 +40,7 @@ import com.rabbitmq.client.MessageProperties;
 /**
  * This abstract class implements basic functions that can be used to implement
  * a system adapter.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -100,7 +100,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     /**
      * Constructor setting the maximum number of messages processed in parallel.
-     * 
+     *
      * @param maxParallelProcessedMsgs
      *            The maximum number of incoming messages of a single queue that
      *            are processed in parallel. Additional messages have to wait.
@@ -217,7 +217,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     /**
      * This method sends the given result data for the task with the given task
      * id to the evaluation storage.
-     * 
+     *
      * @param taskIdString
      *            the id of the task
      * @param data

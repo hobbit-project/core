@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * given as environment variable with the key
  * {@link Constants#DATA_QUEUE_NAME_KEY}. The generated data is written to a
  * file with the given file name.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

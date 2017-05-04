@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This abstract class implements basic methods for a benchmark controller.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -183,7 +183,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Creates the given number of data generators using the given image name
      * and environment variables.
-     * 
+     *
      * @param dataGeneratorImageName
      *            name of the data generator Docker image
      * @param numberOfDataGenerators
@@ -199,7 +199,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Creates the given number of task generators using the given image name
      * and environment variables.
-     * 
+     *
      * @param taskGeneratorImageName
      *            name of the task generator Docker image
      * @param numberOfTaskGenerators
@@ -214,7 +214,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Internal method for creating generator components.
-     * 
+     *
      * @param generatorImageName
      *            name of the generator Docker image
      * @param numberOfGenerators
@@ -246,7 +246,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Creates the evaluate module using the given image name and environment
      * variables.
-     * 
+     *
      * @param evalModuleImageName
      *            name of the evaluation module image
      * @param envVariables
@@ -275,7 +275,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Creates the evaluate storage using the given image name and environment
      * variables.
-     * 
+     *
      * @param evalStorageImageName
      *            name of the evaluation storage image
      * @param envVariables
@@ -366,7 +366,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * This method waits for the benchmarked system to terminate or times out
      * after the given amount of time (in milliseconds).
-     * 
+     *
      * @param maxWaitingTime
      *            maximum waiting time in milliseconds
      * @return {@code true} if the system has been terminated or {@code false}
@@ -430,7 +430,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Uses the given model as result model if the result model is
      * <code>null</code>. Else, the two models are merged.
-     * 
+     *
      * @param resultModel
      *            the new result model
      */
@@ -503,7 +503,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Sends the result RDF model to the platform controller.
-     * 
+     *
      * @param model
      *            model containing the results
      */
@@ -569,7 +569,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * This method handles messages from the command bus containing the
      * information that a container terminated. It checks whether the container
      * belongs to the current benchmark and whether it has to react.
-     * 
+     *
      * @param containerName
      *            the name of the terminated container
      * @param exitCode

@@ -35,7 +35,7 @@ public interface RabbitQueueFactory {
      * <li>The queue is configured to be deleted automatically.</li>
      * <li>No additional queue configuration is defined.</li>
      * </ul>
-     * 
+     *
      * @param name
      *            name of the queue
      * @return {@link RabbitQueue} object comprising the {@link Channel} and the

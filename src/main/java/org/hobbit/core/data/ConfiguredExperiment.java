@@ -18,7 +18,7 @@ package org.hobbit.core.data;
 
 /**
  * Simple data structure containing data about a configured experiment.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

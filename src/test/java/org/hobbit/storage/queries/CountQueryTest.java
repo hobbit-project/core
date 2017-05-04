@@ -36,7 +36,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /**
  * This test class tests SPARQL CONSTRUCT queries.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

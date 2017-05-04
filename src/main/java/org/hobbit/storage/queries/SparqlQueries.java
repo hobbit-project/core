@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class provides static SPRAQL queries that are loaded from predefined
  * resources.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -54,7 +54,7 @@ public class SparqlQueries {
 
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
-     * 
+     *
      * @param resourceName
      *            name of the resource that should be loaded
      * @return the resource as String or <code>null</code> if an error occurs
@@ -82,7 +82,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -105,7 +105,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving a shallow graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -128,7 +128,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the tasks of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -152,7 +152,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving a graph comprising the task URIs
      * and the publication date of a challenge if this challenge is closed.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -176,7 +176,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for adding the closed triple to the challenge with
      * the given URI.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be closed. <code>null</code>
      *            works like a wildcard.
@@ -198,7 +198,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the graph of an experiment.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -223,7 +223,7 @@ public class SparqlQueries {
      * Returns a SPARQL query for retrieving a shallow graph of an experiment
      * containing the links to the system instance, the benchmark and the
      * challenge task and the labels of them.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -241,7 +241,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving the graphs of experiments that
      * involve one of the given systems.
-     * 
+     *
      * @param systemUris
      *            URIs of the systems that might be involved in the experiment.
      * @param graphUri
@@ -300,7 +300,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving the graph of an experiment that is
      * part of the given challenge task.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -330,7 +330,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for creating a subgraph of a challenge task that
      * defines an experiment of this task.
-     * 
+     *
      * @param experimentUri
      *            URI of the newly created experiment.
      * @param challengeTaskUri
@@ -366,7 +366,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for deleting the graph of an experiment.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -388,7 +388,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for deleting the graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -412,7 +412,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL update query for cleaning up the graph of a challenge
      * configs.
-     * 
+     *
      * @param graphUri
      *            URI of the graph the challenge is stored. <code>null</code>
      *            works like a wildcard.
@@ -442,7 +442,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL update query for cleaning up the graph of a challenge
      * configs.
-     * 
+     *
      * @param graphUri
      *            URI of the challenge configuration graph.
      * @return the SPARQL update query that performs the deletion or
@@ -471,7 +471,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for cleaning up the private result graph.
-     * 
+     *
      * @param graphUri
      *            URI of the private result graph.
      * @return the SPARQL update query that performs the deletion or
@@ -496,7 +496,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for counting the number of experiments of a
      * challenge task.
-     * 
+     *
      * @param challengeTaskUri
      *            URI of the challenge task
      * @param graphUri
@@ -515,7 +515,7 @@ public class SparqlQueries {
      * Replaces the given placeholders in the given query with the given
      * replacements. If a replacement is <code>null</code>, it is replaced by a
      * variable.
-     * 
+     *
      * @param query
      *            the query containing placeholders
      * @param placeholders
@@ -557,14 +557,14 @@ public class SparqlQueries {
      * the updated model will be put into the DELETE part of the query. Triples
      * that are present in the updated model but can not be found in the
      * original model will be put into the INSERT part of the query.
-     * 
+     *
      * <p>
      * <b>Note</b> that some stores might have a maximum number of triples that
      * can be processed with a single query. In these cases
      * {@link #getUpdateQueriesFromDiff(Model, Model, String, int)} should be
      * used.
      * </p>
-     * 
+     *
      * @param original
      *            the original RDF model
      * @param updated
@@ -583,7 +583,7 @@ public class SparqlQueries {
      * Generates a SPARQL UPDATE query based on the given list of statements
      * that should be deleted and that should be added in the graph with the
      * given URI.
-     * 
+     *
      * @param deleted
      *            statements that should be deleted from the graph
      * @param inserted
@@ -630,7 +630,7 @@ public class SparqlQueries {
      * found in the original model will be put into the INSERT part of the
      * query. The changes might be carried out using multiple queries if a
      * single query could hit a maximum number of triples.
-     * 
+     *
      * @param original
      *            the original RDF model
      * @param updated
@@ -652,7 +652,7 @@ public class SparqlQueries {
      * found in the original model will be put into the INSERT part of the
      * query. The changes will be carried out using multiple queries if a single
      * query would hit the given maximum number of triples per query.
-     * 
+     *
      * @param original
      *            the original RDF model
      * @param updated

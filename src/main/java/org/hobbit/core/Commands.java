@@ -115,7 +115,7 @@ public final class Commands {
 
     /**
      * Returns the name of the command if it is defined inside the {@link Commands} class or its id as String.
-     * 
+     *
      * @param command the command that should be transformed into a String
      * @return the name of the command or its id if the name is not known
      */

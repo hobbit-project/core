@@ -24,5 +24,5 @@ public class BenchmarkMetaData {
     public String benchmarkName;
     public String benchmarkDescription;
     public Set<String> implementedApis;
-    
+
 }

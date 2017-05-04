@@ -39,7 +39,7 @@ import com.rabbitmq.client.QueueingConsumer;
 /**
  * This abstract class implements basic functions that can be used to implement
  * a task generator.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -63,7 +63,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * The URI of the experiment.
      */
     protected String experimentUri;
-    
+
     public AbstractEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -105,7 +105,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * This method communicates with the evaluation storage to collect all
      * response pairs. For every pair the
      * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
-     * 
+     *
      * @throws Exception
      *             if a communication error occurs.
      */
@@ -151,7 +151,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
     /**
      * Evaluates the given response pair.
-     * 
+     *
      * @param expectedData
      *            the data that has been expected
      * @param receivedData
@@ -170,7 +170,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Summarizes the evaluation and generates an RDF model containing the
      * evaluation results.
-     * 
+     *
      * @return an RDF model containing the evaluation results
      * @throws Exception
      *             if a sever error occurs
@@ -179,7 +179,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
     /**
      * Sends the model to the benchmark controller.
-     * 
+     *
      * @param model
      *            the model that should be sent
      * @throws IOException

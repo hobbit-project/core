@@ -1,6 +1,6 @@
-﻿@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix qb: <http://purl.org/linked-data/cube#> . 
+@prefix qb: <http://purl.org/linked-data/cube#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix hobbit: <http://w3id.org/hobbit/vocab#> .
 @prefix exp: <http://w3id.org/hobbit/experiments#> .
@@ -18,7 +18,7 @@
 # --- 	hobbit:organizer "owner"@en;
 # --- 	hobbit:closed	"true"^^xsd:boolean;
 # --- 	hobbit:visible	"true"^^xsd:boolean .
-    
+
 # --- Challenge Tasks ---
 
 # --- ex:Challenge1Task1 a hobbit:ChallengeTask;
@@ -29,7 +29,7 @@
 # --- 	bench:dataType bench:TrafficData;
 # --- 	hobbit:involvesSystemInstance ex:SystemA;
 # --- 	hobbit:involvesSystemInstance ex:SystemB .
-    
+
 # --- Benchmarks ---
 
 # --- bench:BenchmarkX a	hobbit:Benchmark;
@@ -43,21 +43,21 @@ bench:dataType a hobbit:ConfigurableParameter;
     rdfs:range bench:GenerationDataType .
 
 bench:GenerationDataType a owl:Class, rdfs:Class .
-    
+
 bench:TrafficData a bench:GenerationDataType .
 
 # --- bench:kpiX a hobbit:KPI;
 # ---     rdfs:range xsd:double .
-    
+
 # --- Systems ---
 
-# --- ex:SystemA a  hobbit:SystemInstance ; 
+# --- ex:SystemA a  hobbit:SystemInstance ;
 # --- 	rdfs:label	"System A Label"@en;
 # --- 	rdfs:comment	"System A Desc"@en;
 # --- 	hobbit:imageName "SystemImageName" ;
 # --- 	hobbit:implementsAPI bench:ApiX .
-# --- 
-# --- ex:SystemB a  hobbit:SystemInstance ; 
+# ---
+# --- ex:SystemB a  hobbit:SystemInstance ;
 # --- 	rdfs:label	"System B Label"@en;
 # --- 	rdfs:comment	"System B Desc"@en;
 # --- 	hobbit:imageName "SystemImageName" ;

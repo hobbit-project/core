@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class DummyComponentExecutor implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DummyComponentExecutor.class);
-    
+
     protected Component component;
     protected boolean success;
 

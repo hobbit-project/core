@@ -29,7 +29,7 @@ import java.io.IOException;
 
 /**
  * This abstract class implements basic functionalities of a hobbit component.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -141,7 +141,7 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
      * <li>The queue is configured to be deleted automatically.</li>
      * <li>No additional queue configuration is defined.</li>
      * </ul>
-     * 
+     *
      * @param name
      *            name of the queue
      * @return {@link RabbitQueue} object comprising the {@link Channel} and the

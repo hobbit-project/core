@@ -27,7 +27,7 @@ import org.hobbit.core.data.ResultPair;
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for
  * testing purposes.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -50,7 +50,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
     /**
      * Adds the given result to the map of results.
-     * 
+     *
      * @param isExpectedResult
      *            true if the result has been received from a task generator,
      *            i.e., is the expected result for a task
@@ -83,7 +83,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
     /**
      * A simple structure implementing the {@link ResultPair} interface.
-     * 
+     *
      * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
      *
      */
@@ -113,7 +113,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
     /**
      * A simple structure implementing the {@link Result} interface
-     * 
+     *
      * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
      *
      */

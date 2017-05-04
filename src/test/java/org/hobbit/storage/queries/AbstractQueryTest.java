@@ -39,10 +39,10 @@ import org.junit.Test;
  * the graph containing the graph loaded from a given resource is defined by
  * {@link #FIRST_GRAPH_NAME}. The storage contains a second, empty graph with a
  * name defined by {@link #SECOND_GRAPH_NAME}.
- * 
+ *
  * If one of the given resource names is null, the named graph in the storage or
  * the result model will be empty.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

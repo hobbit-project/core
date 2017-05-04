@@ -4,27 +4,27 @@ This library offers some main functionalities and utilities for the Hobbit platf
 ### Using it with Maven
 
 ```xml
-	<repositories>
-		<repository>
-			<id>maven.aksw.internal</id>
-			<name>University Leipzig, AKSW Maven2 Repository</name>
-			<url>http://maven.aksw.org/repository/internal</url>
-		</repository>
-		<repository>
-			<id>maven.aksw.snapshots</id>
-			<name>University Leipzig, AKSW Maven2 Repository</name>
-			<url>http://maven.aksw.org/repository/snapshots</url>
-		</repository>
+  <repositories>
+    <repository>
+      <id>maven.aksw.internal</id>
+      <name>University Leipzig, AKSW Maven2 Repository</name>
+      <url>http://maven.aksw.org/repository/internal</url>
+    </repository>
+    <repository>
+      <id>maven.aksw.snapshots</id>
+      <name>University Leipzig, AKSW Maven2 Repository</name>
+      <url>http://maven.aksw.org/repository/snapshots</url>
+    </repository>
     ...
-	</repositories>
+  </repositories>
 
-	<dependencies>
-		<!-- Hobbit core -->
-		<dependency>
-			<groupId>org.hobbit</groupId>
-			<artifactId>core</artifactId>
-			<version>1.0.3</version>
-		</dependency>
+  <dependencies>
+    <!-- Hobbit core -->
+    <dependency>
+      <groupId>org.hobbit</groupId>
+      <artifactId>core</artifactId>
+      <version>1.0.3</version>
+    </dependency>
     ...
-	<dependencies>
+  <dependencies>
 ```

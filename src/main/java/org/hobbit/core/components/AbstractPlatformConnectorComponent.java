@@ -30,7 +30,7 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
  * This extension of the {@link AbstractCommandReceivingComponent} offers some
  * platform functionalities to other classes by implementing the
  * {@link PlatformConnector} interface.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

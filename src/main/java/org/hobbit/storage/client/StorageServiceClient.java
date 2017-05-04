@@ -39,7 +39,7 @@ import com.rabbitmq.client.Connection;
 /**
  * Simple client of the storage service implementing a synchronized
  * communication.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -55,7 +55,7 @@ public class StorageServiceClient implements Closeable {
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
      * {@link Connection}.
-     * 
+     *
      * @param connection
      *            RabbitMQ connection used for the communication
      * @return a StorageServiceClient instance
@@ -77,7 +77,7 @@ public class StorageServiceClient implements Closeable {
     /**
      * Constructor creating a StorageServiceClient using the given
      * {@link RabbitRpcClient}.
-     * 
+     *
      * @param rpcClient
      *            RPC client that is used for the communication
      */
@@ -89,7 +89,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given ASK query to the storage service and returns a boolean
      * value or throws an Exception if an error occurs, the service needs too
      * much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            ASK query
      * @return result for the query or <code>false</code> if an error occurs
@@ -116,7 +116,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given CONSTRUCT query to the storage service and returns a
      * {@link Model} value or <code>null</code> if an error occurs, the service
      * needs too much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            CONSTRUCT query
      * @return result for the query or <code>null</code>
@@ -141,7 +141,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given DESCRIBE query to the storage service and returns a
      * {@link Model} value or <code>null</code> if an error occurs, the service
      * needs too much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            DESCRIBE query
      * @return result for the query or <code>null</code>
@@ -167,7 +167,7 @@ public class StorageServiceClient implements Closeable {
      * {@link ResultSet} value or <code>null</code> if an error occurs, the
      * service needs too much time to respond or the response couldn't be
      * parsed.
-     * 
+     *
      * @param query
      *            SELECT query
      * @return result for the query or <code>null</code>
@@ -194,7 +194,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given UPDATE query to the storage service and returns
      * <code>true</code> if the query is successful or <code>false</code> if an
      * error occurs or the service needs too much time to respond.
-     * 
+     *
      * @param query
      *            UPDATE query
      * @return flag indicating whether the query has been executed successfully
@@ -213,7 +213,7 @@ public class StorageServiceClient implements Closeable {
      * Inserts the given model into the storage and returns <code>true</code> if
      * the query is successful or <code>false</code> if an error occurs or the
      * service needs too much time to respond.
-     * 
+     *
      * @param model
      *            RDF model containing triples that should be inserted
      * @param graphURI

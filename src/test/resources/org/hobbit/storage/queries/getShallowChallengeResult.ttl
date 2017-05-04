@@ -1,4 +1,4 @@
-﻿@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix qb: <http://purl.org/linked-data/cube#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -11,9 +11,9 @@
 # --- Challenge ---
 
 <http://example.org/MyChallenge> a	hobbit:Challenge;
-	rdfs:label "My example Challenge"@en;
-	rdfs:comment	"This is an example for a challenge."@en;
-	hobbit:executionDate "2016-12-24"^^xsd:date;
-	hobbit:publicationDate "2016-12-26"^^xsd:date;
-	hobbit:organizer "Michael Roeder"@en;
-	hobbit:visible	"true"^^xsd:boolean .
+  rdfs:label "My example Challenge"@en;
+  rdfs:comment	"This is an example for a challenge."@en;
+  hobbit:executionDate "2016-12-24"^^xsd:date;
+  hobbit:publicationDate "2016-12-26"^^xsd:date;
+  hobbit:organizer "Michael Roeder"@en;
+  hobbit:visible	"true"^^xsd:boolean .

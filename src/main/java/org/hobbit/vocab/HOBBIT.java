@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
  * Representation of the Hobbit vocabulary as Java objects.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -32,7 +32,7 @@ public class HOBBIT {
 
     /**
      * returns the URI for this schema
-     * 
+     *
      * @return the URI for this schema
      */
     public static String getURI() {
@@ -60,7 +60,7 @@ public class HOBBIT {
     public static final Resource Parameter = resource("Parameter");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
-    
+
     public static final Property closed = property("closed");
     public static final Property defaultValue = property("defaultValue");
     public static final Property endTime = property("endTime");

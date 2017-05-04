@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * {@link AbstractTaskGenerator} classes. Note that this test needs a running
  * RabbitMQ instance. Its host name can be set using the
  * {@link #RABBIT_HOST_NAME} parameter.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -110,7 +110,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        
+
         init();
 
         Thread[] dataGenThreads = new Thread[numberOfDataGenerators];

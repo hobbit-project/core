@@ -19,7 +19,7 @@ package org.hobbit.core;
 /**
  * Command bytes that can be sent to the controller. The response depends on the
  * used command.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

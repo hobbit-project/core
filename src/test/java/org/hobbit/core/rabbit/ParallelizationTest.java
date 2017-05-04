@@ -35,7 +35,7 @@ import com.rabbitmq.client.ConnectionFactory;
  * for their response. If one of the client gets stuck, this test will last
  * forever. Thus, it is counted as failing if it needs more time than
  * {@link #MAX_RUNTIME}, i.e., the main thread is stopped after that time.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

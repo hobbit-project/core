@@ -24,7 +24,7 @@ import com.rabbitmq.client.Channel;
 /**
  * Simple structure representing the data of a RabbitMQ queue, i.e., the
  * {@link Channel} and the name.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -41,7 +41,7 @@ public class RabbitQueue implements Closeable {
 
     /**
      * Constructor.
-     * 
+     *
      * @param channel
      *            Channel of this queue.
      * @param name
@@ -62,7 +62,7 @@ public class RabbitQueue implements Closeable {
 
     /**
      * Returns number of available messages or 0 if an error occurred.
-     * 
+     *
      * @return the number of available messages.
      */
     public long messageCount() {

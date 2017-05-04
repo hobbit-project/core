@@ -4,14 +4,14 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 WITH %GRAPH_URI%
 DELETE {
-	?kpiProp	?kpiPropProp	?kpiPropObject .
+    ?kpiProp	?kpiPropProp	?kpiPropObject .
 }
 WHERE {
-	{?benchmark	hobbit:measuresKPI	?kpiProp} UNION {?kpiProp	a	hobbit:KPI} .
-	?kpiProp	?kpiPropProp	?kpiPropObject .
-	FILTER NOT EXISTS {
-		?challengeTask a hobbit:ChallengeTask .
-		?challengeTask hobbit:involvesBenchmark ?otherBenchmark .
-		?otherBenchmark	hobbit:measuresKPI	?kpiProp .
-	}
+    {?benchmark	hobbit:measuresKPI	?kpiProp} UNION {?kpiProp	a	hobbit:KPI} .
+    ?kpiProp	?kpiPropProp	?kpiPropObject .
+    FILTER NOT EXISTS {
+        ?challengeTask a hobbit:ChallengeTask .
+        ?challengeTask hobbit:involvesBenchmark ?otherBenchmark .
+        ?otherBenchmark	hobbit:measuresKPI	?kpiProp .
+    }
 }
