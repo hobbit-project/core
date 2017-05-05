@@ -92,6 +92,40 @@ public class UpdateQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", null, SECOND_GRAPH_NAME,
                 new String[] { SparqlQueries.getUpdateQueryFromDiff(original, updated, SECOND_GRAPH_NAME) } });
         /*
+         * The original model is changed to the updated model as expected with
+         * the possibility to create multiple queries.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME) });
+        /*
+         * The original model is changed to the updated model as expected with
+         * one triple per query
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME, 1) });
+        /*
+         * The original model is changed to the updated model as expected with
+         * up to two triples per query
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME, 2) });
+        /*
+         * A query that should focus on the second graph does not change the
+         * first graph
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/exampleChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, SECOND_GRAPH_NAME) });
+        /*
+         * A query that should DELETE and INSERT something does not change an
+         * empty graph.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", null, SECOND_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, SECOND_GRAPH_NAME) });
+        /*
          * The difference between an open and a closed challenge can be
          * expressed with this method as well.
          */
