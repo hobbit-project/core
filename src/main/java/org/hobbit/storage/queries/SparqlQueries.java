@@ -50,7 +50,7 @@ public class SparqlQueries {
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
     private static final String GRAPH_PLACEHOLDER = "%GRAPH_URI%";
     private static final String SYSTEM_PLACEHOLDER = "%SYSTEM_URI%";
-    private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 5000;
+    private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 500;
 
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
