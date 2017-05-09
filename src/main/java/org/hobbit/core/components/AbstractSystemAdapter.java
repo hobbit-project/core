@@ -59,6 +59,14 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      */
     private Semaphore terminateMutex = new Semaphore(0);
     /**
+     * The cause for an unusual termination.
+     */
+    private Exception cause;
+    /**
+     * Mutex used to manage access to the {@link #cause} object.
+     */
+    private Semaphore causeMutex = new Semaphore(1);
+    /**
      * Semaphore used to control the number of data messages that can be
      * processed in parallel.
      */
@@ -191,11 +199,31 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
 
         terminateMutex.acquire();
+        // Check whether the system should abort
+        try {
+            causeMutex.acquire();
+            if (cause != null) {
+                throw cause;
+            }
+            causeMutex.release();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting to set the termination cause.");
+        }
         // wait until all messages have been read from the queue and all sent
         // messages have been consumed
         while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()
                 + system2EvalStoreQueue.messageCount()) > 0) {
             Thread.sleep(1000);
+            // Check whether the system should abort
+            try {
+                causeMutex.acquire();
+                if (cause != null) {
+                    throw cause;
+                }
+                causeMutex.release();
+            } catch (InterruptedException e) {
+                LOGGER.error("Interrupted while waiting to set the termination cause.");
+            }
         }
         // Collect all open mutex counts to make sure that there is no message
         // that is still processed
@@ -208,8 +236,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     public void receiveCommand(byte command, byte[] data) {
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATION_FINISHED) {
-            // release the mutex
-            terminateMutex.release();
+            terminate(null);
         }
         super.receiveCommand(command, data);
     }
@@ -240,6 +267,28 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         // MessageProperties.PERSISTENT_BASIC, buffer.array());
         system2EvalStoreQueue.channel.basicPublish("", system2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
                 buffer.array());
+    }
+
+    /**
+     * Starts termination of the main thread of this system adapter. If a cause
+     * is given, it will be thrown causing an abortion from the main thread
+     * instead of a normal termination.
+     * 
+     * @param cause
+     *            the cause for an abortion of the process or {code null} if the
+     *            component should terminate in a normal way.
+     */
+    protected synchronized void terminate(Exception cause) {
+        if (cause != null) {
+            try {
+                causeMutex.acquire();
+                this.cause = cause;
+                causeMutex.release();
+            } catch (InterruptedException e) {
+                LOGGER.error("Interrupted while waiting to set the termination cause.");
+            }
+        }
+        terminateMutex.release();
     }
 
     @Override
