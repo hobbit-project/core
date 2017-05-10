@@ -25,6 +25,7 @@ public class SystemMetaData {
     public String systemDescription;
     public String system_image_name;
     public Set<String> implementedApis;
+    public Set<String> usedImages;
 
     @Override
     public int hashCode() {
