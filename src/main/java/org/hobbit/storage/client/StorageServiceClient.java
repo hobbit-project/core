@@ -21,16 +21,13 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sparql.modify.request.QuadDataAcc;
-import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitRpcClient;
+import org.hobbit.storage.queries.SparqlQueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +48,7 @@ public class StorageServiceClient implements Closeable {
      * for a response = {@value #DEFAULT_MAX_WAITING_TIME}ms.
      */
     private static final long DEFAULT_MAX_WAITING_TIME = 60000;
-
+    
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
      * {@link Connection}.
@@ -230,16 +227,12 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("Can not store a model without a graph URI. Returning false.");
             return false;
         }
-        StmtIterator iterator = model.listStatements();
-        QuadDataAcc quads = new QuadDataAcc();
-        quads.setGraph(NodeFactory.createURI(graphURI));
-        while (iterator.hasNext()) {
-            quads.addTriple(iterator.next().asTriple());
+        String queries[] = SparqlQueries.getUpdateQueriesFromDiff(null, model, graphURI);
+        boolean success = true;
+        for (int i = 0; i < queries.length; ++i) {
+            success &= sendUpdateQuery(queries[i]);
         }
-
-        String query = (new UpdateDataInsert(quads)).toString(model);
-        LOGGER.info("Generated query: {}", query.replace('\n', ' '));
-        return sendUpdateQuery(query);
+        return success;
     }
 
     /**

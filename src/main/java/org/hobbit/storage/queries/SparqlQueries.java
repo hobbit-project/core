@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.modify.request.QuadAcc;
@@ -50,7 +51,8 @@ public class SparqlQueries {
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
     private static final String GRAPH_PLACEHOLDER = "%GRAPH_URI%";
     private static final String SYSTEM_PLACEHOLDER = "%SYSTEM_URI%";
-    private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 500;
+    private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
+    private static final Model EMPTY_MODEL = ModelFactory.createDefaultModel();
 
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
@@ -576,7 +578,8 @@ public class SparqlQueries {
      */
     public static final String getUpdateQueryFromDiff(Model original, Model updated, String graphUri) {
         return getUpdateQueryFromStatements(original.difference(updated).listStatements().toList(),
-                updated.difference(original).listStatements().toList(), original, graphUri);
+                updated.difference(original).listStatements().toList(),
+                original.size() > updated.size() ? original : updated, graphUri);
     }
 
     /**
@@ -632,9 +635,11 @@ public class SparqlQueries {
      * single query could hit a maximum number of triples.
      *
      * @param original
-     *            the original RDF model
+     *            the original RDF model ({@code null} is interpreted as an
+     *            empty model)
      * @param updated
-     *            the updated RDF model
+     *            the updated RDF model ({@code null} is interpreted as an empty
+     *            model)
      * @param graphUri
      *            the URI of the graph to which the UPDATE query should be
      *            applied or <code>null</code>
@@ -654,9 +659,11 @@ public class SparqlQueries {
      * query would hit the given maximum number of triples per query.
      *
      * @param original
-     *            the original RDF model
+     *            the original RDF model ({@code null} is interpreted as an
+     *            empty model)
      * @param updated
-     *            the updated RDF model
+     *            the updated RDF model ({@code null} is interpreted as an empty
+     *            model)
      * @param graphUri
      *            the URI of the graph to which the UPDATE query should be
      *            applied or <code>null</code>
@@ -664,6 +671,12 @@ public class SparqlQueries {
      */
     public static final String[] getUpdateQueriesFromDiff(Model original, Model updated, String graphUri,
             int maxTriplesPerQuery) {
+        if (original == null) {
+            original = EMPTY_MODEL;
+        }
+        if (updated == null) {
+            updated = EMPTY_MODEL;
+        }
         List<Statement> deleted = original.difference(updated).listStatements().toList();
         List<Statement> inserted = updated.difference(original).listStatements().toList();
 
@@ -689,7 +702,8 @@ public class SparqlQueries {
                     addStatements = inserted.subList(startIndex - numberOfDelStmts, endIndex - numberOfDelStmts);
                 }
             }
-            String query = getUpdateQueryFromStatements(delStatements, addStatements, original, graphUri);
+            String query = getUpdateQueryFromStatements(delStatements, addStatements,
+                    original.size() > updated.size() ? original : updated, graphUri);
             results[i] = query;
             // get the indexes of the next query
             startIndex = endIndex;
