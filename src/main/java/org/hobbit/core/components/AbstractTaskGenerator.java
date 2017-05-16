@@ -216,9 +216,15 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
             terminateMutex.acquire();
             // wait until all messages have been read from the queue
             long messageCount = dataGen2TaskGenQueue.messageCount();
-            while (messageCount > 0) {
-                LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
-                Thread.sleep(1000);
+            int count = 0;
+            while (count < 5) {
+                if (messageCount > 0) {
+                    LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
+                    count = 0;
+                } else {
+                    ++count;
+                }
+                Thread.sleep(500);
                 messageCount = dataGen2TaskGenQueue.messageCount();
             }
             // Collect all open mutex counts to make sure that there is no
@@ -235,9 +241,11 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         // make sure that all messages have been delivered (otherwise they might
         // be lost)
         long messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
+        System.out.println("outgoing messages: " + messageCount);
         while (messageCount > 0) {
             Thread.sleep(1000);
             messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
+            System.out.println("outgoing messages: " + messageCount);
         }
     }
 
