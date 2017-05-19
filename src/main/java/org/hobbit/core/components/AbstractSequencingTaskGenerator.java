@@ -92,7 +92,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
         super.init();
         // Create channel for incoming acknowledgments using the command
         // connection (not the data connection!)
-        ackChannel = cmdConnection.createChannel();
+        ackChannel = getFactoryForIncomingCmdQueues().getConnection().createChannel();
         String queueName = ackChannel.queueDeclare().getQueue();
         String exchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         ackChannel.exchangeDeclare(exchangeName, "fanout", false, true, null);

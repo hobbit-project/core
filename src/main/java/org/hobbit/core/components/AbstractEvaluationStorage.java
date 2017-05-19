@@ -95,8 +95,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
         @SuppressWarnings("resource")
         ExpectedResponseReceivingComponent expReceiver = this;
-        taskGen2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
+        taskGen2EvalStoreQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
         taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true,
                 new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
                     @Override
@@ -115,8 +115,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         @SuppressWarnings("resource")
         ResponseReceivingComponent respReceiver = this;
-        system2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+        system2EvalStoreQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
         system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true,
                 new DefaultConsumer(system2EvalStoreQueue.channel) {
                     @Override
@@ -135,8 +135,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 });
 
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
                 new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
                     @Override
@@ -200,7 +200,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
             sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
                 // Create channel for acknowledgements
-                ackChannel = cmdConnection.createChannel();
+                ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
                 ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
                         false, true, null);
             }

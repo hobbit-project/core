@@ -65,8 +65,10 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
                     "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
         }
 
-        sender2TaskGen = DataSenderImpl.builder().queue(this, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME).build();
-        sender2System = DataSenderImpl.builder().queue(this, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME).build();
+        sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+        sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
     }
 
     @Override

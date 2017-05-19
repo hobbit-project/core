@@ -16,15 +16,14 @@
  */
 package org.hobbit.core.components;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
 
 /**
  * This extension of the {@link AbstractCommandReceivingComponent} offers some
@@ -43,14 +42,6 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
         // We have to add the broadcast command header to receive messages about
         // terminated containers
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        return super.createDefaultRabbitQueue(name);
     }
 
     @Override
@@ -85,6 +76,26 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
         if ((containerName != null) && (observer != null)) {
             containerObservers.put(containerName, observer);
         }
+    }
+
+    @Override
+    public RabbitQueueFactory getFactoryForIncomingCmdQueues() {
+        return cmdQueueFactory;
+    }
+
+    @Override
+    public RabbitQueueFactory getFactoryForIncomingDataQueues() {
+        return incomingDataQueueFactory;
+    }
+
+    @Override
+    public RabbitQueueFactory getFactoryForOutgoingCmdQueues() {
+        return cmdQueueFactory;
+    }
+
+    @Override
+    public RabbitQueueFactory getFactoryForOutgoingDataQueues() {
+        return outgoingDataQueuefactory;
     }
 
 }

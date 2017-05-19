@@ -36,7 +36,6 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.TestConstants;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.junit.Assert;
 import org.junit.Before;
@@ -235,5 +234,16 @@ public class FileStreamingTest implements RabbitQueueFactory {
             return null;
         }
         return tempFile.getAbsolutePath();
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Connection getConnection() {
+        return connection;
     }
 }

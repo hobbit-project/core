@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.FileReceiveState;
 import org.hobbit.core.data.RabbitQueue;
 import org.slf4j.Logger;

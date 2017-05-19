@@ -91,7 +91,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      */
     protected RabbitQueue taskGen2SystemQueue;
     /**
-     * Sender for sending messages from the benchmarked system to the evaluation storage.
+     * Sender for sending messages from the benchmarked system to the evaluation
+     * storage.
      */
     protected DataSender sender2EvalStore;
     /**
@@ -144,8 +145,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         @SuppressWarnings("resource")
         AbstractSystemAdapter receiver = this;
 
-        dataGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
+        dataGen2SystemQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
         dataGen2SystemQueue.channel.basicConsume(dataGen2SystemQueue.name, false,
                 new DefaultConsumer(dataGen2SystemQueue.channel) {
                     @Override
@@ -166,8 +167,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                 });
         dataGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
 
-        taskGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
+        taskGen2SystemQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
         taskGen2SystemQueue.channel.basicConsume(taskGen2SystemQueue.name, false,
                 new DefaultConsumer(taskGen2SystemQueue.channel) {
                     @Override
@@ -191,7 +192,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                 });
         taskGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
 
-        sender2EvalStore = DataSenderImpl.builder().queue(this, Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME).build();
+        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
 
     }
 

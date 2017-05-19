@@ -7,7 +7,6 @@ import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.components.RabbitQueueFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,21 +252,22 @@ public class DataSenderImpl implements DataSender {
         private final Semaphore maxBufferedMessageCount;
         private final SortedMap<Long, Message> unconfirmedMsgs = Collections
                 .synchronizedSortedMap(new TreeMap<Long, Message>());
+        private int successfullySubmitted = 0; // TODO remove this debug counter
 
         public DataSenderConfirmHandler(int messageConfirmBuffer) {
             this.maxBufferedMessageCount = new Semaphore(messageConfirmBuffer);
         }
 
         public synchronized void sendDataWithConfirmation(BasicProperties properties, byte[] data) throws IOException {
+            try {
+                LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
+                        maxBufferedMessageCount.availablePermits());
+                maxBufferedMessageCount.acquire();
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted while waiting for free buffer to store the message before sending.",
+                        e);
+            }
             synchronized (unconfirmedMsgs) {
-                try {
-                    LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
-                            maxBufferedMessageCount.availablePermits());
-                    maxBufferedMessageCount.acquire();
-                } catch (InterruptedException e) {
-                    throw new IOException(
-                            "Interrupted while waiting for free buffer to store the message before sending.", e);
-                }
                 sendData_unsecured(new Message(properties, data));
             }
         }
@@ -300,11 +300,13 @@ public class DataSenderImpl implements DataSender {
                     int ackMsgCount = negativeMsgs.size();
                     negativeMsgs.clear();
                     maxBufferedMessageCount.release(ackMsgCount);
+                    successfullySubmitted += ackMsgCount;
                     LOGGER.trace("{}\tack\t{}+\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 } else {
                     // Remove the message
                     unconfirmedMsgs.remove(deliveryTag);
+                    ++successfullySubmitted;
                     maxBufferedMessageCount.release();
                     LOGGER.trace("{}\tack\t{}\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
@@ -341,6 +343,7 @@ public class DataSenderImpl implements DataSender {
             while (true) {
                 synchronized (unconfirmedMsgs) {
                     if (unconfirmedMsgs.size() == 0) {
+                        LOGGER.info("submitted " + successfullySubmitted);
                         return;
                     }
                 }

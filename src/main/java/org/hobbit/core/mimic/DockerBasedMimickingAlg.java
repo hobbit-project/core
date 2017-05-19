@@ -68,7 +68,8 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
         SimpleFileReceiver receiver = null;
         try {
             // create the queue to get data from the container
-            queue = connector.createDefaultRabbitQueue(UUID.randomUUID().toString().replace("-", ""));
+            queue = connector.getFactoryForIncomingDataQueues()
+                    .createDefaultRabbitQueue(UUID.randomUUID().toString().replace("-", ""));
             // create a receiver that writes incoming data to the files
             receiver = SimpleFileReceiver.create(queue);
 
