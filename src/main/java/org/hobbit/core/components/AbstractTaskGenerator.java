@@ -151,11 +151,13 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
                     "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
         }
 
-        sender2System = DataSenderImpl.builder().queue(this, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME).build();
-        sender2EvalStore = DataSenderImpl.builder().queue(this, Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME).build();
+        sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
+        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME)).build();
 
-        dataGen2TaskGenQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        dataGen2TaskGenQueue = getFactoryForIncomingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
         if (maxParallelProcessedMsgs == 1) {
             consumer = new QueueingConsumer(dataGen2TaskGenQueue.channel);
             dataGen2TaskGenQueue.channel.basicConsume(dataGen2TaskGenQueue.name, true, consumer);
@@ -215,9 +217,15 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
             terminateMutex.acquire();
             // wait until all messages have been read from the queue
             long messageCount = dataGen2TaskGenQueue.messageCount();
-            while (messageCount > 0) {
-                LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
-                Thread.sleep(1000);
+            int count = 0;
+            while (count < 5) {
+                if (messageCount > 0) {
+                    LOGGER.info("Waiting for remaining data to be processed: " + messageCount);
+                    count = 0;
+                } else {
+                    ++count;
+                }
+                Thread.sleep(500);
                 messageCount = dataGen2TaskGenQueue.messageCount();
             }
             // Collect all open mutex counts to make sure that there is no
@@ -304,8 +312,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      *             if there is an error during the sending
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
-        sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
-                        RabbitMQUtils.writeLong(timestamp)));
+        sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null,
+                new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp)));
     }
 
     /**
@@ -319,7 +327,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      *             if there is an error during the sending
      */
     protected void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-        sender2System.sendData(RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(taskIdString), data }));
+        sender2System.sendData(
+                RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(taskIdString), data }));
     }
 
     public int getGeneratorId() {
