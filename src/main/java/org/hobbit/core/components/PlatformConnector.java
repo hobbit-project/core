@@ -25,7 +25,7 @@ import org.hobbit.core.Commands;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public interface PlatformConnector extends RabbitQueueFactory{
+public interface PlatformConnector extends RabbitQueueFactory {
 
     /**
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to

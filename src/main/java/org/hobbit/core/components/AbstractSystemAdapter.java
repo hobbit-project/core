@@ -28,6 +28,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.DataSender;
+import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.MessageProperties;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -90,9 +91,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      */
     protected RabbitQueue taskGen2SystemQueue;
     /**
-     * Queue from the benchmarked system to this evaluation storage.
+     * Sender for sending messages from the benchmarked system to the evaluation storage.
      */
-    protected RabbitQueue system2EvalStoreQueue;
+    protected DataSender sender2EvalStore;
     /**
      * The RDF model containing the system parameters.
      */
@@ -190,8 +191,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                 });
         taskGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
 
-        system2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
+        sender2EvalStore = DataSenderImpl.builder().queue(this, Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME).build();
+
     }
 
     @Override
@@ -211,8 +212,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         }
         // wait until all messages have been read from the queue and all sent
         // messages have been consumed
-        while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()
-                + system2EvalStoreQueue.messageCount()) > 0) {
+        while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()) > 0) {
             Thread.sleep(1000);
             // Check whether the system should abort
             try {
@@ -230,6 +230,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         Thread.sleep(1000);
         currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
         currentlyProcessedTasks.acquire(maxParallelProcessedMsgs);
+        sender2EvalStore.closeWhenFinished();
     }
 
     @Override
@@ -262,11 +263,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         buffer.put(taskIdBytes);
         buffer.putInt(data.length);
         buffer.put(data);
-        // system2EvalStore
-        // .basicPublish("", system2EvalStoreQueueName,
-        // MessageProperties.PERSISTENT_BASIC, buffer.array());
-        system2EvalStoreQueue.channel.basicPublish("", system2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
-                buffer.array());
+        sender2EvalStore.sendData(buffer.array());
     }
 
     /**
@@ -295,7 +292,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     public void close() throws IOException {
         IOUtils.closeQuietly(dataGen2SystemQueue);
         IOUtils.closeQuietly(taskGen2SystemQueue);
-        IOUtils.closeQuietly(system2EvalStoreQueue);
+        IOUtils.closeQuietly(sender2EvalStore);
         super.close();
     }
 }

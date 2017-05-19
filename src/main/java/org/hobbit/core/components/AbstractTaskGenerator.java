@@ -24,6 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.DataSender;
+import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
@@ -91,8 +92,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      */
     private final int maxParallelProcessedMsgs;
 
-    protected RabbitQueue taskGen2SystemQueue;
-    protected RabbitQueue taskGen2EvalStoreQueue;
+    protected DataSender sender2System;
+    protected DataSender sender2EvalStore;
     protected RabbitQueue dataGen2TaskGenQueue;
 
     protected QueueingConsumer consumer;
@@ -150,10 +151,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
                     "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
         }
 
-        taskGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
-        taskGen2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
+        sender2System = DataSenderImpl.builder().queue(this, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME).build();
+        sender2EvalStore = DataSenderImpl.builder().queue(this, Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME).build();
 
         dataGen2TaskGenQueue = createDefaultRabbitQueue(
                 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
@@ -234,11 +233,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
         // make sure that all messages have been delivered (otherwise they might
         // be lost)
-        long messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
-        while (messageCount > 0) {
-            Thread.sleep(1000);
-            messageCount = taskGen2SystemQueue.messageCount() + taskGen2EvalStoreQueue.messageCount();
-        }
+        sender2System.closeWhenFinished();
+        sender2EvalStore.closeWhenFinished();
     }
 
     @Override
@@ -308,13 +304,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      *             if there is an error during the sending
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
-        // taskGen2EvalStore.basicPublish("", taskGen2EvalStoreQueueName,
-        // MessageProperties.PERSISTENT_BASIC,
-        // RabbitMQUtils.writeByteArrays(null, new byte[][] {
-        // RabbitMQUtils.writeString(taskIdString), data },
-        // RabbitMQUtils.writeLong(timestamp)));
-        taskGen2EvalStoreQueue.channel.basicPublish("", taskGen2EvalStoreQueue.name, MessageProperties.PERSISTENT_BASIC,
-                RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
+        sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null, new byte[][] { RabbitMQUtils.writeString(taskIdString), data },
                         RabbitMQUtils.writeLong(timestamp)));
     }
 
@@ -329,12 +319,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      *             if there is an error during the sending
      */
     protected void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-        // taskGen2System.basicPublish("", taskGen2SystemQueueName,
-        // MessageProperties.PERSISTENT_BASIC,
-        // RabbitMQUtils.writeByteArrays(new byte[][] {
-        // RabbitMQUtils.writeString(taskIdString), data }));
-        taskGen2SystemQueue.channel.basicPublish("", taskGen2SystemQueue.name, MessageProperties.PERSISTENT_BASIC,
-                RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(taskIdString), data }));
+        sender2System.sendData(RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(taskIdString), data }));
     }
 
     public int getGeneratorId() {
@@ -348,8 +333,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(dataGen2TaskGenQueue);
-        IOUtils.closeQuietly(taskGen2EvalStoreQueue);
-        IOUtils.closeQuietly(taskGen2SystemQueue);
+        IOUtils.closeQuietly(sender2EvalStore);
+        IOUtils.closeQuietly(sender2System);
         super.close();
     }
 }
