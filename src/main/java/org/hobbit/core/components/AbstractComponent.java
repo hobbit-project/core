@@ -64,7 +64,8 @@ public abstract class AbstractComponent implements Component {
     /**
      * The factory that can be used to create additional connections. However,
      * in most cases it is sufficient to create a new channel using the already
-     * established {@link #dataConnection}.
+     * existing {@link #incomingDataQueueFactory} and
+     * {@link #outgoingDataQueuefactory} objects.
      */
     protected ConnectionFactory connectionFactory;
 
@@ -135,5 +136,5 @@ public abstract class AbstractComponent implements Component {
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
     }
-    
+
 }

@@ -26,16 +26,11 @@ import com.rabbitmq.client.QueueingConsumer.Delivery;
  * will be closed as well.
  * </p>
  * <p>
- * Internally, the receiver uses a multithreaded consumer that handles incoming
- * streams, sorts the messages that belong to these streams and sends the
- * received data via an {@link InputStream} to the given
- * {@link IncomingStreamHandler} instance. <b>Note</b> that since the consumer
- * is multithreaded the
- * {@link IncomingStreamHandler#handleIncomingStream(String, InputStream)}
- * should be thread safe since it might be called in parallel. Even setting the
- * maximum number of parallel processed messages to 1 (via
- * {@link Builder#maxParallelProcessedMsgs(int)}) the given handler might be
- * called with several {@link InputStream} instances in parallel.
+ * Internally, the receiver uses an own thread to consume incoming messages.
+ * These messages are forwarded to the given {@link DataHandler} instance.
+ * <b>Note</b> that this forwarding is based on an {@link ExecutorService} the
+ * called method {@link DataHandler#handleData(byte[])} should be thread safe
+ * since it might be called in parallel.
  * </p>
  * <p>
  * The {@link DataReceiverImpl} owns recources that need to be freed if its work
