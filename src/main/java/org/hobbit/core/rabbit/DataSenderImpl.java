@@ -97,7 +97,8 @@ public class DataSenderImpl implements DataSender {
                         "Exception while waiting for confirmations. It can not be guaranteed that all messages have been consumed.",
                         e);
             }
-        } else {
+        } 
+//        else {
             try {
                 // Simply check whether the queue is empty. If the check is true
                 // 5
@@ -118,7 +119,7 @@ public class DataSenderImpl implements DataSender {
                         "Exception while trying to check whether all messages have been consumed. It will be ignored.",
                         e);
             }
-        }
+//        }
         close();
     }
 
