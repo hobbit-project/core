@@ -6,7 +6,6 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -162,7 +161,7 @@ public class SenderReceiverTest {
 
     }
 
-    protected static class Receiver implements Runnable {
+    protected static class Receiver implements Runnable, DataHandler {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(Receiver.class);
 
@@ -186,17 +185,24 @@ public class SenderReceiverTest {
         public void run() {
             RabbitQueueFactory factory = null;
             RabbitQueue queue = null;
-            ExecutorService executor = null;
+            // ExecutorService executor = null;
             try {
-                executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
+                // executor =
+                // Executors.newFixedThreadPool(maxParallelProcessedMsgs);
+                // factory = new
+                // RabbitQueueFactoryImpl(cFactory.newConnection());
+                // queue = factory.createDefaultRabbitQueue(QUEUE_NAME);
+                // queue.channel.basicQos(0, maxParallelProcessedMsgs, false);
+                // if (maxParallelProcessedMsgs == 1) {
+                // receiveMsgsSequentielly(queue);
+                // } else if (maxParallelProcessedMsgs > 1) {
+                // receiveMsgsInParallel(queue, executor);
+                // }
                 factory = new RabbitQueueFactoryImpl(cFactory.newConnection());
-                queue = factory.createDefaultRabbitQueue(QUEUE_NAME);
-                queue.channel.basicQos(0, maxParallelProcessedMsgs, false);
-                if (maxParallelProcessedMsgs == 1) {
-                    receiveMsgsSequentielly(queue);
-                } else if (maxParallelProcessedMsgs > 1) {
-                    receiveMsgsInParallel(queue, executor);
-                }
+                DataReceiver receiver = DataReceiverImpl.builder().dataHandler(this)
+                        .maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(factory, QUEUE_NAME).build();
+                terminationMutex.acquire();
+                receiver.closeWhenFinished();
             } catch (Exception e) {
                 LOGGER.error("Receiver crashed with Exception.", e);
                 error = e;
@@ -206,6 +212,7 @@ public class SenderReceiverTest {
             }
         }
 
+        @SuppressWarnings("unused")
         private void receiveMsgsSequentielly(RabbitQueue queue) throws Exception {
             QueueingConsumer consumer = new QueueingConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
@@ -218,6 +225,7 @@ public class SenderReceiverTest {
             }
         }
 
+        @SuppressWarnings("unused")
         private void receiveMsgsInParallel(RabbitQueue queue, ExecutorService executor) throws Exception {
             QueueingConsumer consumer = new QueueingConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
@@ -319,5 +327,9 @@ public class SenderReceiverTest {
             return error;
         }
 
+        @Override
+        public void handleData(byte[] data) {
+            processMsg(RabbitMQUtils.readString(data));
+        }
     }
 }
