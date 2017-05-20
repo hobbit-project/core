@@ -27,16 +27,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.DataHandler;
+import org.hobbit.core.rabbit.DataReceiver;
+import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -68,28 +66,18 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      */
     private Semaphore causeMutex = new Semaphore(1);
     /**
-     * Semaphore used to control the number of data messages that can be
-     * processed in parallel.
-     */
-    private Semaphore currentlyProcessedMessages;
-    /**
-     * Semaphore used to control the number of tasks that can be processed in
-     * parallel.
-     */
-    private Semaphore currentlyProcessedTasks;
-    /**
      * The maximum number of incoming messages of a single queue that are
      * processed in parallel. Additional messages have to wait.
      */
     private final int maxParallelProcessedMsgs;
     /**
-     * Queue from the data generator to this evaluation storage.
+     * Receiver for data coming from the data generator.
      */
-    protected RabbitQueue dataGen2SystemQueue;
+    protected DataReceiver dataGenReceiver;
     /**
-     * Queue from the task generator to this evaluation storage.
+     * Receiver for tasks coming from the task generator.
      */
-    protected RabbitQueue taskGen2SystemQueue;
+    protected DataReceiver taskGenReceiver;
     /**
      * Sender for sending messages from the benchmarked system to the evaluation
      * storage.
@@ -124,9 +112,6 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     public void init() throws Exception {
         super.init();
 
-        currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
-        currentlyProcessedTasks = new Semaphore(maxParallelProcessedMsgs);
-
         Map<String, String> env = System.getenv();
         // Get the benchmark parameter model
         if (env.containsKey(Constants.SYSTEM_PARAMETERS_MODEL_KEY)) {
@@ -142,59 +127,29 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
             systemParamModel = ModelFactory.createDefaultModel();
         }
 
-        @SuppressWarnings("resource")
-        AbstractSystemAdapter receiver = this;
-
-        dataGen2SystemQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
-        dataGen2SystemQueue.channel.basicConsume(dataGen2SystemQueue.name, false,
-                new DefaultConsumer(dataGen2SystemQueue.channel) {
+        dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
+                .dataHandler(new DataHandler() {
                     @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        try {
-                            currentlyProcessedMessages.acquire();
-                        } catch (InterruptedException e) {
-                            throw new IOException("Interrupted while waiting for mutex.", e);
-                        }
-                        try {
-                            receiver.receiveGeneratedData(body);
-                            dataGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                        } finally {
-                            currentlyProcessedMessages.release();
-                        }
+                    public void handleData(byte[] data) {
+                        receiveGeneratedData(data);
                     }
-                });
-        dataGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
+                }).build();
 
-        taskGen2SystemQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME));
-        taskGen2SystemQueue.channel.basicConsume(taskGen2SystemQueue.name, false,
-                new DefaultConsumer(taskGen2SystemQueue.channel) {
+        taskGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
+                .dataHandler(new DataHandler() {
                     @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                    public void handleData(byte[] data) {
+                        ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] data = RabbitMQUtils.readByteArray(buffer);
-                        try {
-                            currentlyProcessedTasks.acquire();
-                        } catch (InterruptedException e) {
-                            throw new IOException("Interrupted while waiting for mutex.", e);
-                        }
-                        try {
-                            receiver.receiveGeneratedTask(taskId, data);
-                            taskGen2SystemQueue.channel.basicAck(envelope.getDeliveryTag(), false);
-                        } finally {
-                            currentlyProcessedTasks.release();
-                        }
+                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                        receiveGeneratedTask(taskId, taskData);
                     }
-                });
-        taskGen2SystemQueue.channel.basicQos(maxParallelProcessedMsgs);
+                }).build();
 
         sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
-
     }
 
     @Override
@@ -212,26 +167,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         } catch (InterruptedException e) {
             LOGGER.error("Interrupted while waiting to set the termination cause.");
         }
-        // wait until all messages have been read from the queue and all sent
-        // messages have been consumed
-        while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()) > 0) {
-            Thread.sleep(1000);
-            // Check whether the system should abort
-            try {
-                causeMutex.acquire();
-                if (cause != null) {
-                    throw cause;
-                }
-                causeMutex.release();
-            } catch (InterruptedException e) {
-                LOGGER.error("Interrupted while waiting to set the termination cause.");
-            }
-        }
-        // Collect all open mutex counts to make sure that there is no message
-        // that is still processed
-        Thread.sleep(1000);
-        currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
-        currentlyProcessedTasks.acquire(maxParallelProcessedMsgs);
+        dataGenReceiver.closeWhenFinished();
+        taskGenReceiver.closeWhenFinished();
         sender2EvalStore.closeWhenFinished();
     }
 
@@ -292,8 +229,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(dataGen2SystemQueue);
-        IOUtils.closeQuietly(taskGen2SystemQueue);
+        IOUtils.closeQuietly(dataGenReceiver);
+        IOUtils.closeQuietly(taskGenReceiver);
         IOUtils.closeQuietly(sender2EvalStore);
         super.close();
     }

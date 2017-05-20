@@ -134,7 +134,9 @@ public class DataGeneratorTest extends AbstractDataGenerator {
                 Assert.assertTrue(taskGenExecutors[i].isSuccess());
             }
 
+            Collections.sort(sentData);
             List<String> receivedData = system.getReceiveddata();
+            Collections.sort(receivedData);
             Assert.assertArrayEquals(sentData.toArray(new String[sentData.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
             // collect the data from all task generators
@@ -143,7 +145,6 @@ public class DataGeneratorTest extends AbstractDataGenerator {
                 receivedData.addAll(taskGens[i].getReceiveddata());
             }
             Collections.sort(receivedData);
-            Collections.sort(sentData);
             Assert.assertArrayEquals(sentData.toArray(new String[sentData.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
         } finally {

@@ -29,6 +29,9 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
+import org.hobbit.core.rabbit.DataHandler;
+import org.hobbit.core.rabbit.DataReceiver;
+import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,11 +62,20 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      * The empty response that is sent if an error occurs.
      */
     private static final byte[] EMPTY_RESPONSE = new byte[0];
+    /**
+     * Default value of the {@link #maxParallelProcessedMsgs} attribute.
+     */
+    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 50;
 
     /**
      * Mutex used to wait for the termination signal.
      */
     private Semaphore terminationMutex = new Semaphore(0);
+    /**
+     * The maximum number of incoming messages of a single queue that are
+     * processed in parallel. Additional messages have to wait.
+     */
+    private final int maxParallelProcessedMsgs;
     /**
      * Iterators that have been started.
      */
@@ -71,11 +83,11 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     /**
      * The incoming queue from the task generator.
      */
-    protected RabbitQueue taskGen2EvalStoreQueue;
+    protected DataReceiver taskResultReceiver;
     /**
      * The incoming queue from the system.
      */
-    protected RabbitQueue system2EvalStoreQueue;
+    protected DataReceiver systemResultReceiver;
     /**
      * The incoming queue from the evaluation module.
      */
@@ -85,7 +97,23 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      */
     protected Channel ackChannel = null;
 
+    /**
+     * Constructor using the {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
+     * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}.
+     */
     public AbstractEvaluationStorage() {
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+    }
+
+    /**
+     * Constructor setting the maximum number of messages processed in parallel.
+     *
+     * @param maxParallelProcessedMsgs
+     *            The maximum number of incoming messages of a single queue that
+     *            are processed in parallel. Additional messages have to wait.
+     */
+    public AbstractEvaluationStorage(int maxParallelProcessedMsgs) {
+        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
         defaultContainerType = Constants.CONTAINER_TYPE_DATABASE;
     }
 
@@ -93,47 +121,41 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void init() throws Exception {
         super.init();
 
-        @SuppressWarnings("resource")
-        ExpectedResponseReceivingComponent expReceiver = this;
-        taskGen2EvalStoreQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME));
-        taskGen2EvalStoreQueue.channel.basicConsume(taskGen2EvalStoreQueue.name, true,
-                new DefaultConsumer(taskGen2EvalStoreQueue.channel) {
+        taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME))
+                .dataHandler(new DataHandler() {
                     @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                    public void handleData(byte[] data) {
+                        ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] data = RabbitMQUtils.readByteArray(buffer);
+                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
                         long timestamp = buffer.getLong();
-                        expReceiver.receiveExpectedResponseData(taskId, timestamp, data);
-                        // taskGen2EvalStoreQueue.channel.basicAck(envelope.getDeliveryTag(),
-                        // false);
+                        receiveExpectedResponseData(taskId, timestamp, taskData);
                     }
-                });
+                }).build();
 
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-        @SuppressWarnings("resource")
-        ResponseReceivingComponent respReceiver = this;
-        system2EvalStoreQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME));
-        system2EvalStoreQueue.channel.basicConsume(system2EvalStoreQueue.name, true,
-                new DefaultConsumer(system2EvalStoreQueue.channel) {
+        systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME))
+                .dataHandler(new DataHandler() {
                     @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
+                    public void handleData(byte[] data) {
+                        ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] data = RabbitMQUtils.readByteArray(buffer);
-                        respReceiver.receiveResponseData(taskId, System.currentTimeMillis(), data);
+                        byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+                        receiveResponseData(taskId, System.currentTimeMillis(), responseData);
                         // If we should send acknowledgments (and there was no
                         // error until now)
                         if (ackChannel != null) {
-                            ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                            try {
+                                ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                            } catch (IOException e) {
+                                LOGGER.error("Error while sending acknowledgement.", e);
+                            }
                             LOGGER.trace("Sent ack{}.", taskId);
                         }
                     }
-                });
+                }).build();
 
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
@@ -218,6 +240,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void run() throws Exception {
         sendToCmdQueue(Commands.EVAL_STORAGE_READY_SIGNAL);
         terminationMutex.acquire();
+        taskResultReceiver.closeWhenFinished();
+        systemResultReceiver.closeWhenFinished();
     }
 
     @Override
@@ -232,9 +256,16 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(taskGen2EvalStoreQueue);
-        IOUtils.closeQuietly(system2EvalStoreQueue);
+        IOUtils.closeQuietly(taskResultReceiver);
+        IOUtils.closeQuietly(systemResultReceiver);
         IOUtils.closeQuietly(evalModule2EvalStoreQueue);
+        if (ackChannel != null) {
+            try {
+                ackChannel.close();
+            } catch (Exception e) {
+                LOGGER.error("Error while trying to close the acknowledgement channel.", e);
+            }
+        }
         super.close();
     }
 }

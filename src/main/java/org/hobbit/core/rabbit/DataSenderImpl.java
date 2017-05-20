@@ -97,29 +97,25 @@ public class DataSenderImpl implements DataSender {
                         "Exception while waiting for confirmations. It can not be guaranteed that all messages have been consumed.",
                         e);
             }
-        } 
-//        else {
-            try {
-                // Simply check whether the queue is empty. If the check is true
-                // 5
-                // times, we can assume that it is empty
-                int check = 0;
-                while (check < 5) {
-                    if (queue.messageCount() > 0) {
-                        check = 0;
-                    } else {
-                        ++check;
-                    }
-                    Thread.sleep(200);
+        }
+        try {
+            // Simply check whether the queue is empty. If the check is true
+            // 5 times, we can assume that it is empty
+            int check = 0;
+            while (check < 5) {
+                if (queue.messageCount() > 0) {
+                    check = 0;
+                } else {
+                    ++check;
                 }
-            } catch (AlreadyClosedException e) {
-                LOGGER.info("The queue is already closed. Assuming that all messages have been consumed.");
-            } catch (Exception e) {
-                LOGGER.warn(
-                        "Exception while trying to check whether all messages have been consumed. It will be ignored.",
-                        e);
+                Thread.sleep(200);
             }
-//        }
+        } catch (AlreadyClosedException e) {
+            LOGGER.info("The queue is already closed. Assuming that all messages have been consumed.");
+        } catch (Exception e) {
+            LOGGER.warn("Exception while trying to check whether all messages have been consumed. It will be ignored.",
+                    e);
+        }
         close();
     }
 
@@ -253,7 +249,7 @@ public class DataSenderImpl implements DataSender {
         private final Semaphore maxBufferedMessageCount;
         private final SortedMap<Long, Message> unconfirmedMsgs = Collections
                 .synchronizedSortedMap(new TreeMap<Long, Message>());
-        private int successfullySubmitted = 0; // TODO remove this debug counter
+        private int successfullySubmitted = 0;
 
         public DataSenderConfirmHandler(int messageConfirmBuffer) {
             this.maxBufferedMessageCount = new Semaphore(messageConfirmBuffer);
@@ -344,7 +340,7 @@ public class DataSenderImpl implements DataSender {
             while (true) {
                 synchronized (unconfirmedMsgs) {
                     if (unconfirmedMsgs.size() == 0) {
-                        LOGGER.info("submitted " + successfullySubmitted);
+                        LOGGER.trace("sent {} messages.", successfullySubmitted);
                         return;
                     }
                 }

@@ -60,24 +60,24 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
-//        // We use only one single data generator without parallel message
-//        // processing
-//        testConfigs.add(new Object[] { 1, 10000, 1, 0 });
-//        // We use only one single data generator with parallel message
-//        // processing (max 100)
-//        testConfigs.add(new Object[] { 1, 10000, 100, 0 });
-//        // We use two data generators without parallel message processing
-//        testConfigs.add(new Object[] { 2, 10000, 1, 0 });
-//        // We use two data generators with parallel message processing (max
-//        // 100)
-//        testConfigs.add(new Object[] { 2, 10000, 100, 0 });
-//        // We use six data generators without parallel message processing
-//        testConfigs.add(new Object[] { 6, 5000, 1, 0 });
-//        // We use six data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 6, 5000, 100, 0 });
-//        // We use six data generators with parallel message processing (max 100)
-//        // but with a processing time of 5s
-        testConfigs.add(new Object[] { 6, 2000, 100, 5000 });
+        // We use only one single data generator without parallel message
+        // processing
+        testConfigs.add(new Object[] { 1, 10000, 1, 0 });
+        // We use only one single data generator with parallel message
+        // processing (max 100)
+        testConfigs.add(new Object[] { 1, 10000, 100, 0 });
+        // We use two data generators without parallel message processing
+        testConfigs.add(new Object[] { 2, 10000, 1, 0 });
+        // We use two data generators with parallel message processing (max
+        // 100)
+        testConfigs.add(new Object[] { 2, 10000, 100, 0 });
+        // We use six data generators without parallel message processing
+        testConfigs.add(new Object[] { 6, 5000, 1, 0 });
+        // We use six data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 6, 5000, 100, 0 });
+        // We use six data generators with parallel message processing (max 100)
+        // but with a processing time of 5s
+        testConfigs.add(new Object[] { 6, 200, 100, 500 });
         return testConfigs;
     }
 
@@ -170,10 +170,14 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
             List<String> receivedData = system.getReceivedtasks();
+            Collections.sort(sentTasks);
+            Collections.sort(receivedData);
             Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
             Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
             receivedData = evalStore.getExpectedResponses();
+            Collections.sort(expectedResponses);
+            Collections.sort(receivedData);
             Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
                     receivedData.toArray(new String[receivedData.size()]));
             Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());

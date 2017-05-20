@@ -150,7 +150,7 @@ public class DataReceiverImpl implements DataReceiver {
                     ++count;
                 }
             }
-            LOGGER.info("Receiver task terminates after receiving {} messages.", count);
+            LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
         }
 
         public void terminate() {
