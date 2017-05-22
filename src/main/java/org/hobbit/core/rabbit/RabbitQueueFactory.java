@@ -14,15 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with core.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.hobbit.core.components;
+package org.hobbit.core.rabbit;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 
-public interface RabbitQueueFactory {
+public interface RabbitQueueFactory extends Closeable {
 
     /**
      * This method opens a channel using the established connection to RabbitMQ
@@ -45,4 +47,6 @@ public interface RabbitQueueFactory {
      *             or the queue occurs
      */
     public RabbitQueue createDefaultRabbitQueue(String name) throws IOException;
+    
+    public Connection getConnection();
 }

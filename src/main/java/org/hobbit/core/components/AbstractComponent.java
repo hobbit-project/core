@@ -16,16 +16,17 @@
  */
 package org.hobbit.core.components;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import java.io.IOException;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
+import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * This abstract class implements basic functionalities of a hobbit component.
@@ -33,7 +34,7 @@ import java.io.IOException;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public abstract class AbstractComponent implements Component, RabbitQueueFactory {
+public abstract class AbstractComponent implements Component {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractComponent.class);
 
@@ -49,10 +50,13 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
 
     private String hobbitSessionId;
     /**
-     * The connection to the RabbitMQ broker. In most cases it will be used for
-     * handling data.
+     * Factory for creating outgoing data queues.
      */
-    protected Connection dataConnection = null;
+    protected RabbitQueueFactory outgoingDataQueuefactory = null;
+    /**
+     * Factory for creating outgoing data queues.
+     */
+    protected RabbitQueueFactory incomingDataQueueFactory = null;
     /**
      * The host name of the RabbitMQ broker.
      */
@@ -60,7 +64,8 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
     /**
      * The factory that can be used to create additional connections. However,
      * in most cases it is sufficient to create a new channel using the already
-     * established {@link #dataConnection}.
+     * existing {@link #incomingDataQueueFactory} and
+     * {@link #outgoingDataQueuefactory} objects.
      */
     protected ConnectionFactory connectionFactory;
 
@@ -81,29 +86,8 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
             connectionFactory.setAutomaticRecoveryEnabled(true);
             // attempt recovery every 10 seconds
             connectionFactory.setNetworkRecoveryInterval(10000);
-            for (int i = 0; (dataConnection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
-                try {
-                    dataConnection = connectionFactory.newConnection();
-                } catch (Exception e) {
-                    if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
-                        long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
-                        LOGGER.warn(
-                                "Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
-                                e);
-                        try {
-                            Thread.sleep(waitingTime);
-                        } catch (Exception e2) {
-                            LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.", e2);
-                        }
-                    }
-                }
-            }
-            if (dataConnection == null) {
-                String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
-                        + " retries.";
-                LOGGER.error(msg);
-                throw new Exception(msg);
-            }
+            incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+            outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
         } else {
             String msg = "Couldn't get " + Constants.RABBIT_MQ_HOST_NAME_KEY
                     + " from the environment. This component won't be able to connect to RabbitMQ.";
@@ -112,14 +96,37 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        if (dataConnection != null) {
+    protected Connection createConnection() throws Exception {
+        Connection connection = null;
+        for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
             try {
-                dataConnection.close();
+                connection = connectionFactory.newConnection();
             } catch (Exception e) {
+                if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
+                    long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
+                    LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
+                            e);
+                    try {
+                        Thread.sleep(waitingTime);
+                    } catch (Exception e2) {
+                        LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.", e2);
+                    }
+                }
             }
         }
+        if (connection == null) {
+            String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
+                    + " retries.";
+            LOGGER.error(msg);
+            throw new Exception(msg);
+        }
+        return connection;
+    }
+
+    @Override
+    public void close() throws IOException {
+        IOUtils.closeQuietly(incomingDataQueueFactory);
+        IOUtils.closeQuietly(outgoingDataQueuefactory);
     }
 
     public String getHobbitSessionId() {
@@ -130,29 +137,4 @@ public abstract class AbstractComponent implements Component, RabbitQueueFactory
         return queueName + "." + hobbitSessionId;
     }
 
-    /**
-     * This method opens a channel using the established {@link #dataConnection}
-     * to RabbitMQ and creates a new queue using the given name and the
-     * following configuration:
-     * <ul>
-     * <li>The channel number is automatically derived from the connection.</li>
-     * <li>The queue is not durable.</li>
-     * <li>The queue is not exclusive.</li>
-     * <li>The queue is configured to be deleted automatically.</li>
-     * <li>No additional queue configuration is defined.</li>
-     * </ul>
-     *
-     * @param name
-     *            name of the queue
-     * @return {@link RabbitQueue} object comprising the {@link Channel} and the
-     *         name of the created queue
-     * @throws IOException
-     *             if a communication error occurs
-     */
-    @Override
-    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = dataConnection.createChannel();
-        channel.queueDeclare(name, false, false, true, null);
-        return new RabbitQueue(channel, name);
-    }
 }

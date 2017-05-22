@@ -23,22 +23,16 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.data.RabbitQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.AlreadyClosedException;
-import com.rabbitmq.client.MessageProperties;
+import org.hobbit.core.rabbit.DataSender;
+import org.hobbit.core.rabbit.DataSenderImpl;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataGenerator.class);
 
     private Semaphore startDataGenMutex = new Semaphore(0);
     private int generatorId;
     private int numberOfGenerators;
-    protected RabbitQueue dataGen2TaskGenQueue;
-    protected RabbitQueue dataGen2SystemQueue;
+    protected DataSender sender2TaskGen;
+    protected DataSender sender2System;
 
     public AbstractDataGenerator() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -71,10 +65,10 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
                     "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
         }
 
-        dataGen2TaskGenQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
-        dataGen2SystemQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));
+        sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+        sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
     }
 
     @Override
@@ -85,27 +79,9 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
         generateData();
 
-        // Unfortunately, we have to wait until all messages are consumed
-        try {
-            while (dataGen2SystemQueue.messageCount() > 0) {
-                Thread.sleep(500);
-            }
-        } catch (AlreadyClosedException e) {
-            LOGGER.info("The queue to the system is already closed. Assuming that all messages have been consumed.");
-        } catch (Exception e) {
-            LOGGER.warn("Exception while trying to check whether all messages have been consumed. It will be ignored.",
-                    e);
-        }
-        try {
-            while (dataGen2TaskGenQueue.messageCount() > 0) {
-                Thread.sleep(500);
-            }
-        } catch (AlreadyClosedException e) {
-            LOGGER.info("The queue to the system is already closed. Assuming that all messages have been consumed.");
-        } catch (Exception e) {
-            LOGGER.warn("Exception while trying to check whether all messages have been consumed. It will be ignored.",
-                    e);
-        }
+        // We have to wait until all messages are consumed
+        sender2TaskGen.closeWhenFinished();
+        sender2System.closeWhenFinished();
     }
 
     protected abstract void generateData() throws Exception;
@@ -121,13 +97,11 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     }
 
     protected void sendDataToTaskGenerator(byte[] data) throws IOException {
-        dataGen2TaskGenQueue.channel.basicPublish("", dataGen2TaskGenQueue.name, MessageProperties.PERSISTENT_BASIC,
-                data);
+        sender2TaskGen.sendData(data);
     }
 
     protected void sendDataToSystemAdapter(byte[] data) throws IOException {
-        dataGen2SystemQueue.channel.basicPublish("", dataGen2SystemQueue.name, MessageProperties.PERSISTENT_BASIC,
-                data);
+        sender2System.sendData(data);
     }
 
     public int getGeneratorId() {
@@ -140,8 +114,8 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(dataGen2TaskGenQueue);
-        IOUtils.closeQuietly(dataGen2SystemQueue);
+        IOUtils.closeQuietly(sender2TaskGen);
+        IOUtils.closeQuietly(sender2System);
         super.close();
     }
 }

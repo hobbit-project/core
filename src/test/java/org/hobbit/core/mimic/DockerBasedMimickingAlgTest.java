@@ -58,7 +58,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
 
     private File outputDir;
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
@@ -248,7 +248,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
             }
             Objects.requireNonNull(queueName);
             // create the sender
-            sender = SimpleFileSender.create(this, queueName);
+            sender = SimpleFileSender.create(outgoingDataQueuefactory, queueName);
         }
 
         @Override

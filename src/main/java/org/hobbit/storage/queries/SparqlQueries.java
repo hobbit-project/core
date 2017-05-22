@@ -512,6 +512,29 @@ public class SparqlQueries {
                 new String[] { CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { challengeTaskUri, graphUri });
     }
+    
+    /**
+     * A construct query for getting the organizer of the challenge two which a given challenge tasks belong to.
+     */
+    private static final String GET_CHALLENGE_TASK_ORGANIZER = loadQuery(
+            "org/hobbit/storage/queries/getChallengeTaskOrganizer.query");
+
+    /**
+     * Returns a SPARQL CONSTRUCT query for getting the organizer of the challenge two which a given challenge tasks belong to.
+     * 
+     * @param challengeTaskUri
+     *            URI of the challenge task
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL CONSTRUCT query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getChallengeTaskOrganizer(String challengeTaskUri, String graphUri) {
+        return replacePlaceholders(GET_CHALLENGE_TASK_ORGANIZER,
+                new String[] { CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { challengeTaskUri, graphUri });
+    }
 
     /**
      * Replaces the given placeholders in the given query with the given

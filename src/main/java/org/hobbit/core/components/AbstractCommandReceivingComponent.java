@@ -24,11 +24,14 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
+import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +39,6 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -63,11 +65,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private QueueingConsumer responseConsumer = null;
     /**
-     * Connection on which the commands are received. It is separated from the
-     * #dataConnection since otherwise the component can get stuck waiting for a
-     * command while the connection is busy handling incoming data.
+     * Factory for generating queues with which the commands are sent and
+     * received. It is separated from the data connections since otherwise the
+     * component can get stuck waiting for a command while the connection is
+     * busy handling incoming or outgoing data.
      */
-    protected Connection cmdConnection;
+    protected RabbitQueueFactory cmdQueueFactory;
     /**
      * Channel that is used for the command queue.
      */
@@ -90,8 +93,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         super.init();
         addCommandHeaderId(getHobbitSessionId());
 
-        cmdConnection = connectionFactory.newConnection();
-        cmdChannel = dataConnection.createChannel();
+        cmdQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+        cmdChannel = cmdQueueFactory.getConnection().createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
@@ -308,10 +311,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             } catch (Exception e) {
             }
         }
-        try {
-            cmdConnection.close();
-        } catch (Exception e) {
-        }
+        IOUtils.closeQuietly(cmdQueueFactory);
         super.close();
     }
 

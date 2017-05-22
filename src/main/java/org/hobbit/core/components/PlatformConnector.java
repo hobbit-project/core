@@ -17,6 +17,7 @@
 package org.hobbit.core.components;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
 
 /**
  * This interface should be implemented by components if they want to offer
@@ -25,7 +26,7 @@ import org.hobbit.core.Commands;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
-public interface PlatformConnector extends RabbitQueueFactory{
+public interface PlatformConnector {
 
     /**
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
@@ -53,4 +54,8 @@ public interface PlatformConnector extends RabbitQueueFactory{
      */
     public void stopContainer(String containerName);
 
+    public RabbitQueueFactory getFactoryForOutgoingDataQueues();
+    public RabbitQueueFactory getFactoryForIncomingDataQueues();
+    public RabbitQueueFactory getFactoryForOutgoingCmdQueues();
+    public RabbitQueueFactory getFactoryForIncomingCmdQueues();
 }
