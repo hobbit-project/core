@@ -1,9 +1,9 @@
 package org.hobbit.core.rabbit;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
@@ -55,6 +55,7 @@ public class DataReceiverImpl implements DataReceiver {
     private DataHandler dataHandler;
     private ExecutorService executor = null;
     private MsgReceivingTask receiverTask;
+    private Future<?> receiverTasksFuture;
 
     protected DataReceiverImpl(RabbitQueue queue, DataHandler handler, int maxParallelProcessedMsgs)
             throws IOException {
@@ -65,7 +66,7 @@ public class DataReceiverImpl implements DataReceiver {
         queue.channel.basicQos(maxParallelProcessedMsgs);
         executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs + 1);
         receiverTask = new MsgReceivingTask(consumer);
-        executor.submit(receiverTask);
+        receiverTasksFuture = executor.submit(receiverTask);
     }
 
     public DataHandler getDataHandler() {
@@ -90,6 +91,14 @@ public class DataReceiverImpl implements DataReceiver {
      */
     public void closeWhenFinished() {
         receiverTask.terminate();
+        // Try to wait for the receiver task to finish
+        try {
+            receiverTasksFuture.get();
+        } catch (Exception e) {
+            LOGGER.error("Exception while waiting for termination of receiver task. Closing receiver.", e);
+        }
+        // After the receiver task finished, no new tasks are added to the
+        // executor. Now we can ask the executor to shut down.
         executor.shutdown();
         try {
             executor.awaitTermination(1, TimeUnit.DAYS);
