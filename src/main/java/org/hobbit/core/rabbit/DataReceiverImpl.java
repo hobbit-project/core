@@ -129,6 +129,28 @@ public class DataReceiverImpl implements DataReceiver {
         return new Builder();
     }
 
+    /**
+     * This factory method creates a runnable task that uses the given consumer
+     * to receive incoming messages.
+     * 
+     * @param consumer
+     * @return
+     */
+    protected Runnable buildMsgReceivingTask(QueueingConsumer consumer) {
+        return new MsgReceivingTask(consumer);
+    }
+
+    /**
+     * This factory method creates a runnable task that processes the given
+     * message.
+     * 
+     * @param consumer
+     * @return
+     */
+    protected Runnable buildMsgProcessingTask(Delivery delivery) {
+        return new MsgProcessingTask(delivery);
+    }
+
     protected class MsgReceivingTask implements Runnable {
 
         private QueueingConsumer consumer;
