@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class DataReceiverImpl implements DataReceiver {
     private int errorCount = 0;
     private DataHandler dataHandler;
     private ExecutorService executor = null;
-    private MsgReceivingTask receiverTask;
+    private TerminatableRunnable receiverTask;
     private Future<?> receiverTasksFuture;
 
     protected DataReceiverImpl(RabbitQueue queue, DataHandler handler, int maxParallelProcessedMsgs)
@@ -65,7 +66,7 @@ public class DataReceiverImpl implements DataReceiver {
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
         executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs + 1);
-        receiverTask = new MsgReceivingTask(consumer);
+        receiverTask = buildMsgReceivingTask(consumer);
         receiverTasksFuture = executor.submit(receiverTask);
     }
 
@@ -136,7 +137,7 @@ public class DataReceiverImpl implements DataReceiver {
      * @param consumer
      * @return
      */
-    protected Runnable buildMsgReceivingTask(QueueingConsumer consumer) {
+    protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
         return new MsgReceivingTask(consumer);
     }
 
@@ -151,7 +152,7 @@ public class DataReceiverImpl implements DataReceiver {
         return new MsgProcessingTask(delivery);
     }
 
-    protected class MsgReceivingTask implements Runnable {
+    protected class MsgReceivingTask implements TerminatableRunnable {
 
         private QueueingConsumer consumer;
         private boolean runFlag = true;
@@ -172,15 +173,21 @@ public class DataReceiverImpl implements DataReceiver {
                     increaseErrorCount();
                 }
                 if (delivery != null) {
-                    executor.submit(new MsgProcessingTask(delivery));
+                    executor.submit(buildMsgProcessingTask(delivery));
                     ++count;
                 }
             }
             LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
         }
 
+        @Override
         public void terminate() {
             runFlag = false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return !runFlag;
         }
 
     }
