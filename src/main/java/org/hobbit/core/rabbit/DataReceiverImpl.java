@@ -86,6 +86,10 @@ public class DataReceiverImpl implements DataReceiver {
         return queue;
     }
 
+    protected ExecutorService getExecutor() {
+        return executor;
+    }
+
     /**
      * This method waits for the data receiver to finish its work and closes the
      * incoming queue as well as the internal thread pool after that.
@@ -207,16 +211,16 @@ public class DataReceiverImpl implements DataReceiver {
 
     }
 
-    public static final class Builder {
+    public static class Builder {
 
-        private static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataReceiver. Either a queue or a name and a factory to create a new queue are mandatory.";
-        private static final String DATA_HANDLER_MISSING_ERROR = "The necessary data handler has not been provided for the DataReceiver.";
+        protected static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataReceiver. Either a queue or a name and a factory to create a new queue are mandatory.";
+        protected static final String DATA_HANDLER_MISSING_ERROR = "The necessary data handler has not been provided for the DataReceiver.";
 
-        private DataHandler dataHandler;
-        private RabbitQueue queue;
-        private String queueName;
-        private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
-        private RabbitQueueFactory factory;
+        protected DataHandler dataHandler;
+        protected RabbitQueue queue;
+        protected String queueName;
+        protected int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        protected RabbitQueueFactory factory;
 
         public Builder() {
         };
