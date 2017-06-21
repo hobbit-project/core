@@ -218,13 +218,6 @@ public class FileStreamingTest implements RabbitQueueFactory {
         }
     }
 
-    @Override
-    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = connection.createChannel();
-        channel.queueDeclare(name, false, false, true, null);
-        return new RabbitQueue(channel, name);
-    }
-
     public static String getTempDir() throws IOException {
         File tempFile = File.createTempFile("FileStreamTest", "Temp");
         if (!tempFile.delete()) {
@@ -245,5 +238,21 @@ public class FileStreamingTest implements RabbitQueueFactory {
     @Override
     public Connection getConnection() {
         return connection;
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
+        return createDefaultRabbitQueue(name, createChannel());
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name, Channel channel) throws IOException {
+        channel.queueDeclare(name, false, false, true, null);
+        return new RabbitQueue(channel, name);
+    }
+
+    @Override
+    public Channel createChannel() throws IOException {
+        return connection.createChannel();
     }
 }
