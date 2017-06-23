@@ -79,6 +79,12 @@ public class SimpleFileReceiver {
         if (!outputDirectory.endsWith(File.separator)) {
             outputDirectory = outputDirectory + File.separator;
         }
+        File outDir = new File(outputDirectory);
+        if (!outDir.exists()) {
+            if (!outDir.mkdirs()) {
+                throw new IOException("Couldn't create \"" + outDir.getAbsolutePath() + "\".");
+            }
+        }
         try {
             Delivery delivery = null;
             // while the receiver should not terminate, the last delivery was

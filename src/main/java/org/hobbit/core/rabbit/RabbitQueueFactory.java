@@ -60,7 +60,7 @@ public interface RabbitQueueFactory extends Closeable {
      *
      * @param name
      *            name of the queue
-     * @param cannel
+     * @param channel
      *            the {@link Channel} that will be used to generate the queue
      * @return {@link RabbitQueue} object comprising the {@link Channel} and the
      *         name of the created queue
