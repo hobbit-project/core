@@ -61,3 +61,9 @@ sys:limesV1 a  hobbit:SystemInstance ;
   hobbit:instanceOf sys:limes ;
   sys:threshold "0.7"^^xsd:float .
 
+<http://w3id.org/hobbit/challenges#OAEILinkingChallenge> a hobbit:ChallengeTask ;
+    rdfs:label	"Linking"@en ;
+    rdfs:comment	"Linking Challenge for OAEI 2017"@en ;
+    hobbit:involvesSystemInstance sys:limesV1;
+    hobbit:involvesBenchmark bench:lance;
+    hobbit:isTaskOf <http://w3id.org/hobbit/challenges#OAEIChallenge> .
