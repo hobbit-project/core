@@ -79,19 +79,27 @@ public final class Constants {
 
     public static final String TASK_GEN_2_SYSTEM_QUEUE_NAME = "hobbit.taskgen-system";
 
-    public static final String TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.taskgen-evalstore";
+    public static final String TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.taskgen-evalstore";
 
-    public static final String SYSTEM_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.system-evalstore";
+    public static final String SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.system-evalstore";
 
-    public static final String EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.evalmod-evalstore";
+    public static final String EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.evalmod-evalstore";
 
-    public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME = "hobbit.evalstore-evalmod";
+    public static final String EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME = "hobbit.evalstore-evalmod";
 
     public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
 
     public static final String CONTROLLER_2_FRONT_END_QUEUE_NAME = "hobbit.controller-frontend";
 
     public static final String CONTROLLER_2_ANALYSIS_QUEUE_NAME = "hobbit.controller-analysis";
+
+    public static final String TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY = "TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY = "SYSTEM_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY = "EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY = "EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME";
 
     public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
 
@@ -117,5 +125,5 @@ public final class Constants {
     public static final String CONTAINER_TYPE_DATABASE = "data";
 
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
-
+    
 }

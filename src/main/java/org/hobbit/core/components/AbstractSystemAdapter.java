@@ -149,7 +149,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                 }).build();
 
         sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
     }
 
     @Override

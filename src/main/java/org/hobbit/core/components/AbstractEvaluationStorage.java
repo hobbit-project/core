@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -52,6 +53,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         implements ResponseReceivingComponent, ExpectedResponseReceivingComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEvaluationStorage.class);
+
+    public static final String RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY = "HOBBIT_RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS";
 
     /**
      * If a request contains this iterator ID, a new iterator is created and its
@@ -121,8 +124,13 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void init() throws Exception {
         super.init();
 
+        Map<String, String> env = System.getenv();
+        String queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+        if(env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+            queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+        }
         taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME))
+                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName))
                 .dataHandler(new DataHandler() {
                     @Override
                     public void handleData(byte[] data) {
@@ -134,16 +142,30 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
+        queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+        if(env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+            queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+        }
+        boolean temp = false;
+        if(env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
+            try {
+            temp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
+            } catch (Exception e) {
+                LOGGER.error("Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
+            }
+        }
+        final boolean receiveTimeStamp = temp;
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME))
+                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName))
                 .dataHandler(new DataHandler() {
                     @Override
                     public void handleData(byte[] data) {
                         ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
                         byte[] responseData = RabbitMQUtils.readByteArray(buffer);
-                        receiveResponseData(taskId, System.currentTimeMillis(), responseData);
+                        long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+                        receiveResponseData(taskId, timestamp, responseData);
                         // If we should send acknowledgments (and there was no
                         // error until now)
                         if (ackChannel != null) {
@@ -157,8 +179,12 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
+        queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+        if(env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+        }
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
                 new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
                     @Override
