@@ -3,7 +3,6 @@ package org.hobbit.core.rabbit;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
@@ -56,7 +55,7 @@ public class DataReceiverImpl implements DataReceiver {
     private DataHandler dataHandler;
     private ExecutorService executor = null;
     private TerminatableRunnable receiverTask;
-    private Future<?> receiverTasksFuture;
+    private Thread receiverThread;
 
     protected DataReceiverImpl(RabbitQueue queue, DataHandler handler, int maxParallelProcessedMsgs)
             throws IOException {
@@ -65,9 +64,10 @@ public class DataReceiverImpl implements DataReceiver {
         QueueingConsumer consumer = new QueueingConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
-        executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs + 1);
+        executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
         receiverTask = buildMsgReceivingTask(consumer);
-        receiverTasksFuture = executor.submit(receiverTask);
+        receiverThread = new Thread(receiverTask);
+        receiverThread.start();
     }
 
     public DataHandler getDataHandler() {
@@ -98,7 +98,7 @@ public class DataReceiverImpl implements DataReceiver {
         receiverTask.terminate();
         // Try to wait for the receiver task to finish
         try {
-            receiverTasksFuture.get();
+            receiverThread.join();
         } catch (Exception e) {
             LOGGER.error("Exception while waiting for termination of receiver task. Closing receiver.", e);
         }
