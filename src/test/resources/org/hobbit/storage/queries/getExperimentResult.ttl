@@ -22,16 +22,19 @@ exp:LinkingExp10 a hobbit:Experiment ;
   bench:fmeasure "0.5"^^xsd:float .
 
 bench:precision a hobbit:KPI;
+  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "Precision"@en;
   rdfs:comment	"Precision = TP / (TP + FP)"@en;
   rdfs:range	xsd:float .
 
 bench:recall a hobbit:KPI;
+  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "Recall"@en;
   rdfs:comment	"Recall = TP / (TP + FN)"@en;
   rdfs:range	xsd:float .
 
 bench:fmeasure a hobbit:KPI;
+  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "F-measure"@en;
   rdfs:comment	"F-measure is the harmonic mean of precision and recall."@en;
   rdfs:range	xsd:float .
@@ -62,6 +65,7 @@ sys:limesV1 a  hobbit:SystemInstance ;
   sys:threshold "0.7"^^xsd:float .
 
 <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> a hobbit:ChallengeTask ;
+  hobbit:rankingKPIs <http://w3id.org/hobbit/challenges#OAEILinkingChallenge_KPIs> ;
   rdfs:label	"Linking"@en ;
   rdfs:comment	"Linking Challenge for OAEI 2017"@en ;
   hobbit:involvesSystemInstance sys:limesV1;

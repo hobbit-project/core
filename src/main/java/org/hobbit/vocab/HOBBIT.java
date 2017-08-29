@@ -60,6 +60,8 @@ public class HOBBIT {
     public static final Resource Parameter = resource("Parameter");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
+    public static final Resource AscendingOrder = resource("AscendingOrder");
+    public static final Resource DescendingOrder = resource("DescendingOrder");
 
     public static final Property closed = property("closed");
     public static final Property defaultValue = property("defaultValue");
@@ -94,5 +96,7 @@ public class HOBBIT {
     public static final Property version = property("version");
     public static final Property visible = property("visible");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");
+    public static final Property ranking = property("ranking");
+    public static final Property rankingKPIs = property("rankingKPIs");
 
 }
