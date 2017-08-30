@@ -5,11 +5,16 @@ CONSTRUCT {
     %CHALLENGE_URI% a hobbit:Challenge .
     ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
     ?challengeTask ?challengeTaskProp ?challengeTaskObject .
+    ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
 }
 WHERE {
   GRAPH %GRAPH_URI% {
     %CHALLENGE_URI% a hobbit:Challenge .
     ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
     ?challengeTask ?challengeTaskProp ?challengeTaskObject .
+    OPTIONAL {
+        ?challengeTask hobbit:rankingKPIs ?rankingKPIs .
+        ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
+    }
   }
 }

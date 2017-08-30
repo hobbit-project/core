@@ -15,6 +15,7 @@ CONSTRUCT {
     ?parameterProp ?parameterPropProp ?parameterPropObject .
     ?benchmark ?benchmarkProp ?benchmarkObject .
     ?system ?systemProp ?systemObject .
+    ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
 }
 WHERE {
     {
@@ -22,8 +23,17 @@ WHERE {
             %EXPERIMENT_URI% hobbit:isPartOf %CHALLENGE_TASK_URI% .
             %EXPERIMENT_URI% a hobbit:Experiment .
   	        %EXPERIMENT_URI% ?experimentProp ?experimentObj .
-            %CHALLENGE_TASK_URI% ?challengeTaskProp ?challengeTaskObject .
   	    }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_TASK_URI% ?challengeTaskProp ?challengeTaskObject .
+            OPTIONAL {
+                %CHALLENGE_TASK_URI% hobbit:rankingKPIs ?rankingKPIs .
+                ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
+            }
+        }
     }
     UNION
     {

@@ -17,6 +17,7 @@ CONSTRUCT {
     ?benchmark hobbit:hasParameter ?parameterProp .
     ?benchmark ?benchmarkProp ?benchmarkObject .
     ?system ?systemProp ?systemObject .
+    ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
 }
 WHERE {
     {
@@ -32,6 +33,10 @@ WHERE {
             ?challengeTask hobbit:isTaskOf %CHALLENGE_URI% .
             ?challengeTask a hobbit:ChallengeTask .
             ?challengeTask ?taskProp ?taskObj .
+            OPTIONAL {
+                ?challengeTask hobbit:rankingKPIs ?rankingKPIs .
+                ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
+            }
         }
     }
     UNION
