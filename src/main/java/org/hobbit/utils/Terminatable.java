@@ -14,7 +14,9 @@ public interface Terminatable {
 
     /**
      * Returns a flag whether the object has been asked to terminate. Note that
-     * if the method returns true, it does not have to be terminated.
+     * if the method returns {@code true}, it does not have to be terminated.
+     * 
+     * @return returns {@code true} if it received a request to terminate
      */
     public boolean isTerminated();
 

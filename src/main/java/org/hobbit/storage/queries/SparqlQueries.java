@@ -512,15 +512,17 @@ public class SparqlQueries {
                 new String[] { CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { challengeTaskUri, graphUri });
     }
-    
+
     /**
-     * A construct query for getting the organizer of the challenge two which a given challenge tasks belong to.
+     * A construct query for getting the organizer of the challenge two which a
+     * given challenge tasks belong to.
      */
     private static final String GET_CHALLENGE_TASK_ORGANIZER = loadQuery(
             "org/hobbit/storage/queries/getChallengeTaskOrganizer.query");
 
     /**
-     * Returns a SPARQL CONSTRUCT query for getting the organizer of the challenge two which a given challenge tasks belong to.
+     * Returns a SPARQL CONSTRUCT query for getting the organizer of the
+     * challenge two which a given challenge tasks belong to.
      * 
      * @param challengeTaskUri
      *            URI of the challenge task
@@ -690,6 +692,8 @@ public class SparqlQueries {
      * @param graphUri
      *            the URI of the graph to which the UPDATE query should be
      *            applied or <code>null</code>
+     * @param maxTriplesPerQuery
+     *            the maximum number of triples a single query should contain
      * @return The SPARQL UPDATE query
      */
     public static final String[] getUpdateQueriesFromDiff(Model original, Model updated, String graphUri,
