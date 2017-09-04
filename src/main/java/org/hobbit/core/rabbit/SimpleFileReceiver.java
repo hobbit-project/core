@@ -49,7 +49,7 @@ public class SimpleFileReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleFileReceiver.class);
 
-    private static final long DEFAULT_TIMEOUT = 1000;
+    protected static final long DEFAULT_TIMEOUT = 1000;
 
     public static SimpleFileReceiver create(RabbitQueueFactory factory, String queueName) throws IOException {
         return create(factory.createDefaultRabbitQueue(queueName));
@@ -62,12 +62,13 @@ public class SimpleFileReceiver {
         return new SimpleFileReceiver(queue, consumer);
     }
 
-    private RabbitQueue queue;
-    private QueueingConsumer consumer;
-    private Map<String, FileReceiveState> fileStates = new HashMap<>();
-    private boolean terminated = false;
-    private int errorCount = 0;
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    protected RabbitQueue queue;
+    protected QueueingConsumer consumer;
+    protected Map<String, FileReceiveState> fileStates = new HashMap<>();
+    protected boolean terminated = false;
+    protected int errorCount = 0;
+    protected ExecutorService executor = Executors.newCachedThreadPool();
+    protected long waitingForMsgTimeout = DEFAULT_TIMEOUT;
 
     protected SimpleFileReceiver(RabbitQueue queue, QueueingConsumer consumer) {
         this.queue = queue;
@@ -79,12 +80,18 @@ public class SimpleFileReceiver {
         if (!outputDirectory.endsWith(File.separator)) {
             outputDirectory = outputDirectory + File.separator;
         }
+        File outDir = new File(outputDirectory);
+        if (!outDir.exists()) {
+            if (!outDir.mkdirs()) {
+                throw new IOException("Couldn't create \"" + outDir.getAbsolutePath() + "\".");
+            }
+        }
         try {
             Delivery delivery = null;
             // while the receiver should not terminate, the last delivery was
             // not empty or there are still deliveries in the (servers) queue
             while ((!terminated) || (delivery != null) || (queue.channel.messageCount(queue.name) > 0)) {
-                delivery = consumer.nextDelivery(DEFAULT_TIMEOUT);
+                delivery = consumer.nextDelivery(waitingForMsgTimeout);
                 if (delivery != null) {
                     executor.execute(new MessageProcessing(this, outputDirectory, delivery.getBody()));
                 }
@@ -110,6 +117,10 @@ public class SimpleFileReceiver {
 
     public int getErrorCount() {
         return errorCount;
+    }
+
+    public void setWaitingForMsgTimeout(long waitingForMsgTimeout) {
+        this.waitingForMsgTimeout = waitingForMsgTimeout;
     }
 
     protected void close() {

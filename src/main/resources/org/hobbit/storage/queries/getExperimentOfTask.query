@@ -6,6 +6,7 @@ CONSTRUCT {
     %EXPERIMENT_URI% hobbit:involvesBenchmark ?benchmark .
     %EXPERIMENT_URI% ?experimentProp ?experimentObj .
     %EXPERIMENT_URI% hobbit:isPartOf %CHALLENGE_TASK_URI% .
+    %CHALLENGE_TASK_URI% ?challengeTaskProp ?challengeTaskObject .
     %EXPERIMENT_URI% ?resultProp ?resultValue .
     ?resultProp a hobbit:KPI .
     ?resultProp ?resultPropProp ?resultPropObject .
@@ -14,6 +15,7 @@ CONSTRUCT {
     ?parameterProp ?parameterPropProp ?parameterPropObject .
     ?benchmark ?benchmarkProp ?benchmarkObject .
     ?system ?systemProp ?systemObject .
+    ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
 }
 WHERE {
     {
@@ -22,6 +24,16 @@ WHERE {
             %EXPERIMENT_URI% a hobbit:Experiment .
   	        %EXPERIMENT_URI% ?experimentProp ?experimentObj .
   	    }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %CHALLENGE_TASK_URI% ?challengeTaskProp ?challengeTaskObject .
+            OPTIONAL {
+                %CHALLENGE_TASK_URI% hobbit:rankingKPIs ?rankingKPIs .
+                ?rankingKPIs ?rankingKPIsProp ?rankingKPIsObject .
+            }
+        }
     }
     UNION
     {

@@ -1,13 +1,13 @@
 package org.hobbit.core.rabbit;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,8 @@ public class DataReceiverImpl implements DataReceiver {
     private int errorCount = 0;
     private DataHandler dataHandler;
     private ExecutorService executor = null;
-    private MsgReceivingTask receiverTask;
+    private TerminatableRunnable receiverTask;
+    private Thread receiverThread;
 
     protected DataReceiverImpl(RabbitQueue queue, DataHandler handler, int maxParallelProcessedMsgs)
             throws IOException {
@@ -63,9 +64,10 @@ public class DataReceiverImpl implements DataReceiver {
         QueueingConsumer consumer = new QueueingConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
-        executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs + 1);
-        receiverTask = new MsgReceivingTask(consumer);
-        executor.submit(receiverTask);
+        executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
+        receiverTask = buildMsgReceivingTask(consumer);
+        receiverThread = new Thread(receiverTask);
+        receiverThread.start();
     }
 
     public DataHandler getDataHandler() {
@@ -84,12 +86,24 @@ public class DataReceiverImpl implements DataReceiver {
         return queue;
     }
 
+    protected ExecutorService getExecutor() {
+        return executor;
+    }
+
     /**
      * This method waits for the data receiver to finish its work and closes the
      * incoming queue as well as the internal thread pool after that.
      */
     public void closeWhenFinished() {
         receiverTask.terminate();
+        // Try to wait for the receiver task to finish
+        try {
+            receiverThread.join();
+        } catch (Exception e) {
+            LOGGER.error("Exception while waiting for termination of receiver task. Closing receiver.", e);
+        }
+        // After the receiver task finished, no new tasks are added to the
+        // executor. Now we can ask the executor to shut down.
         executor.shutdown();
         try {
             executor.awaitTermination(1, TimeUnit.DAYS);
@@ -120,7 +134,33 @@ public class DataReceiverImpl implements DataReceiver {
         return new Builder();
     }
 
-    protected class MsgReceivingTask implements Runnable {
+    /**
+     * This factory method creates a runnable task that uses the given consumer
+     * to receive incoming messages.
+     * 
+     * @param consumer
+     *            the consumer that can be used to receive messages
+     * @return a Runnable instance that will handle incoming messages as soon as
+     *         it will be executed
+     */
+    protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
+        return new MsgReceivingTask(consumer);
+    }
+
+    /**
+     * This factory method creates a runnable task that processes the given
+     * message.
+     * 
+     * @param delivery
+     *            the message that should be processed
+     * @return a Runnable instance that will process the message as soon as it
+     *         will be executed
+     */
+    protected Runnable buildMsgProcessingTask(Delivery delivery) {
+        return new MsgProcessingTask(delivery);
+    }
+
+    protected class MsgReceivingTask implements TerminatableRunnable {
 
         private QueueingConsumer consumer;
         private boolean runFlag = true;
@@ -141,15 +181,21 @@ public class DataReceiverImpl implements DataReceiver {
                     increaseErrorCount();
                 }
                 if (delivery != null) {
-                    executor.submit(new MsgProcessingTask(delivery));
+                    executor.submit(buildMsgProcessingTask(delivery));
                     ++count;
                 }
             }
             LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
         }
 
+        @Override
         public void terminate() {
             runFlag = false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return !runFlag;
         }
 
     }
@@ -169,16 +215,16 @@ public class DataReceiverImpl implements DataReceiver {
 
     }
 
-    public static final class Builder {
+    public static class Builder {
 
-        private static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataReceiver. Either a queue or a name and a factory to create a new queue are mandatory.";
-        private static final String DATA_HANDLER_MISSING_ERROR = "The necessary data handler has not been provided for the DataReceiver.";
+        protected static final String QUEUE_INFO_MISSING_ERROR = "There are neither a queue nor a queue name and a queue factory provided for the DataReceiver. Either a queue or a name and a factory to create a new queue are mandatory.";
+        protected static final String DATA_HANDLER_MISSING_ERROR = "The necessary data handler has not been provided for the DataReceiver.";
 
-        private DataHandler dataHandler;
-        private RabbitQueue queue;
-        private String queueName;
-        private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
-        private RabbitQueueFactory factory;
+        protected DataHandler dataHandler;
+        protected RabbitQueue queue;
+        protected String queueName;
+        protected int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        protected RabbitQueueFactory factory;
 
         public Builder() {
         };

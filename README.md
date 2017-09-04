@@ -26,5 +26,5 @@ This library offers some main functionalities and utilities for the Hobbit platf
       <version>1.0.3</version>
     </dependency>
     ...
-  <dependencies>
+  </dependencies>
 ```

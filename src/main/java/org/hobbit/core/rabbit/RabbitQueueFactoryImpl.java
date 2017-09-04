@@ -16,7 +16,6 @@
  */
 package org.hobbit.core.rabbit;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 import org.hobbit.core.data.RabbitQueue;
@@ -24,7 +23,7 @@ import org.hobbit.core.data.RabbitQueue;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
-public class RabbitQueueFactoryImpl implements RabbitQueueFactory, Closeable {
+public class RabbitQueueFactoryImpl implements RabbitQueueFactory {
 
     private final Connection connection;
 
@@ -34,9 +33,7 @@ public class RabbitQueueFactoryImpl implements RabbitQueueFactory, Closeable {
 
     @Override
     public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = connection.createChannel();
-        channel.queueDeclare(name, false, false, true, null);
-        return new RabbitQueue(channel, name);
+        return createDefaultRabbitQueue(name, createChannel());
     }
 
     public Connection getConnection() {
@@ -50,5 +47,16 @@ public class RabbitQueueFactoryImpl implements RabbitQueueFactory, Closeable {
             } catch (Exception e) {
             }
         }
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name, Channel channel) throws IOException {
+        channel.queueDeclare(name, false, false, true, null);
+        return new RabbitQueue(channel, name);
+    }
+
+    @Override
+    public Channel createChannel() throws IOException {
+        return connection.createChannel();
     }
 }

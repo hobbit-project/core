@@ -147,7 +147,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
         sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME)).build();
+                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
 
         dataGenReceiver = DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override

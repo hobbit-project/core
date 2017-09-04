@@ -148,8 +148,8 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      * timeout has been reached. The return value shows which of these two cases
      * happened.
      *
-     * @param taskIdString
-     * @param data
+     * @param taskIdString the task id
+     * @param data the data of the task
      * @return <code>true</code> if the acknowledgement has been received,
      *         <code>false</code> if the timeout has been reached or the method
      *         has been interrupted.
