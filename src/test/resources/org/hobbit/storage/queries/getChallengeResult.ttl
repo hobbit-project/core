@@ -20,7 +20,7 @@
 
 # --- Challenge Task 1 ---
 
-<http://w3id.org/hobbit/MyChallengeTask1_KPIs> a rdf:Seq ;
+<http://w3id.org/hobbit/MyChallengeTask1_KPIs> a rdf:Seq, hobbit:KPISeq ;
   rdf:_1 bench:fmeasure ;
   rdf:_2 bench:recall ;
   rdf:_3 bench:precision .

@@ -100,7 +100,7 @@ exp:LinkingExp10 a hobbit:Experiment ;
 
 # --- Challenge Task ---
 
-<http://w3id.org/hobbit/challenges#OAEILinkingChallenge_KPIs> a rdf:Seq ;
+<http://w3id.org/hobbit/challenges#OAEILinkingChallenge_KPIs> a hobbit:KPISeq, rdf:Seq ;
   rdf:_1 bench:fmeasure ;
   rdf:_2 bench:recall ;
   rdf:_3 bench:precision .
