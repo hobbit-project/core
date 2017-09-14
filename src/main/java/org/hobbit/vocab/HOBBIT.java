@@ -60,6 +60,7 @@ public class HOBBIT {
     public static final Resource FeatureParameter = resource("FeatureParameter");
     public static final Resource Hardware = resource("Hardware");
     public static final Resource KPI = resource("KPI");
+    public static final Resource KPISeq = resource("KPISeq");
     public static final Resource Parameter = resource("Parameter");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
