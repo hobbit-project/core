@@ -1,6 +1,10 @@
 # core
 This library offers some main functionalities and utilities for the Hobbit platform project. For more information take a look at the project web page (http://www.project-hobbit.eu) or at the Hobbit platform project on github (https://github.com/hobbit-project/platform).
 
+### Building
+
+`test` target needs RabbitMQ running. You may need to set RabbitMQ host in `src/test/java/org/hobbit/core/TestConstants.java`.
+
 ### Using it with Maven
 
 ```xml
