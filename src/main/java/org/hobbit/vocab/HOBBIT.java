@@ -67,9 +67,11 @@ public class HOBBIT {
 
     // Properties sorted alphabetically
     public static final Property closed = property("closed");
+    public static final Property dateOfNextExecution = property("dateOfNextExecution");
     public static final Property defaultValue = property("defaultValue");
     public static final Property endTime = property("endTime");
     public static final Property executionDate = property("executionDate");
+    public static final Property executionPeriod = property("executionPeriod");
     public static final Property hasAPI = property("hasAPI");
     public static final Property hasCPUTypeCount = property("hasCPUTypeCount");
     public static final Property hasDisks = property("hasDisks");
@@ -94,6 +96,7 @@ public class HOBBIT {
     public static final Property publicationDate = property("publicationDate");
     public static final Property ranking = property("ranking");
     public static final Property rankingKPIs = property("rankingKPIs");
+    public static final Property registrationCutoffDate = property("registrationCutoffDate");
     public static final Property relevantForAnalysis = property("relevantForAnalysis");
     public static final Property startTime = property("startTime");
     public static final Property terminatedWithError = property("terminatedWithError");
