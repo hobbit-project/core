@@ -170,6 +170,30 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query that retrieves the graph of a repeatable challenge.
+     */
+    private static final String GET_REPEATABLE_CHALLENGE_INFO_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getRepeatableChallengeInfo.query");
+
+    /**
+     * Returns a SPARQL query for retrieving a graph comprising
+     * repeatable challenge properties if this challenge is closed.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getRepeatableChallengeInfoQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(GET_REPEATABLE_CHALLENGE_INFO_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
+    }
+
+    /**
      * An update query that closes a challenge.
      */
     private static final String CLOSE_CHALLENGE_UPDATE_QUERY = loadQuery(

@@ -158,6 +158,13 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getChallengePublishInfoQuery(null, FIRST_GRAPH_NAME), null });
 
+        // Construct challenge publish info graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                SparqlQueries.getRepeatableChallengeInfoQuery(null, FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getRepeatableChallengeInfoResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getRepeatableChallengeInfoQuery(null, FIRST_GRAPH_NAME), null });
+
         return testConfigs;
     }
 
