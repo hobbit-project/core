@@ -590,6 +590,9 @@ public class SparqlQueries {
                 // create a variable name
                 builder.append("?v");
                 builder.append(i);
+            } else if (replacements[i].charAt(0) == '"') {
+                // create literal
+                builder.append(replacements[i]);
             } else {
                 // create <URI>
                 builder.append('<');
