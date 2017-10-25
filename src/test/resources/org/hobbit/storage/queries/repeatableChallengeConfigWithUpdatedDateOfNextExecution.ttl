@@ -103,7 +103,7 @@ hobbit:hasModel "...." ;
   hobbit:executionDate "2016-12-24"^^xsd:date;
   hobbit:publicationDate "2016-12-26"^^xsd:date;
   hobbit:registrationCutoffDate "2016-12-26"^^xsd:dateTime;
-  hobbit:dateOfNextExecution "2016-12-24T21:00:00Z"^^xsd:dateTime;
+  hobbit:dateOfNextExecution "2016-12-26T03:00:00Z"^^xsd:dateTime;
   hobbit:executionPeriod "P1DT6H"^^xsd:duration;
   hobbit:organizer "Michael Roeder"@en;
   hobbit:visible	"true"^^xsd:boolean;

@@ -12,5 +12,5 @@
 
 <http://example.org/MyChallenge> a	hobbit:Challenge ;
   hobbit:registrationCutoffDate "2016-12-26"^^xsd:dateTime ;
-  hobbit:dateOfNextExecution "2016-12-24T21:00:00"^^xsd:dateTime ;
+  hobbit:dateOfNextExecution "2016-12-24T21:00:00Z"^^xsd:dateTime ;
   hobbit:executionPeriod "P1DT6H"^^xsd:duration .
