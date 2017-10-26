@@ -161,4 +161,20 @@ public class RdfHelperTest {
         Assert.assertNull(RdfHelper.getDateValue(null, model.getResource("http://example.org/MyChallenge"),
                 model.getProperty("http://w3id.org/hobbit/vocab#executionDate")));
     }
+
+    @Test
+    public void testGetDateTimeValue() {
+        String modelString = "<http://example.org/MyChallenge> "
+                + "<http://w3id.org/hobbit/vocab#registrationCutoffDate> \"2016-12-24T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
+        Model model = ModelFactory.createDefaultModel();
+        model.read(new StringReader(modelString), "http://example.org/", "TTL");
+
+        TimeZone timeZone = TimeZone.getTimeZone("GMT");
+        Calendar executionDate = Calendar.getInstance(timeZone);
+        executionDate.set(2016, Calendar.DECEMBER, 24, 0, 0, 0);
+        executionDate.set(Calendar.MILLISECOND, 0);
+        Assert.assertEquals(executionDate,
+                RdfHelper.getDateTimeValue(model, model.getResource("http://example.org/MyChallenge"),
+                        model.getProperty("http://w3id.org/hobbit/vocab#registrationCutoffDate")));
+    }
 }
