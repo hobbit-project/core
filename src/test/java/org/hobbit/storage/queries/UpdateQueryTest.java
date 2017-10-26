@@ -96,6 +96,20 @@ public class UpdateQueryTest extends AbstractQueryTest {
                 new String[] {
                         SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", null, FIRST_GRAPH_NAME) } });
 
+        // Move involvesSystem triples between graphs update
+        /*
+         * In the first graph, triples should be deleted.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/exampleChallengeWithoutInvolvedSystems.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getMoveChallengeSystemQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME, SECOND_GRAPH_NAME) } });
+        /*
+         * In the second graph, triples should be added.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/onlyInvolvedSystems.ttl", SECOND_GRAPH_NAME, new String[] {
+                        SparqlQueries.getMoveChallengeSystemQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME, SECOND_GRAPH_NAME) } });
+
         // Check the model diff based SPARQL UPDATE query creation
         Model original, updated;
         original = loadModel("org/hobbit/storage/queries/exampleChallengeConfig.ttl");

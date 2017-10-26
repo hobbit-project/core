@@ -52,6 +52,7 @@ public class SparqlQueries {
     private static final String CHALLENGE_TASK_PLACEHOLDER = "%CHALLENGE_TASK_URI%";
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
     private static final String GRAPH_PLACEHOLDER = "%GRAPH_URI%";
+    private static final String NEW_GRAPH_PLACEHOLDER = "%NEW_GRAPH_URI%";
     private static final String SYSTEM_PLACEHOLDER = "%SYSTEM_URI%";
     private static final String VALUE_PLACEHOLDER = "%VALUE_LITERAL%";
     private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
@@ -255,6 +256,35 @@ public class SparqlQueries {
 
         return replacePlaceholders(DATE_OF_NEXT_EXECUTION_UPDATE_QUERY,
                 new String[] { CHALLENGE_PLACEHOLDER, VALUE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, xsdValue, graphUri });
+    }
+
+    /**
+     * An update query that moves involvesSystem triples between graphs.
+     */
+    private static final String MOVE_CHALLENGE_SYSTEM_QUERY = loadQuery(
+            "org/hobbit/storage/queries/moveChallengeSystem.query");
+
+    /**
+     * Returns a SPARQL query for moving involvesSystem triples between graphs
+     * for a challenge with given URI.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be updated. <code>null</code>
+     *            works like a wildcard.
+     * @param graphUri
+     *            URI of the challenge definition graph.
+     * @param newGraphUri
+     *            URI of the public data graph.
+     * @return the SPARQL update query that performs the operation or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getMoveChallengeSystemQuery(String challengeUri, String graphUri, String newGraphUri) {
+        LOGGER.info(replacePlaceholders(MOVE_CHALLENGE_SYSTEM_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER, NEW_GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri, newGraphUri }));
+
+
+        return replacePlaceholders(MOVE_CHALLENGE_SYSTEM_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER, NEW_GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri, newGraphUri });
     }
 
     /**
