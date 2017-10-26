@@ -19,11 +19,13 @@ package org.hobbit.storage.queries;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -51,6 +53,7 @@ public class SparqlQueries {
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
     private static final String GRAPH_PLACEHOLDER = "%GRAPH_URI%";
     private static final String SYSTEM_PLACEHOLDER = "%SYSTEM_URI%";
+    private static final String VALUE_PLACEHOLDER = "%VALUE_LITERAL%";
     private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
     private static final Model EMPTY_MODEL = ModelFactory.createDefaultModel();
 
@@ -170,6 +173,30 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query that retrieves the graph of a repeatable challenge.
+     */
+    private static final String GET_REPEATABLE_CHALLENGE_INFO_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getRepeatableChallengeInfo.query");
+
+    /**
+     * Returns a SPARQL query for retrieving a graph comprising
+     * repeatable challenge properties if this challenge is closed.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getRepeatableChallengeInfoQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(GET_REPEATABLE_CHALLENGE_INFO_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
+    }
+
+    /**
      * An update query that closes a challenge.
      */
     private static final String CLOSE_CHALLENGE_UPDATE_QUERY = loadQuery(
@@ -191,6 +218,43 @@ public class SparqlQueries {
     public static final String getCloseChallengeQuery(String challengeUri, String graphUri) {
         return replacePlaceholders(CLOSE_CHALLENGE_UPDATE_QUERY,
                 new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
+    }
+
+    /**
+     * An update query that changes next execution date for a repeatable challenge.
+     */
+    private static final String DATE_OF_NEXT_EXECUTION_UPDATE_QUERY = loadQuery(
+            "org/hobbit/storage/queries/updateDateOfNextExecution.query");
+
+    /**
+     * Returns a SPARQL query for updating the date of next execution
+     * for a repeatable challenge with given URI.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be updated. <code>null</code>
+     *            works like a wildcard.
+     * @param newValue
+     *            New value for date of next execution. <code>null</code>
+     *            to remove the value.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL update query that performs the insertion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getUpdateDateOfNextExecutionQuery(String challengeUri, Calendar newValue, String graphUri) {
+        String xsdValue = null;
+        if (newValue != null) {
+            StringBuilder builder = new StringBuilder();
+            builder.append('"');
+            builder.append(new XSDDateTime(newValue).toString());
+            builder.append('"');
+            builder.append("^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+            xsdValue = builder.toString();
+        }
+
+        return replacePlaceholders(DATE_OF_NEXT_EXECUTION_UPDATE_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, VALUE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, xsdValue, graphUri });
     }
 
     /**
@@ -566,6 +630,9 @@ public class SparqlQueries {
                 // create a variable name
                 builder.append("?v");
                 builder.append(i);
+            } else if (replacements[i].charAt(0) == '"') {
+                // create literal
+                builder.append(replacements[i]);
             } else {
                 // create <URI>
                 builder.append('<');

@@ -18,8 +18,10 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
@@ -67,6 +69,32 @@ public class UpdateQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", null, SECOND_GRAPH_NAME,
                 new String[] {
                         SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME) } });
+
+        // Date of next repeatable challenge execution update
+        /*
+         * Property should be created if it didn't exist.
+         */
+        TimeZone timeZone = TimeZone.getTimeZone("GMT");
+        Calendar date = Calendar.getInstance(timeZone);
+        date.set(Calendar.MILLISECOND, 0);
+        date.set(2016, Calendar.DECEMBER, 24, 21, 0, 0);
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfigWithoutDateOfNextExecution.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfig.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", date, FIRST_GRAPH_NAME) } });
+        /*
+         * Property should be updated if it already exists.
+         */
+        date.set(2016, Calendar.DECEMBER, 26, 3, 0, 0);
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfigWithUpdatedDateOfNextExecution.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", date, FIRST_GRAPH_NAME) } });
+        /*
+         * Property should be removed when new value is null.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfigWithoutDateOfNextExecution.ttl", FIRST_GRAPH_NAME,
+                new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", null, FIRST_GRAPH_NAME) } });
 
         // Check the model diff based SPARQL UPDATE query creation
         Model original, updated;

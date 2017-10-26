@@ -102,13 +102,15 @@ hobbit:hasModel "...." ;
   rdfs:comment	"This is an example for a challenge."@en;
   hobbit:executionDate "2016-12-24"^^xsd:date;
   hobbit:publicationDate "2016-12-26"^^xsd:date;
+  hobbit:registrationCutoffDate "2016-12-26"^^xsd:dateTime;
+  hobbit:executionPeriod "P1DT6H"^^xsd:duration;
   hobbit:organizer "Michael Roeder"@en;
   hobbit:visible	"true"^^xsd:boolean;
   hobbit:closed	"true"^^xsd:boolean .
 
 # --- Challenge Task 1 ---
 
-<http://w3id.org/hobbit/MyChallengeTask1_KPIs> a hobbit:KPISeq, rdf:Seq ;
+<http://w3id.org/hobbit/MyChallengeTask1_KPIs> a rdf:Seq ;
   rdf:_1 bench:fmeasure ;
   rdf:_2 bench:recall ;
   rdf:_3 bench:precision .
