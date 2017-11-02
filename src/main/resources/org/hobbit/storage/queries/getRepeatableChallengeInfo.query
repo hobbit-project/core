@@ -10,7 +10,6 @@ CONSTRUCT {
 WHERE {
   GRAPH %GRAPH_URI% {
     %CHALLENGE_URI% a hobbit:Challenge .
-    %CHALLENGE_URI% hobbit:closed "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
     %CHALLENGE_URI% hobbit:registrationCutoffDate ?registrationCutoffDate .
     %CHALLENGE_URI% hobbit:executionPeriod ?executionPeriod .
     OPTIONAL {
