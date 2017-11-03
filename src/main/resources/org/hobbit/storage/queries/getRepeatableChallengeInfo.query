@@ -17,5 +17,6 @@ WHERE {
     OPTIONAL {
         %CHALLENGE_URI% hobbit:dateOfNextExecution ?dateOfNextExecution .
     }
+    %CHALLENGE_URI% hobbit:closed "false"^^xsd:boolean .
   }
 }

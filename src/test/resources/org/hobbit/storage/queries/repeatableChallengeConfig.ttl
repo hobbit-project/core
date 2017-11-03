@@ -107,7 +107,7 @@ hobbit:hasModel "...." ;
   hobbit:executionPeriod "P1DT6H"^^xsd:duration;
   hobbit:organizer "Michael Roeder"@en;
   hobbit:visible	"true"^^xsd:boolean;
-  hobbit:closed	"true"^^xsd:boolean .
+  hobbit:closed	"false"^^xsd:boolean .
 
 # --- Challenge Task 1 ---
 
