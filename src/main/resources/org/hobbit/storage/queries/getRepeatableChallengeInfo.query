@@ -3,6 +3,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
     %CHALLENGE_URI% a hobbit:Challenge .
+    %CHALLENGE_URI% hobbit:executionDate ?executionDate .
     %CHALLENGE_URI% hobbit:registrationCutoffDate ?registrationCutoffDate .
     %CHALLENGE_URI% hobbit:dateOfNextExecution ?dateOfNextExecution .
     %CHALLENGE_URI% hobbit:executionPeriod ?executionPeriod .
@@ -10,6 +11,7 @@ CONSTRUCT {
 WHERE {
   GRAPH %GRAPH_URI% {
     %CHALLENGE_URI% a hobbit:Challenge .
+    %CHALLENGE_URI% hobbit:executionDate ?executionDate .
     %CHALLENGE_URI% hobbit:registrationCutoffDate ?registrationCutoffDate .
     %CHALLENGE_URI% hobbit:executionPeriod ?executionPeriod .
     OPTIONAL {
