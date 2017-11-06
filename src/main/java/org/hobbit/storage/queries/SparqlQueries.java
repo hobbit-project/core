@@ -279,10 +279,6 @@ public class SparqlQueries {
      *         <code>null</code> if the query hasn't been loaded correctly
      */
     public static final String getMoveChallengeSystemQuery(String challengeUri, String graphUri, String newGraphUri) {
-        LOGGER.info(replacePlaceholders(MOVE_CHALLENGE_SYSTEM_QUERY,
-                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER, NEW_GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri, newGraphUri }));
-
-
         return replacePlaceholders(MOVE_CHALLENGE_SYSTEM_QUERY,
                 new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER, NEW_GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri, newGraphUri });
     }
