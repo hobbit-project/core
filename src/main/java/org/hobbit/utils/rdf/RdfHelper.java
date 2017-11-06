@@ -18,10 +18,12 @@ package org.hobbit.utils.rdf;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.time.Duration;
 import java.util.List;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.XSDDuration;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
@@ -165,6 +167,38 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Couldn't parse " + dateType.getURI() + ". Returning null.", e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the object as {@link Duration} of the first triple that has the
+     * given subject and predicate and that can be found in the given model.
+     *
+     * @param model
+     *            the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as {@link Duration} or <code>null</code> if
+     *         such a triple couldn't be found or the value can not be read as
+     *         XSDDuration
+     */
+    public static Duration getDurationValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return Duration.parse(literal.getString());
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse \"" + literal.getString() + "\" as xsd:duration. Returning null.", e);
             }
         }
         return null;

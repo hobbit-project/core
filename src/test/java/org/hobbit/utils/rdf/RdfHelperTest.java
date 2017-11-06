@@ -17,6 +17,8 @@
 package org.hobbit.utils.rdf;
 
 import java.io.StringReader;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -160,5 +162,66 @@ public class RdfHelperTest {
         // model is null
         Assert.assertNull(RdfHelper.getDateValue(null, model.getResource("http://example.org/MyChallenge"),
                 model.getProperty("http://w3id.org/hobbit/vocab#executionDate")));
+    }
+
+    @Test
+    public void testGetDateTimeValue() {
+        String modelString = "<http://example.org/MyChallenge> "
+                + "<http://w3id.org/hobbit/vocab#registrationCutoffDate> \"2016-12-24T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .";
+        Model model = ModelFactory.createDefaultModel();
+        model.read(new StringReader(modelString), "http://example.org/", "TTL");
+
+        TimeZone timeZone = TimeZone.getTimeZone("GMT");
+        Calendar executionDate = Calendar.getInstance(timeZone);
+        executionDate.set(2016, Calendar.DECEMBER, 24, 0, 0, 0);
+        executionDate.set(Calendar.MILLISECOND, 0);
+        Assert.assertEquals(executionDate,
+                RdfHelper.getDateTimeValue(model, model.getResource("http://example.org/MyChallenge"),
+                        model.getProperty("http://w3id.org/hobbit/vocab#registrationCutoffDate")));
+    }
+
+    @Test
+    public void testGetDurationValue() {
+        StringBuilder modelBuilder = new StringBuilder();
+        modelBuilder.append("<http://example.org/full>      <http://example.org/d> \"P2Y6M5DT12H35M30S\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/some>      <http://example.org/d> \"P1DT2H\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/overflow>  <http://example.org/d> \"PT30H\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/minutes>   <http://example.org/d> \"PT20M\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/withZeros> <http://example.org/d> \"P0M20D\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/exactZero> <http://example.org/d> \"P0D\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/negative>  <http://example.org/d> \"-P60D\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        modelBuilder.append("<http://example.org/fraction>  <http://example.org/d> \"PT1M30.5S\"^^<http://www.w3.org/2001/XMLSchema#duration> .");
+        Model model = ModelFactory.createDefaultModel();
+        model.read(new StringReader(modelBuilder.toString()), "http://example.org/", "TTL");
+
+        Assert.assertEquals(Duration.of(26, ChronoUnit.HOURS),
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/some"),
+                model.getProperty("http://example.org/d")));
+
+        Assert.assertEquals(Duration.of(30, ChronoUnit.HOURS),
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/overflow"),
+                model.getProperty("http://example.org/d")));
+
+        Assert.assertEquals(Duration.of(20, ChronoUnit.MINUTES),
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/minutes"),
+                model.getProperty("http://example.org/d")));
+
+        Assert.assertEquals(Duration.ZERO,
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/exactZero"),
+                model.getProperty("http://example.org/d")));
+
+        Assert.assertEquals(Duration.of(-60, ChronoUnit.DAYS),
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/negative"),
+                model.getProperty("http://example.org/d")));
+
+        Assert.assertEquals(Duration.of(90500, ChronoUnit.MILLIS),
+                RdfHelper.getDurationValue(model,
+                model.getResource("http://example.org/fraction"),
+                model.getProperty("http://example.org/d")));
     }
 }

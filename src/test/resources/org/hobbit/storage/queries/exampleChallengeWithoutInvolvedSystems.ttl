@@ -22,19 +22,16 @@ bench:lance a	hobbit:Benchmark;
   hobbit:hasParameter bench:lanceDataFormat .
 
 bench:precision a hobbit:KPI;
-  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "Precision"@en;
   rdfs:comment	"Precision = TP / (TP + FP)"@en;
   rdfs:range	xsd:float .
 
 bench:recall a hobbit:KPI;
-  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "Recall"@en;
   rdfs:comment	"Recall = TP / (TP + FN)"@en;
   rdfs:range	xsd:float .
 
 bench:fmeasure a hobbit:KPI;
-  hobbit:ranking hobbit:AscendingOrder ;
   rdfs:label "F-measure"@en;
   rdfs:comment	"F-measure is the harmonic mean of precision and recall."@en;
   rdfs:range	xsd:float .
@@ -44,7 +41,7 @@ bench:lanceApi a hobbit:API .
 bench:lanceDataFormat  a	hobbit:ConfigurableParameter;
   rdfs:label	"Lance dataset format"@en;
   rdfs:comment	"......."@en;
-  rdfs:range bench:DataFormat;
+            rdfs:range bench:DataFormat;
   hobbit:defaultValue bench:Turtle .
 
 bench:DataFormat  a owl:Class .
@@ -88,7 +85,7 @@ exp:LinkingExp10 a hobbit:Experiment ;
 # --- Hardware ---
 
 <http://example.org/ExampleHardware> a hobbit:Hardware ;
-  hobbit:hasModel "...." ;
+hobbit:hasModel "...." ;
   hobbit:hasProcessors "...." ;
   hobbit:hasMemory "...." ;
   hobbit:hasDisks "..." ;
@@ -98,24 +95,66 @@ exp:LinkingExp10 a hobbit:Experiment ;
   hobbit:hasCPUTypeCount ""^^xsd:int ;
   hobbit:hasRAM "..." .
 
-# --- Challenge Task ---
+# --- Challenge ---
 
-<http://w3id.org/hobbit/challenges#OAEILinkingChallenge_KPIs> a hobbit:KPISeq, rdf:Seq ;
+<http://example.org/MyChallenge> a	hobbit:Challenge;
+  rdfs:label "My example Challenge"@en;
+  rdfs:comment	"This is an example for a challenge."@en;
+  hobbit:executionDate "2016-12-24"^^xsd:date;
+  hobbit:publicationDate "2016-12-26"^^xsd:date;
+  hobbit:organizer "Michael Roeder"@en;
+  hobbit:visible	"true"^^xsd:boolean .
+
+# --- Challenge Task 1 ---
+
+<http://w3id.org/hobbit/MyChallengeTask1_KPIs> a hobbit:KPISeq, rdf:Seq ;
   rdf:_1 bench:fmeasure ;
   rdf:_2 bench:recall ;
   rdf:_3 bench:precision .
 
-<http://w3id.org/hobbit/challenges#OAEILinkingChallenge> a hobbit:ChallengeTask ;
-  hobbit:rankingKPIs <http://w3id.org/hobbit/challenges#OAEILinkingChallenge_KPIs> ;
-  rdfs:label	"Linking"@en ;
-  rdfs:comment	"Linking Challenge for OAEI 2017"@en ;
-  hobbit:involvesSystemInstance sys:limesV1;
-  hobbit:involvesBenchmark bench:lance;
-  hobbit:isTaskOf <http://w3id.org/hobbit/challenges#OAEIChallenge> .
+<http://example.org/MyChallengeTask1> a hobbit:ChallengeTask;
+  hobbit:rankingKPIs <http://w3id.org/hobbit/MyChallengeTask1_KPIs> ;
+  rdfs:label "Example task 1"@en;
+  rdfs:comment	"Task 1 of my example challenge."@en;
+  hobbit:isTaskOf <http://example.org/MyChallenge>;
+  hobbit:involvesBenchmark bench:BenchmarkX;
+  bench:dataType bench:TrafficData.
 
-<http://w3id.org/hobbit/challenges#OAEIChallenge> a hobbit:Challenge ;
-  rdfs:label	"OAEI Challenge"@en ;
-  rdfs:comment	"Challenge for OAEI 2017"@en ;
-  hobbit:executionDate "2017-02-25"^^xsd:date  ;
-  hobbit:publicationDate "2017-02-10"^^xsd:date  ;
-  hobbit:organizer "FORTH".
+bench:BenchmarkX a	hobbit:Benchmark;
+  hobbit:hasParameter bench:dataType .
+
+bench:dataType a hobbit:ConfigurableParameter;
+  rdfs:range bench:GenerationDataType .
+
+bench:GenerationDataType a owl:Class, rdfs:Class .
+
+bench:TrafficData a bench:GenerationDataType .
+
+# --- Challenge Task 2 ---
+
+<http://example.org/MyChallengeTask2> a hobbit:ChallengeTask;
+  rdfs:label "Example task 2"@en;
+  rdfs:comment	"The second task of my example challenge."@en;
+  hobbit:isTaskOf <http://example.org/MyChallenge>;
+  hobbit:involvesBenchmark bench:BenchmarkY;
+  bench:dataSize "1000"^^xsd:positiveInteger;
+  bench:frequency "9"^^xsd:positiveInteger.
+
+bench:BenchmarkY a	hobbit:Benchmark;
+  hobbit:hasParameter bench:dataSize;
+  hobbit:hasParameter bench:frequency .
+
+bench:dataSize a hobbit:ConfigurableParameter;
+  rdfs:range xsd:positiveInteger .
+
+bench:frequency a hobbit:ConfigurableParameter;
+  rdfs:range xsd:positiveInteger .
+
+# --- Challenge 2---
+
+<http://example.org/MyChallenge2> a	hobbit:Challenge;
+  rdfs:label "My second Challenge"@en;
+  rdfs:comment	"This is a second example for a challenge."@en;
+  hobbit:executionDate "2016-12-24"^^xsd:date;
+  hobbit:publicationDate "2016-12-26"^^xsd:date;
+  hobbit:organizer "Michael Roeder"@en .
