@@ -16,14 +16,13 @@
  */
 package org.hobbit.utils.rdf;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.time.Duration;
 import java.util.List;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.datatypes.xsd.XSDDuration;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
