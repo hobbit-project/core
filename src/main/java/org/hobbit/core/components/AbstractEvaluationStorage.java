@@ -82,7 +82,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     /**
      * Iterators that have been started.
      */
-    protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
+    protected List<Iterator<? extends ResultPair>> resultPairIterators = Lists.newArrayList();
     /**
      * The incoming queue from the task generator.
      */
@@ -200,7 +200,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                             byte iteratorId = buffer.get();
 
                             // get the iterator
-                            Iterator<ResultPair> iterator = null;
+                            Iterator<? extends ResultPair> iterator = null;
                             if (iteratorId == NEW_ITERATOR_ID) {
                                 // create and save a new iterator
                                 iteratorId = (byte) resultPairIterators.size();
@@ -260,7 +260,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      *
      * @return a new iterator or null if an error occurred
      */
-    protected abstract Iterator<ResultPair> createIterator();
+    protected abstract Iterator<? extends ResultPair> createIterator();
 
     @Override
     public void run() throws Exception {
