@@ -14,14 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with core.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.hobbit.core;
+package org.hobbit.utils.docker;
 
 import org.hobbit.utils.docker.DockerHelper;
 
-import org.junit.Ignore;
+import static org.junit.Assert.assertEquals;
 
-@Ignore
-public class TestConstants {
+import org.junit.Test;
 
-    public static final String RABBIT_HOST = DockerHelper.getHost();
+public class DockerHelperTest {
+
+    private static final String ipv4 = "123.45.6.7";
+
+    @Test
+    public void getDockerHostTest() throws Exception {
+        assertEquals("Should be localhost when not set",
+                "localhost",
+                DockerHelper.getHost(null));
+
+        assertEquals("Should be as is when just the host is provided",
+                ipv4,
+                DockerHelper.getHost(ipv4));
+
+        assertEquals("Should be just the host part when full URL is provided",
+                ipv4,
+                DockerHelper.getHost(String.format("tcp://%s:2376", ipv4)));
+    }
+
 }

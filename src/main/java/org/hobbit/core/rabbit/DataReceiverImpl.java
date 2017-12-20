@@ -114,9 +114,9 @@ public class DataReceiverImpl implements DataReceiver {
     }
 
     /**
-     * A rude way to close the receiver. Note that this method directly closes
-     * the incoming queue and only notifies the internal consumer to stop its
-     * work but won't wait for the handler threads to finish their work.
+     * A rude way to close the receiver. Note that this method directly closes the
+     * incoming queue and only notifies the internal consumer to stop its work but
+     * won't wait for the handler threads to finish their work.
      */
     public void close() {
         IOUtils.closeQuietly(queue);
@@ -135,26 +135,25 @@ public class DataReceiverImpl implements DataReceiver {
     }
 
     /**
-     * This factory method creates a runnable task that uses the given consumer
-     * to receive incoming messages.
+     * This factory method creates a runnable task that uses the given consumer to
+     * receive incoming messages.
      * 
      * @param consumer
      *            the consumer that can be used to receive messages
-     * @return a Runnable instance that will handle incoming messages as soon as
-     *         it will be executed
+     * @return a Runnable instance that will handle incoming messages as soon as it
+     *         will be executed
      */
     protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
         return new MsgReceivingTask(consumer);
     }
 
     /**
-     * This factory method creates a runnable task that processes the given
-     * message.
+     * This factory method creates a runnable task that processes the given message.
      * 
      * @param delivery
      *            the message that should be processed
-     * @return a Runnable instance that will process the message as soon as it
-     *         will be executed
+     * @return a Runnable instance that will process the message as soon as it will
+     *         be executed
      */
     protected Runnable buildMsgProcessingTask(Delivery delivery) {
         return new MsgProcessingTask(delivery);
@@ -210,7 +209,11 @@ public class DataReceiverImpl implements DataReceiver {
 
         @Override
         public void run() {
-            dataHandler.handleData(delivery.getBody());
+            try {
+                dataHandler.handleData(delivery.getBody());
+            } catch (Throwable e) {
+                LOGGER.error("Uncatched throwable inside the data handler.", e);
+            }
         }
 
     }
@@ -254,9 +257,9 @@ public class DataReceiverImpl implements DataReceiver {
         }
 
         /**
-         * Method for providing the necessary information to create a queue if
-         * it has not been provided with the {@link #queue(RabbitQueue)} method.
-         * Note that this information is not used if a queue has been provided.
+         * Method for providing the necessary information to create a queue if it has
+         * not been provided with the {@link #queue(RabbitQueue)} method. Note that this
+         * information is not used if a queue has been provided.
          * 
          * @param factory
          *            the queue factory used to create a queue
@@ -271,12 +274,12 @@ public class DataReceiverImpl implements DataReceiver {
         }
 
         /**
-         * Sets the maximum number of incoming messages that are processed in
-         * parallel. Additional messages have to wait in the queue.
+         * Sets the maximum number of incoming messages that are processed in parallel.
+         * Additional messages have to wait in the queue.
          * 
          * @param maxParallelProcessedMsgs
-         *            the maximum number of incoming messages that are processed
-         *            in parallel
+         *            the maximum number of incoming messages that are processed in
+         *            parallel
          * @return this builder instance
          */
         public Builder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -285,19 +288,18 @@ public class DataReceiverImpl implements DataReceiver {
         }
 
         /**
-         * Builds the {@link DataReceiverImpl} instance with the previously
-         * given information.
+         * Builds the {@link DataReceiverImpl} instance with the previously given
+         * information.
          * 
          * @return The newly created DataReceiver instance
          * @throws IllegalStateException
-         *             if the dataHandler is missing or if neither a queue nor
-         *             the information needed to create a queue have been
-         *             provided.
+         *             if the dataHandler is missing or if neither a queue nor the
+         *             information needed to create a queue have been provided.
          * @throws IOException
-         *             if an exception is thrown while creating a new queue or
-         *             if the given queue can not be configured by the newly
-         *             created DataReceiver. <b>Note</b> that in the latter case
-         *             the queue will be closed.
+         *             if an exception is thrown while creating a new queue or if the
+         *             given queue can not be configured by the newly created
+         *             DataReceiver. <b>Note</b> that in the latter case the queue will
+         *             be closed.
          */
         public DataReceiverImpl build() throws IllegalStateException, IOException {
             if (dataHandler == null) {

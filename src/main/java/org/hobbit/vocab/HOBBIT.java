@@ -58,6 +58,7 @@ public class HOBBIT {
     public static final Resource Error = resource("Error");
     public static final Resource Experiment = resource("Experiment");
     public static final Resource FeatureParameter = resource("FeatureParameter");
+    public static final Resource ForwardedParameter = resource("ForwardedParameter");
     public static final Resource Hardware = resource("Hardware");
     public static final Resource KPI = resource("KPI");
     public static final Resource KPISeq = resource("KPISeq");
