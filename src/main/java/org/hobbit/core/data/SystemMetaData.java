@@ -22,4 +22,16 @@ public class SystemMetaData extends ImageMetaData {
 
     public Set<String> implementedApis;
 
+    public SystemMetaData() {
+    }
+
+    public SystemMetaData(SystemMetaData other) {
+        super(other);
+        this.implementedApis = other.implementedApis;
+    }
+
+    @Override
+    public Object clone() {
+        return new SystemMetaData(this);
+    }
 }

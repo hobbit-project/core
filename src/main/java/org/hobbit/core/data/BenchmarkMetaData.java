@@ -22,4 +22,16 @@ public class BenchmarkMetaData extends ImageMetaData {
 
     public Set<String> definedApis;
 
+    public BenchmarkMetaData() {
+    }
+
+    public BenchmarkMetaData(BenchmarkMetaData other) {
+        super(other);
+        this.definedApis = other.definedApis;
+    }
+
+    @Override
+    public Object clone() {
+        return new BenchmarkMetaData(this);
+    }
 }

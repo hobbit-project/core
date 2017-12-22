@@ -5,23 +5,49 @@ import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
 
-public class ImageMetaData {
+public class ImageMetaData implements Cloneable {
 
     public String uri;
     public String name;
     public String description;
     public String mainImage;
     public Set<String> usedImages;
-    public Model rdfModel;
+    public transient Model rdfModel;
     public String source;
     public Date date;
     public String defError;
-
-    @Override
-    public int hashCode() {
-        return ((uri == null) ? 0 : uri.hashCode());
+    
+    public ImageMetaData() {
+    }
+    
+    public ImageMetaData(ImageMetaData other) {
+        this.uri = other.uri;
+        this.name = other.name;
+        this.description = other.description;
+        this.mainImage = other.mainImage;
+        this.usedImages = other.usedImages;
+        this.rdfModel = other.rdfModel;
+        this.source = other.source;
+        this.date = other.date;
+        this.defError = other.defError;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((date == null) ? 0 : date.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        result = prime * result + ((uri == null) ? 0 : uri.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -30,7 +56,17 @@ public class ImageMetaData {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SystemMetaData other = (SystemMetaData) obj;
+        ImageMetaData other = (ImageMetaData) obj;
+        if (date == null) {
+            if (other.date != null)
+                return false;
+        } else if (!date.equals(other.date))
+            return false;
+        if (source == null) {
+            if (other.source != null)
+                return false;
+        } else if (!source.equals(other.source))
+            return false;
         if (uri == null) {
             if (other.uri != null)
                 return false;
@@ -163,5 +199,10 @@ public class ImageMetaData {
      */
     public void setDefError(String defError) {
         this.defError = defError;
+    }
+    
+    @Override
+    public Object clone() {
+        return new ImageMetaData(this);
     }
 }
