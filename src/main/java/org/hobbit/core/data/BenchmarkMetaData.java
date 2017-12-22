@@ -18,12 +18,8 @@ package org.hobbit.core.data;
 
 import java.util.Set;
 
-public class BenchmarkMetaData {
+public class BenchmarkMetaData extends ImageMetaData {
 
-    public String benchmarkUri;
-    public String benchmarkName;
-    public String benchmarkDescription;
-    public Set<String> implementedApis;
-    public Set<String> usedImages;
+    public Set<String> definedApis;
 
 }
