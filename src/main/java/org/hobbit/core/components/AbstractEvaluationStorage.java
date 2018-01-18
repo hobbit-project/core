@@ -18,6 +18,7 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -220,22 +221,21 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                                 // Make sure that the result is not null
                                 if (result != null) {
                                     // Check whether the data array is null
-                                    expectedResultTimeStamp = result.getData() != null ? result.getData()
-                                            : new byte[0];
-                                    expectedResultData = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                                    expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
                                 } else {
-                                    expectedResultTimeStamp = new byte[0];
-                                    expectedResultData = RabbitMQUtils.writeLong(0);
+                                    expectedResultData = new byte[0];
+                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
                                 }
                                 result = resultPair.getActual();
                                 // Make sure that the result is not null
                                 if (result != null) {
                                     // Check whether the data array is null
-                                    actualResultTimeStamp = result.getData() != null ? result.getData() : new byte[0];
-                                    actualResultData = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                                    actualResultData = result.getData() != null ? result.getData() : new byte[0];
+                                     actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
                                 } else {
-                                    actualResultTimeStamp = new byte[0];
-                                    actualResultData = RabbitMQUtils.writeLong(0);
+                                    actualResultData = new byte[0];
+                                    actualResultTimeStamp = RabbitMQUtils.writeLong(0);
                                 }
 
                                 response = RabbitMQUtils
