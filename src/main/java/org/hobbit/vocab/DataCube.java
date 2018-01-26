@@ -6,7 +6,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 public class DataCube {
 
-    protected static final String uri = "http://purl.org/linked-data/cube";
+    protected static final String uri = "http://purl.org/linked-data/cube#";
 
     /**
      * returns the URI for this schema

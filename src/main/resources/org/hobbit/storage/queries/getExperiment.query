@@ -89,7 +89,7 @@ WHERE {
         ?cubeDataSet a qb:DataSet .
         ?cubeDataSet ?cubeDataSetProp ?cubeDataSetValue .
             OPTIONAL { 
-                ?observation qb:DataSet ?cubeDataSet . 
+                ?observation qb:dataSet ?cubeDataSet . 
                 ?observation a qb:Observation .
                 ?observation ?observationProp ?observationValue .
                 }
