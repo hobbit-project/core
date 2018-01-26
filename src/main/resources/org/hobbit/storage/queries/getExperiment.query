@@ -1,4 +1,5 @@
 PREFIX hobbit: <http://w3id.org/hobbit/vocab#>
+PREFIX qb: <http://purl.org/linked-data/cube#>
 
 CONSTRUCT {
     %EXPERIMENT_URI% a hobbit:Experiment .
@@ -15,6 +16,16 @@ CONSTRUCT {
     ?parameterProp ?parameterPropProp ?parameterPropObject .
     ?benchmark ?benchmarkProp ?benchmarkObject .
     ?system ?systemProp ?systemObject .
+    ?cubeDataSet ?cubeDataSetProp ?cubeDataSetValue .
+    ?cubeDataSetStructure ?cubeDataSetStructureProp ?cubeDataSetStructureValue .
+    ?cubeDataSetStructure qb:component ?cubeDataSetComponent .
+    ?cubeDataSetComponent qb:dimension ?cubeDataSetDimension .
+    ?cubeDataSetDimension a qb:DimensionProperty .
+    ?cubeDataSetDimension ?cubeDataSetDimensionProp ?cubeDataSetDimensionValue .
+    ?cubeDataSetComponent qb:measure ?cubeDataSetMeasure .
+    ?cubeDataSetMeasure a qb:MeasureProperty .
+    ?cubeDataSetMeasure ?cubeDataSetMeasureProperty ?cubeDataSetMeasureValue .
+    ?observation ?observationProp ?observationValue .
 }
 WHERE {
     {
@@ -68,6 +79,43 @@ WHERE {
             ?parameterProp a ?parameterType .
             {?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
             OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %EXPERIMENT_URI% a hobbit:Experiment .
+            %EXPERIMENT_URI% ?resultProp ?cubeDataSet .
+        ?cubeDataSet a qb:DataSet .
+        ?cubeDataSet ?cubeDataSetProp ?cubeDataSetValue .
+            OPTIONAL { 
+                ?observation qb:DataSet ?cubeDataSet . 
+                ?observation a qb:Observation .
+                ?observation ?observationProp ?observationValue .
+                }
+        }
+    }
+    UNION
+    {
+        GRAPH %GRAPH_URI% {
+            %EXPERIMENT_URI% a hobbit:Experiment .
+            %EXPERIMENT_URI% ?resultProp ?cubeDataSet .
+        ?cubeDataSet a qb:DataSet .
+        ?cubeDataSet ?cubeDataSetProp ?cubeDataSetValue .
+        ?cubeDataSet qb:structure ?cubeDataSetStructure .
+            ?cubeDataSetStructure a qb:DataStructureDefinition .
+            ?cubeDataSetStructure ?cubeDataSetStructureProp ?cubeDataSetStructureValue .
+            ?cubeDataSetStructure qb:component ?cubeDataSetComponent .
+            OPTIONAL { 
+                ?cubeDataSetComponent qb:dimension ?cubeDataSetDimension .
+                ?cubeDataSetDimension a qb:DimensionProperty .
+                ?cubeDataSetDimension ?cubeDataSetDimensionProp ?cubeDataSetDimensionValue .
+                }
+            OPTIONAL { 
+                ?cubeDataSetComponent qb:measure ?cubeDataSetMeasure .
+                ?cubeDataSetMeasure a qb:MeasureProperty .
+                ?cubeDataSetMeasure ?cubeDataSetMeasureProperty ?cubeDataSetMeasureValue .
+                }
         }
     }
 }
