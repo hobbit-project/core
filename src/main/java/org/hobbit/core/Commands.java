@@ -95,6 +95,8 @@ public final class Commands {
     public static final byte DOCKER_CONTAINER_TERMINATED = 16;
 
     public static final byte START_BENCHMARK_SIGNAL = 17;
+    
+    public static final byte REQUEST_SYSTEM_RESOURCES_USAGE = 18;
 
     private static final ImmutableMap<Byte, String> ID_TO_COMMAND_NAME_MAP = generateMap();
 
