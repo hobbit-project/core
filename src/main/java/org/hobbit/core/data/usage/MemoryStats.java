@@ -24,4 +24,9 @@ public class MemoryStats {
     public void setUsageSum(long usageSum) {
         this.usageSum = usageSum;
     }
+
+    public MemoryStats merge(MemoryStats memoryStats) {
+        this.usageSum += memoryStats.usageSum;
+        return this;
+    }
 }

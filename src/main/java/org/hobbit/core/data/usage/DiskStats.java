@@ -26,4 +26,9 @@ public class DiskStats {
         this.fsSizeSum = fsSizeSum;
     }
 
+    public DiskStats merge(DiskStats diskStats) {
+        this.fsSizeSum += diskStats.fsSizeSum;
+        return this;
+    }
+
 }

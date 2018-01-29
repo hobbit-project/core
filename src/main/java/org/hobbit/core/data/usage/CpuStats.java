@@ -28,4 +28,9 @@ public class CpuStats {
     public void setTotalUsage(long totalUsage) {
         this.totalUsage = totalUsage;
     }
+
+    public CpuStats merge(CpuStats cpuStats) {
+        this.totalUsage += cpuStats.totalUsage;
+        return this;
+    }
 }
