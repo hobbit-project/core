@@ -33,4 +33,16 @@ public class CpuStats {
         this.totalUsage += cpuStats.totalUsage;
         return this;
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("CpuStats [totalUsage=");
+        builder.append(totalUsage);
+        builder.append("]");
+        return builder.toString();
+    }
 }

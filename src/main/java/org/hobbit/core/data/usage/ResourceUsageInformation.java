@@ -92,4 +92,29 @@ public class ResourceUsageInformation {
         }
         return o1.merge(o2);
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("ResourceUsageInformation [");
+        if (diskStats != null) {
+            builder.append("diskStats=");
+            builder.append(diskStats);
+            builder.append(", ");
+        }
+        if (memoryStats != null) {
+            builder.append("memoryStats=");
+            builder.append(memoryStats);
+            builder.append(", ");
+        }
+        if (cpuStats != null) {
+            builder.append("cpuStats=");
+            builder.append(cpuStats);
+        }
+        builder.append("]");
+        return builder.toString();
+    }
 }
