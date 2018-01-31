@@ -53,7 +53,7 @@ public class AES {
         return encrypted;
     }
 
-    public String decrypt(byte[] input) {
+    public byte[] decrypt(byte[] input) {
         SecretKeySpec spec = new SecretKeySpec(secretKey.getEncoded(), "AES");
 
         try {
@@ -70,6 +70,6 @@ public class AES {
         } catch (BadPaddingException e) {
             LOGGER.error("Could not init DECRYPT_MODE. Bad padding.", e);
         }
-        return new String(decrypted);
+        return decrypted;
     }
 }

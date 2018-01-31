@@ -15,7 +15,7 @@ public class AESTest {
         byte[] encrypted = encryption_1.encrypt(toEncrypt);
 
         AES encryption_2 = new AES(password, salt);
-        String decrypted = encryption_2.decrypt(encrypted);
+        String decrypted = new String(encryption_2.decrypt(encrypted));
         assertTrue(decrypted.equals(toEncrypt));
     }
 }

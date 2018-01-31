@@ -94,8 +94,11 @@ public class StorageServiceClient implements Closeable {
         if(AES_PASSWORD != null && AES_SALT != null) {
             AES encryption = new AES(AES_PASSWORD, AES_SALT);
             byte[] encryptedRequest = encryption.encrypt(request);
-            return rpcClient.request(encryptedRequest);
+            byte[] encryptedResponse = rpcClient.request(encryptedRequest);
+            byte[] response = encryption.decrypt(encryptedResponse);
+            return response;
         } else {
+            LOGGER.debug("AES_PASSWORD and AES_SALT are not set, sending unencrypted request to Rabbitmq.");
             return rpcClient.request(RabbitMQUtils.writeString(request));
         }
     }
