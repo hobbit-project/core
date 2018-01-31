@@ -27,9 +27,9 @@ public class AES {
         try {
             this.cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.error("Error initializing AES encryption. AES algorithm not found.\n" + e.getStackTrace());
+            LOGGER.error("Error initializing AES encryption. AES algorithm not found.", e);
         } catch (NoSuchPaddingException e) {
-            LOGGER.error("Error initializing AES encryption. PKCS5PADDING not found.\n" + e.getStackTrace());
+            LOGGER.error("Error initializing AES encryption. PKCS5PADDING not found.", e);
         }
     }
 
@@ -39,15 +39,15 @@ public class AES {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, this.secretKey);
         } catch (InvalidKeyException e) {
-            LOGGER.error("Could not init ENCRYPT_MODE. Invalid key.\n" + e.getStackTrace());
+            LOGGER.error("Could not init ENCRYPT_MODE. Invalid key.", e);
         }
 
         try {
             encrypted = cipher.doFinal(toEncrypt);
         } catch (IllegalBlockSizeException e) {
-            LOGGER.error("Could not encrypt message. Illegal block size.\n" + e.getStackTrace());
+            LOGGER.error("Could not encrypt message. Illegal block size.", e);
         } catch (BadPaddingException e) {
-            LOGGER.error("Could not encrypt message. Bad padding.\n" + e.getStackTrace());
+            LOGGER.error("Could not encrypt message. Bad padding.", e);
         }
 
         return encrypted;
@@ -59,16 +59,16 @@ public class AES {
         try {
             cipher.init(Cipher.DECRYPT_MODE, spec);
         } catch (InvalidKeyException e) {
-            LOGGER.error("Could not init DECRYPT_MODE. Invalid key.\n" + e.getStackTrace());
+            LOGGER.error("Could not init DECRYPT_MODE. Invalid key.", e);
         }
 
         byte[] decrypted = new byte[0];
         try {
             decrypted = cipher.doFinal(input);
         } catch (IllegalBlockSizeException e) {
-            LOGGER.error("Could not init DECRYPT_MODE. Illegal block size.\n" + e.getStackTrace());
+            LOGGER.error("Could not init DECRYPT_MODE. Illegal block size.", e);
         } catch (BadPaddingException e) {
-            LOGGER.error("Could not init DECRYPT_MODE. Bad padding.\n" + e.getStackTrace());
+            LOGGER.error("Could not init DECRYPT_MODE. Bad padding.", e);
         }
         return new String(decrypted);
     }
