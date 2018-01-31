@@ -20,8 +20,10 @@ package org.hobbit.core.data;
  * Simple data structure containing data about a configured experiment.
  *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
- *
+ * 
+ * @deprecated Use {@link org.hobbit.core.data.status.QueuedExperiment} instead.
  */
+@Deprecated
 public class ConfiguredExperiment {
 
     public String benchmarkUri = null;
