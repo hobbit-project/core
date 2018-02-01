@@ -122,7 +122,17 @@ public class SystemResourceUsageRequester implements Closeable {
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-
+        if (cmdChannel != null) {
+            try {
+                cmdChannel.close();
+            } catch (Exception e) {
+            }
+        }
+        if (incomingChannel != null) {
+            try {
+                incomingChannel.close();
+            } catch (Exception e) {
+            }
+        }
     }
 }
