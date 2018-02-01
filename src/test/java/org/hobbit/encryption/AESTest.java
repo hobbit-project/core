@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 public class AESTest {
 
     @Test
-    public void encryptDecrypt() {
+    public void encryptDecrypt() throws AESException {
         String password = "password";
         String salt = "salt";
         AES encryption_1 = new AES(password, salt);

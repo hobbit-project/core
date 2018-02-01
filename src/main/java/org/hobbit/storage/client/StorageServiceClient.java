@@ -28,6 +28,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitRpcClient;
 import org.hobbit.encryption.AES;
+import org.hobbit.encryption.AESException;
 import org.hobbit.storage.queries.SparqlQueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,11 +93,17 @@ public class StorageServiceClient implements Closeable {
         String AES_PASSWORD = System.getenv("AES_PASSWORD");
         String AES_SALT = System.getenv("AES_SALT");
         if(AES_PASSWORD != null && AES_SALT != null) {
-            AES encryption = new AES(AES_PASSWORD, AES_SALT);
-            byte[] encryptedRequest = encryption.encrypt(request);
-            byte[] encryptedResponse = rpcClient.request(encryptedRequest);
-            byte[] response = encryption.decrypt(encryptedResponse);
-            return response;
+            try {
+                AES encryption = new AES(AES_PASSWORD, AES_SALT);
+                byte[] encryptedRequest = new byte[0];
+                encryptedRequest = encryption.encrypt(request);
+                byte[] encryptedResponse = rpcClient.request(encryptedRequest);
+                byte[] response = encryption.decrypt(encryptedResponse);
+                return response;
+            } catch (AESException e) {
+                LOGGER.error("Encryption failed while sending request to storage service. Returning null.", e);
+                return null;
+            }
         } else {
             LOGGER.debug("AES_PASSWORD and AES_SALT are not set, sending unencrypted request to Rabbitmq.");
             return rpcClient.request(RabbitMQUtils.writeString(request));

@@ -18,48 +18,49 @@ import java.security.NoSuchAlgorithmException;
 public class AES {
     private static final Logger LOGGER = LoggerFactory.getLogger(AES.class);
 
-    private Cipher cipher = null;
     private SecretKey secretKey = null;
+    private static String cipherAlgorithm = "AES/ECB/PKCS5PADDING";
 
     public AES(String password, String salt) {
         this.secretKey = AESKeyGenerator.generate(password, salt);
-
-        try {
-            this.cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-        } catch (NoSuchAlgorithmException e) {
-            LOGGER.error("Error initializing AES encryption. AES algorithm not found.", e);
-        } catch (NoSuchPaddingException e) {
-            LOGGER.error("Error initializing AES encryption. PKCS5PADDING not found.", e);
-        }
     }
 
-    public byte[] encrypt(String input) {
+    public byte[] encrypt(String input) throws AESException {
         byte[] toEncrypt = input.getBytes();
         byte[] encrypted = null;
+
+        Cipher cipher = null;
         try {
+            cipher = this.getCipherInstance();
             cipher.init(Cipher.ENCRYPT_MODE, this.secretKey);
         } catch (InvalidKeyException e) {
             LOGGER.error("Could not init ENCRYPT_MODE. Invalid key.", e);
+            throw new AESException();
         }
 
         try {
             encrypted = cipher.doFinal(toEncrypt);
         } catch (IllegalBlockSizeException e) {
             LOGGER.error("Could not encrypt message. Illegal block size.", e);
+            throw new AESException();
         } catch (BadPaddingException e) {
             LOGGER.error("Could not encrypt message. Bad padding.", e);
+            throw new AESException();
         }
 
         return encrypted;
     }
 
-    public byte[] decrypt(byte[] input) {
+    public byte[] decrypt(byte[] input) throws AESException {
         SecretKeySpec spec = new SecretKeySpec(secretKey.getEncoded(), "AES");
 
+        Cipher cipher = null;
         try {
+            cipher = this.getCipherInstance();
             cipher.init(Cipher.DECRYPT_MODE, spec);
         } catch (InvalidKeyException e) {
             LOGGER.error("Could not init DECRYPT_MODE. Invalid key.", e);
+            throw new AESException();
         }
 
         byte[] decrypted = new byte[0];
@@ -67,9 +68,25 @@ public class AES {
             decrypted = cipher.doFinal(input);
         } catch (IllegalBlockSizeException e) {
             LOGGER.error("Could not init DECRYPT_MODE. Illegal block size.", e);
+            throw new AESException();
         } catch (BadPaddingException e) {
             LOGGER.error("Could not init DECRYPT_MODE. Bad padding.", e);
+            throw new AESException();
         }
         return decrypted;
+    }
+
+    private Cipher getCipherInstance() throws AESException {
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance(this.cipherAlgorithm);
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error("Error initializing AES encryption. AES algorithm not found.", e);
+            throw new AESException();
+        } catch (NoSuchPaddingException e) {
+            LOGGER.error("Error initializing AES encryption. PKCS5PADDING not found.", e);
+            throw new AESException();
+        }
+        return cipher;
     }
 }
