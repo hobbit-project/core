@@ -18,6 +18,7 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +76,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      */
     private Semaphore terminationMutex = new Semaphore(0);
     /**
-     * The maximum number of incoming messages of a single queue that are
-     * processed in parallel. Additional messages have to wait.
+     * The maximum number of incoming messages of a single queue that are processed
+     * in parallel. Additional messages have to wait.
      */
     private final int maxParallelProcessedMsgs;
     /**
@@ -112,8 +113,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      * Constructor setting the maximum number of messages processed in parallel.
      *
      * @param maxParallelProcessedMsgs
-     *            The maximum number of incoming messages of a single queue that
-     *            are processed in parallel. Additional messages have to wait.
+     *            The maximum number of incoming messages of a single queue that are
+     *            processed in parallel. Additional messages have to wait.
      */
     public AbstractEvaluationStorage(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
@@ -126,12 +127,11 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
         Map<String, String> env = System.getenv();
         String queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if(env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+        if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
             queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
         }
         taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName))
-                .dataHandler(new DataHandler() {
+                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
                     @Override
                     public void handleData(byte[] data) {
                         ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -143,22 +143,22 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 }).build();
 
         queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if(env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+        if (env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
             queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
         }
         boolean temp = false;
-        if(env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
+        if (env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
             try {
-            temp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
+                temp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
             } catch (Exception e) {
-                LOGGER.error("Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
+                LOGGER.error(
+                        "Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
             }
         }
         final boolean receiveTimeStamp = temp;
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName))
-                .dataHandler(new DataHandler() {
+                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
                     @Override
                     public void handleData(byte[] data) {
                         ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -180,7 +180,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 }).build();
 
         queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if(env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
             queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
         }
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
@@ -215,25 +215,33 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                             }
                             if ((iterator != null) && (iterator.hasNext())) {
                                 ResultPair resultPair = iterator.next();
-                                // set response (iteratorId,
-                                // taskSentTimestamp, expectedData,
-                                // responseReceivedTimestamp, receivedData)
-                                Result expected = resultPair.getExpected();
-                                Result actual = resultPair.getActual();
+                                Result result = resultPair.getExpected();
+                                byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
+                                        actualResultTimeStamp[];
+                                // Make sure that the result is not null
+                                if (result != null) {
+                                    // Check whether the data array is null
+                                    expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                                } else {
+                                    expectedResultData = new byte[0];
+                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
+                                }
+                                result = resultPair.getActual();
+                                // Make sure that the result is not null
+                                if (result != null) {
+                                    // Check whether the data array is null
+                                    actualResultData = result.getData() != null ? result.getData() : new byte[0];
+                                     actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                                } else {
+                                    actualResultData = new byte[0];
+                                    actualResultTimeStamp = RabbitMQUtils.writeLong(0);
+                                }
 
                                 response = RabbitMQUtils
                                         .writeByteArrays(
-                                                new byte[] {
-                                                        iteratorId },
-                                                new byte[][] {
-                                                        expected != null
-                                                                ? RabbitMQUtils.writeLong(expected.getSentTimestamp())
-                                                                : new byte[0],
-                                                        expected != null ? expected.getData() : new byte[0],
-                                                        actual != null
-                                                                ? RabbitMQUtils.writeLong(actual.getSentTimestamp())
-                                                                : new byte[0],
-                                                        actual != null ? actual.getData() : new byte[0] },
+                                                new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
+                                                        expectedResultData, actualResultTimeStamp, actualResultData },
                                                 null);
                             } else {
                                 response = new byte[] { iteratorId };

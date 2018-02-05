@@ -41,8 +41,8 @@ public class FrontEndApiCommands {
     public static final byte LIST_AVAILABLE_BENCHMARKS = 1;
 
     /**
-     * This command requests the parameters of a benchmark and the systems that
-     * can be benchmarked with it.
+     * This command requests the parameters of a benchmark and the systems that can
+     * be benchmarked with it.
      */
     public static final byte GET_BENCHMARK_DETAILS = 2;
 
@@ -60,4 +60,10 @@ public class FrontEndApiCommands {
      * This command closes the given challenge.
      */
     public static final byte CLOSE_CHALLENGE = 5;
+
+    /**
+     * This command deletes the given experiment from the queue with the access
+     * authority of the given user.
+     */
+    public static final byte REMOVE_EXPERIMENT = 6;
 }

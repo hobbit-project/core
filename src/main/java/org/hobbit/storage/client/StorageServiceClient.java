@@ -27,6 +27,8 @@ import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitRpcClient;
+import org.hobbit.encryption.AES;
+import org.hobbit.encryption.AESException;
 import org.hobbit.storage.queries.SparqlQueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +50,7 @@ public class StorageServiceClient implements Closeable {
      * for a response = {@value #DEFAULT_MAX_WAITING_TIME}ms.
      */
     private static final long DEFAULT_MAX_WAITING_TIME = 60000;
-    
+
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
      * {@link Connection}.
@@ -83,6 +85,32 @@ public class StorageServiceClient implements Closeable {
     }
 
     /**
+     * Sends a request using rpcClient.
+     *
+     * If environment vars AES_PASSWORD and AES_SALT are set, the request will be encrypted.
+     */
+    private byte[] sendRequest(String request) {
+        String AES_PASSWORD = System.getenv("AES_PASSWORD");
+        String AES_SALT = System.getenv("AES_SALT");
+        if(AES_PASSWORD != null && AES_SALT != null) {
+            try {
+                AES encryption = new AES(AES_PASSWORD, AES_SALT);
+                byte[] encryptedRequest = new byte[0];
+                encryptedRequest = encryption.encrypt(request);
+                byte[] encryptedResponse = rpcClient.request(encryptedRequest);
+                byte[] response = encryption.decrypt(encryptedResponse);
+                return response;
+            } catch (AESException e) {
+                LOGGER.error("Encryption failed while sending request to storage service. Returning null.", e);
+                return null;
+            }
+        } else {
+            LOGGER.debug("AES_PASSWORD and AES_SALT are not set, sending unencrypted request to Rabbitmq.");
+            return rpcClient.request(RabbitMQUtils.writeString(request));
+        }
+    }
+
+    /**
      * Sends the given ASK query to the storage service and returns a boolean
      * value or throws an Exception if an error occurs, the service needs too
      * much time to respond or the response couldn't be parsed.
@@ -98,7 +126,7 @@ public class StorageServiceClient implements Closeable {
         if (query == null) {
             throw new IllegalArgumentException("The given query is null.");
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return Boolean.parseBoolean(RabbitMQUtils.readString(response));
@@ -123,7 +151,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -148,7 +176,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -174,7 +202,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 ByteArrayInputStream in = new ByteArrayInputStream(response);
@@ -202,7 +230,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("Can not send an update query that is null. Returning false.");
             return false;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         return (response != null) && (response.length > 0);
     }
 

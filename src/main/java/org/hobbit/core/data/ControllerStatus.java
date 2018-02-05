@@ -16,7 +16,13 @@
  */
 package org.hobbit.core.data;
 
-
+/**
+ * 
+ * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
+ *
+ * @deprecated Use {@link org.hobbit.core.data.status.ControllerStatus} instead.
+ */
+@Deprecated
 public class ControllerStatus {
 
     public String currentExperimentId;
