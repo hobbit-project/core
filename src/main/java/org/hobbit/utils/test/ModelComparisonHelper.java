@@ -27,7 +27,7 @@ import org.apache.jena.rdf.model.StmtIterator;
 
 /**
  * A simple utility class that helps comparing two models.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -37,7 +37,7 @@ public class ModelComparisonHelper {
      * Collects statements that can be found in model A but not in model B. If A
      * and B are seen as sets of statements, this method returns the difference
      * A\B.
-     * 
+     *
      * @param modelA
      *            the model that should be fully contained inside model B.
      * @param modelB
@@ -61,7 +61,7 @@ public class ModelComparisonHelper {
      * Checks whether the given statement can be found in the given model. If
      * the given statement contains blank nodes (= Anon nodes) they are replaced
      * by variables.
-     * 
+     *
      * @param model
      *            the model that might contain the given statement
      * @param s

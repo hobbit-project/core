@@ -38,7 +38,7 @@ public abstract class AbstractEvaluationModule extends AbstractStreamingEvaluati
 
     /**
      * Evaluates the given response pair.
-     * 
+     *
      * @param expectedData
      *            the data that has been expected
      * @param receivedData

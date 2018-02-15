@@ -18,8 +18,10 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
@@ -36,7 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /**
  * This test class tests SPARQL UPDATE queries.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -68,6 +70,46 @@ public class UpdateQueryTest extends AbstractQueryTest {
                 new String[] {
                         SparqlQueries.getCloseChallengeQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME) } });
 
+        // Date of next repeatable challenge execution update
+        /*
+         * Property should be created if it didn't exist.
+         */
+        TimeZone timeZone = TimeZone.getTimeZone("GMT");
+        Calendar date = Calendar.getInstance(timeZone);
+        date.set(Calendar.MILLISECOND, 0);
+        date.set(2016, Calendar.DECEMBER, 24, 21, 0, 0);
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfigWithoutDateOfNextExecution.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfig.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", date, FIRST_GRAPH_NAME) } });
+        /*
+         * Property should be updated if it already exists.
+         */
+        date.set(2016, Calendar.DECEMBER, 26, 3, 0, 0);
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfigWithUpdatedDateOfNextExecution.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", date, FIRST_GRAPH_NAME) } });
+        /*
+         * Property should be removed when new value is null.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                "org/hobbit/storage/queries/repeatableChallengeConfigWithoutDateOfNextExecution.ttl", FIRST_GRAPH_NAME,
+                new String[] {
+                        SparqlQueries.getUpdateDateOfNextExecutionQuery("http://example.org/MyChallenge", null, FIRST_GRAPH_NAME) } });
+
+        // Move involvesSystem triples between graphs update
+        /*
+         * In the first graph, triples should be deleted.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/exampleChallengeWithoutInvolvedSystems.ttl", FIRST_GRAPH_NAME, new String[] {
+                        SparqlQueries.getMoveChallengeSystemQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME, SECOND_GRAPH_NAME) } });
+        /*
+         * In the second graph, triples should be added.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/onlyInvolvedSystems.ttl", SECOND_GRAPH_NAME, new String[] {
+                        SparqlQueries.getMoveChallengeSystemQuery("http://example.org/MyChallenge", FIRST_GRAPH_NAME, SECOND_GRAPH_NAME) } });
+
         // Check the model diff based SPARQL UPDATE query creation
         Model original, updated;
         original = loadModel("org/hobbit/storage/queries/exampleChallengeConfig.ttl");
@@ -91,6 +133,40 @@ public class UpdateQueryTest extends AbstractQueryTest {
          */
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", null, SECOND_GRAPH_NAME,
                 new String[] { SparqlQueries.getUpdateQueryFromDiff(original, updated, SECOND_GRAPH_NAME) } });
+        /*
+         * The original model is changed to the updated model as expected with
+         * the possibility to create multiple queries.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME) });
+        /*
+         * The original model is changed to the updated model as expected with
+         * one triple per query
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME, 1) });
+        /*
+         * The original model is changed to the updated model as expected with
+         * up to two triples per query
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/changedChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, FIRST_GRAPH_NAME, 2) });
+        /*
+         * A query that should focus on the second graph does not change the
+         * first graph
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                "org/hobbit/storage/queries/exampleChallengeConfig.ttl", FIRST_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, SECOND_GRAPH_NAME) });
+        /*
+         * A query that should DELETE and INSERT something does not change an
+         * empty graph.
+         */
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", null, SECOND_GRAPH_NAME,
+                SparqlQueries.getUpdateQueriesFromDiff(original, updated, SECOND_GRAPH_NAME) });
         /*
          * The difference between an open and a closed challenge can be
          * expressed with this method as well.

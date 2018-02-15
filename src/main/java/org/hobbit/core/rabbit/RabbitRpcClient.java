@@ -40,7 +40,7 @@ import com.rabbitmq.client.Envelope;
 /**
  * This class implements a thread safe client that can process several RPC calls
  * in parallel.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -57,7 +57,7 @@ public class RabbitRpcClient implements Closeable {
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
      * {@link Connection}.
-     * 
+     *
      * @param connection
      *            RabbitMQ connection used for the communication
      * @param requestQueueName
@@ -111,7 +111,7 @@ public class RabbitRpcClient implements Closeable {
      * Initializes the client by declaring a request queue using the given
      * connection and queue name as well as a second queue and a consumer for
      * retrieving responses.
-     * 
+     *
      * @param connection
      *            the RabbitMQ connection that is used for creating queues
      * @param requestQueueName
@@ -134,7 +134,7 @@ public class RabbitRpcClient implements Closeable {
     /**
      * Sends the request, i.e., the given data, and blocks until the response is
      * received.
-     * 
+     *
      * @param data
      *            the data of the request
      * @return the response or null if an error occurs.
@@ -165,7 +165,7 @@ public class RabbitRpcClient implements Closeable {
      * searching for a matching request and setting the response if it could be
      * found. If there is no request with the same correlation Id, nothing is
      * done.
-     * 
+     *
      * @param corrId
      *            correlation Id of the response
      * @param body
@@ -190,7 +190,7 @@ public class RabbitRpcClient implements Closeable {
 
     /**
      * Sets the maximum amount of time the client is waiting for a response.
-     * 
+     *
      * @param maxWaitingTime
      *            the maximum waiting time in milliseconds
      */
@@ -209,7 +209,7 @@ public class RabbitRpcClient implements Closeable {
      * queue and calls
      * {@link RabbitRpcClient#processResponseForRequest(String, byte[])} of its
      * {@link #client}.
-     * 
+     *
      * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
      *
      */
@@ -222,7 +222,7 @@ public class RabbitRpcClient implements Closeable {
 
         /**
          * Constructor.
-         * 
+         *
          * @param channel
          *            channel from which the messages are received
          * @param client
@@ -250,7 +250,7 @@ public class RabbitRpcClient implements Closeable {
     /**
      * Simple extension of the {@link AbstractFuture} class that waits for the
      * response which is set by the {@link #setResponse(byte[] response)}.
-     * 
+     *
      * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
      *
      */
@@ -258,7 +258,7 @@ public class RabbitRpcClient implements Closeable {
 
         /**
          * Calls the internal set method of the {@link AbstractFuture} class.
-         * 
+         *
          * @param response
          *            the response this request is waiting for
          */

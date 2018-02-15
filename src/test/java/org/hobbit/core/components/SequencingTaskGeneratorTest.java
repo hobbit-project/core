@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * {@link AbstractSequencingTaskGenerator} classes. Note that this test needs a
  * running RabbitMQ instance. Its host name can be set using the
  * {@link #RABBIT_HOST_NAME} parameter.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

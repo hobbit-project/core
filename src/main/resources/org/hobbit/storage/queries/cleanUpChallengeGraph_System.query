@@ -4,14 +4,14 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 WITH %GRAPH_URI%
 DELETE {
-	?system	?systemProp	?systemObject .
+    ?system	?systemProp	?systemObject .
 }
 WHERE {
-	?system	a	hobbit:System .
-	?system	?systemProp	?systemObject .
-	FILTER NOT EXISTS {
-		?challengeTask	a	hobbit:ChallengeTask .
-		?challengeTask	hobbit:involvesSystemInstance	?systemInstance .
-		?systemInstance	hobbit:instanceOf	?system .
-	}
+    ?system	a	hobbit:System .
+    ?system	?systemProp	?systemObject .
+    FILTER NOT EXISTS {
+        ?challengeTask	a	hobbit:ChallengeTask .
+        ?challengeTask	hobbit:involvesSystemInstance	?systemInstance .
+        ?systemInstance	hobbit:instanceOf	?system .
+    }
 }

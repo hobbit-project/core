@@ -24,11 +24,14 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.RabbitQueueFactory;
+import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +39,6 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -46,7 +48,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCommandReceivingComponent.class);
 
-    private static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
+    public static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
 
     /**
      * Name of this Docker container.
@@ -63,11 +65,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private QueueingConsumer responseConsumer = null;
     /**
-     * Connection on which the commands are received. It is separated from the
-     * #dataConnection since otherwise the component can get stuck waiting for a
-     * command while the connection is busy handling incoming data.
+     * Factory for generating queues with which the commands are sent and
+     * received. It is separated from the data connections since otherwise the
+     * component can get stuck waiting for a command while the connection is
+     * busy handling incoming or outgoing data.
      */
-    protected Connection cmdConnection;
+    protected RabbitQueueFactory cmdQueueFactory;
     /**
      * Channel that is used for the command queue.
      */
@@ -90,8 +93,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         super.init();
         addCommandHeaderId(getHobbitSessionId());
 
-        cmdConnection = connectionFactory.newConnection();
-        cmdChannel = dataConnection.createChannel();
+        cmdQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+        cmdChannel = cmdQueueFactory.getConnection().createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
@@ -119,7 +122,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     /**
      * Sends the given command to the command queue.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @throws IOException
@@ -132,7 +135,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Sends the given command to the command queue with the given data
      * appended.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @param data
@@ -147,7 +150,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Sends the given command to the command queue with the given data appended
      * and using the given properties.
-     * 
+     *
      * @param command
      *            the command that should be sent
      * @param data
@@ -179,7 +182,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Adds the given session id to the set of ids this component is reacting
      * to.
-     * 
+     *
      * @param sessionId
      *            session id that should be added to the set of accepted ids.
      */
@@ -207,7 +210,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
      * create and start an instance of the given image using the given
      * environment variables.
-     * 
+     *
      * @param imageName
      *            the name of the image of the docker container
      * @param envVariables
@@ -223,7 +226,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
      * create and start an instance of the given image using the given
      * environment variables.
-     * 
+     *
      * <p>
      * Note that the containerType parameter should have one of the following
      * values.
@@ -235,7 +238,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
      * a benchmarked system.</li>
      * </ul>
-     * 
+     *
      * @param imageName
      *            the name of the image of the docker container
      * @param containerType
@@ -270,7 +273,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * This method sends a {@link Commands#DOCKER_CONTAINER_STOP} command to
      * stop the container with the given id.
-     * 
+     *
      * @param containerName
      *            the name of the container instance that should be stopped
      */
@@ -286,7 +289,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Internal method for initializing the {@link #responseQueueName} and the
      * {@link #responseConsumer} if they haven't been initialized before.
-     * 
+     *
      * @throws IOException
      *             if a communication problem occurs
      */
@@ -308,10 +311,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             } catch (Exception e) {
             }
         }
-        try {
-            cmdConnection.close();
-        } catch (Exception e) {
-        }
+        IOUtils.closeQuietly(cmdQueueFactory);
         super.close();
     }
 

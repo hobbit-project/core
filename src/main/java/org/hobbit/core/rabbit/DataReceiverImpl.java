@@ -92,7 +92,7 @@ public class DataReceiverImpl implements DataReceiver {
     public int getErrorCount() {
         return errorCount;
     }
-    
+
     public RabbitQueue getQueue() {
         return queue;
     }

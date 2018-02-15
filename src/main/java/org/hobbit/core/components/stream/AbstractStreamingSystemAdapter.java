@@ -58,6 +58,14 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
     protected DataSender sender2EvalStore;
     protected DataReceiver dataReceiver;
     protected DataReceiver taskReceiver;
+    /**
+     * The cause for an unusual termination.
+     */
+    private Exception cause;
+    /**
+     * Mutex used to manage access to the {@link #cause} object.
+     */
+    private Semaphore causeMutex = new Semaphore(1);
 
     public AbstractStreamingSystemAdapter() {
         this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
@@ -100,14 +108,14 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
             // We don't need to define an id generator since we will set the IDs
             // while sending data
             sender2EvalStore = DataSenderImpl.builder()
-                    .queue(this, generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
+                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
         }
 
         if (maxParallelProcessedMsgs > 0) {
             if (dataReceiver == null) {
                 dataReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler())
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                        .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                        .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
             } else {
                 // XXX here we could set the data handler if the data receiver
                 // would
@@ -116,7 +124,7 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
             if (taskReceiver == null) {
                 taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler())
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                        .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                        .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
             } else {
                 // XXX here we could set the data handler if the data receiver
                 // would
@@ -135,16 +143,48 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
         // wait until all messages have been read from the queue
         dataReceiver.closeWhenFinished();
         taskReceiver.closeWhenFinished();
+        sender2EvalStore.closeWhenFinished();
+        // Check whether the system should abort
+        try {
+            causeMutex.acquire();
+            if (cause != null) {
+                throw cause;
+            }
+            causeMutex.release();
+        } catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting to set the termination cause.");
+        }
     }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATION_FINISHED) {
-            // release the mutex
-            terminateMutex.release();
+            terminate(null);
         }
         super.receiveCommand(command, data);
+    }
+
+    /**
+     * Starts termination of the main thread of this system adapter. If a cause
+     * is given, it will be thrown causing an abortion from the main thread
+     * instead of a normal termination.
+     * 
+     * @param cause
+     *            the cause for an abortion of the process or {code null} if the
+     *            component should terminate in a normal way.
+     */
+    protected synchronized void terminate(Exception cause) {
+        if (cause != null) {
+            try {
+                causeMutex.acquire();
+                this.cause = cause;
+                causeMutex.release();
+            } catch (InterruptedException e) {
+                LOGGER.error("Interrupted while waiting to set the termination cause.");
+            }
+        }
+        terminateMutex.release();
     }
 
     /**

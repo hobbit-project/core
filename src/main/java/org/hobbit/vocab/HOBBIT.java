@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
  * Representation of the Hobbit vocabulary as Java objects.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -32,7 +32,7 @@ public class HOBBIT {
 
     /**
      * returns the URI for this schema
-     * 
+     *
      * @return the URI for this schema
      */
     public static String getURI() {
@@ -47,24 +47,32 @@ public class HOBBIT {
         return ResourceFactory.createProperty(uri, local);
     }
 
+    // Resources sorted alphabetically
     public static final Resource API = resource("API");
+    public static final Resource AscendingOrder = resource("AscendingOrder");
     public static final Resource Benchmark = resource("Benchmark");
     public static final Resource Challenge = resource("Challenge");
     public static final Resource ChallengeTask = resource("ChallengeTask");
     public static final Resource ConfigurableParameter = resource("ConfigurableParameter");
+    public static final Resource DescendingOrder = resource("DescendingOrder");
     public static final Resource Error = resource("Error");
     public static final Resource Experiment = resource("Experiment");
     public static final Resource FeatureParameter = resource("FeatureParameter");
+    public static final Resource ForwardedParameter = resource("ForwardedParameter");
     public static final Resource Hardware = resource("Hardware");
     public static final Resource KPI = resource("KPI");
+    public static final Resource KPISeq = resource("KPISeq");
     public static final Resource Parameter = resource("Parameter");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
-    
+
+    // Properties sorted alphabetically
     public static final Property closed = property("closed");
+    public static final Property dateOfNextExecution = property("dateOfNextExecution");
     public static final Property defaultValue = property("defaultValue");
     public static final Property endTime = property("endTime");
     public static final Property executionDate = property("executionDate");
+    public static final Property executionPeriod = property("executionPeriod");
     public static final Property hasAPI = property("hasAPI");
     public static final Property hasCPUTypeCount = property("hasCPUTypeCount");
     public static final Property hasDisks = property("hasDisks");
@@ -87,9 +95,13 @@ public class HOBBIT {
     public static final Property measuresKPI = property("measuresKPI");
     public static final Property organizer = property("organizer");
     public static final Property publicationDate = property("publicationDate");
+    public static final Property ranking = property("ranking");
+    public static final Property rankingKPIs = property("rankingKPIs");
+    public static final Property registrationCutoffDate = property("registrationCutoffDate");
     public static final Property relevantForAnalysis = property("relevantForAnalysis");
     public static final Property startTime = property("startTime");
     public static final Property terminatedWithError = property("terminatedWithError");
+    public static final Property usesImage = property("usesImage");
     public static final Property version = property("version");
     public static final Property visible = property("visible");
     public static final Property wasCarriedOutOn = property("wasCarriedOutOn");

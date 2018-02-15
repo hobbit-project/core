@@ -18,14 +18,20 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.slf4j.Logger;
@@ -34,7 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class provides static SPRAQL queries that are loaded from predefined
  * resources.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -46,11 +52,15 @@ public class SparqlQueries {
     private static final String CHALLENGE_TASK_PLACEHOLDER = "%CHALLENGE_TASK_URI%";
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
     private static final String GRAPH_PLACEHOLDER = "%GRAPH_URI%";
+    private static final String NEW_GRAPH_PLACEHOLDER = "%NEW_GRAPH_URI%";
     private static final String SYSTEM_PLACEHOLDER = "%SYSTEM_URI%";
+    private static final String VALUE_PLACEHOLDER = "%VALUE_LITERAL%";
+    private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
+    private static final Model EMPTY_MODEL = ModelFactory.createDefaultModel();
 
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
-     * 
+     *
      * @param resourceName
      *            name of the resource that should be loaded
      * @return the resource as String or <code>null</code> if an error occurs
@@ -78,7 +88,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -101,7 +111,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving a shallow graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -124,7 +134,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the tasks of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -148,7 +158,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving a graph comprising the task URIs
      * and the publication date of a challenge if this challenge is closed.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -164,6 +174,30 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query that retrieves the graph of a repeatable challenge.
+     */
+    private static final String GET_REPEATABLE_CHALLENGE_INFO_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getRepeatableChallengeInfo.query");
+
+    /**
+     * Returns a SPARQL query for retrieving a graph comprising
+     * repeatable challenge properties if this challenge is closed.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be retrieved.
+     *            <code>null</code> works like a wildcard.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getRepeatableChallengeInfoQuery(String challengeUri, String graphUri) {
+        return replacePlaceholders(GET_REPEATABLE_CHALLENGE_INFO_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri });
+    }
+
+    /**
      * An update query that closes a challenge.
      */
     private static final String CLOSE_CHALLENGE_UPDATE_QUERY = loadQuery(
@@ -172,7 +206,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for adding the closed triple to the challenge with
      * the given URI.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be closed. <code>null</code>
      *            works like a wildcard.
@@ -188,13 +222,75 @@ public class SparqlQueries {
     }
 
     /**
+     * An update query that changes next execution date for a repeatable challenge.
+     */
+    private static final String DATE_OF_NEXT_EXECUTION_UPDATE_QUERY = loadQuery(
+            "org/hobbit/storage/queries/updateDateOfNextExecution.query");
+
+    /**
+     * Returns a SPARQL query for updating the date of next execution
+     * for a repeatable challenge with given URI.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be updated. <code>null</code>
+     *            works like a wildcard.
+     * @param newValue
+     *            New value for date of next execution. <code>null</code>
+     *            to remove the value.
+     * @param graphUri
+     *            URI of the graph the challenge is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL update query that performs the insertion or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getUpdateDateOfNextExecutionQuery(String challengeUri, Calendar newValue, String graphUri) {
+        String xsdValue = null;
+        if (newValue != null) {
+            StringBuilder builder = new StringBuilder();
+            builder.append('"');
+            builder.append(new XSDDateTime(newValue).toString());
+            builder.append('"');
+            builder.append("^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+            xsdValue = builder.toString();
+        }
+
+        return replacePlaceholders(DATE_OF_NEXT_EXECUTION_UPDATE_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, VALUE_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { challengeUri, xsdValue, graphUri });
+    }
+
+    /**
+     * An update query that moves involvesSystem triples between graphs.
+     */
+    private static final String MOVE_CHALLENGE_SYSTEM_QUERY = loadQuery(
+            "org/hobbit/storage/queries/moveChallengeSystem.query");
+
+    /**
+     * Returns a SPARQL query for moving involvesSystem triples between graphs
+     * for a challenge with given URI.
+     *
+     * @param challengeUri
+     *            URI of the challenge that should be updated. <code>null</code>
+     *            works like a wildcard.
+     * @param graphUri
+     *            URI of the challenge definition graph.
+     * @param newGraphUri
+     *            URI of the public data graph.
+     * @return the SPARQL update query that performs the operation or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getMoveChallengeSystemQuery(String challengeUri, String graphUri, String newGraphUri) {
+        return replacePlaceholders(MOVE_CHALLENGE_SYSTEM_QUERY,
+                new String[] { CHALLENGE_PLACEHOLDER, GRAPH_PLACEHOLDER, NEW_GRAPH_PLACEHOLDER }, new String[] { challengeUri, graphUri, newGraphUri });
+    }
+
+    /**
      * A construct query that selects the graph of an experiment.
      */
     private static final String GET_EXPERIMENT_QUERY = loadQuery("org/hobbit/storage/queries/getExperiment.query");
 
     /**
      * Returns a SPARQL query for retrieving the graph of an experiment.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -219,7 +315,7 @@ public class SparqlQueries {
      * Returns a SPARQL query for retrieving a shallow graph of an experiment
      * containing the links to the system instance, the benchmark and the
      * challenge task and the labels of them.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -237,7 +333,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving the graphs of experiments that
      * involve one of the given systems.
-     * 
+     *
      * @param systemUris
      *            URIs of the systems that might be involved in the experiment.
      * @param graphUri
@@ -296,7 +392,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for retrieving the graph of an experiment that is
      * part of the given challenge task.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -326,7 +422,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for creating a subgraph of a challenge task that
      * defines an experiment of this task.
-     * 
+     *
      * @param experimentUri
      *            URI of the newly created experiment.
      * @param challengeTaskUri
@@ -362,7 +458,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for deleting the graph of an experiment.
-     * 
+     *
      * @param experimentUri
      *            URI of the experiment that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -384,7 +480,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for deleting the graph of a challenge.
-     * 
+     *
      * @param challengeUri
      *            URI of the challenge that should be retrieved.
      *            <code>null</code> works like a wildcard.
@@ -408,7 +504,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL update query for cleaning up the graph of a challenge
      * configs.
-     * 
+     *
      * @param graphUri
      *            URI of the graph the challenge is stored. <code>null</code>
      *            works like a wildcard.
@@ -438,7 +534,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL update query for cleaning up the graph of a challenge
      * configs.
-     * 
+     *
      * @param graphUri
      *            URI of the challenge configuration graph.
      * @return the SPARQL update query that performs the deletion or
@@ -467,7 +563,7 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL update query for cleaning up the private result graph.
-     * 
+     *
      * @param graphUri
      *            URI of the private result graph.
      * @return the SPARQL update query that performs the deletion or
@@ -492,7 +588,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL query for counting the number of experiments of a
      * challenge task.
-     * 
+     *
      * @param challengeTaskUri
      *            URI of the challenge task
      * @param graphUri
@@ -508,10 +604,35 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query for getting the organizer of the challenge two which a
+     * given challenge tasks belong to.
+     */
+    private static final String GET_CHALLENGE_TASK_ORGANIZER = loadQuery(
+            "org/hobbit/storage/queries/getChallengeTaskOrganizer.query");
+
+    /**
+     * Returns a SPARQL CONSTRUCT query for getting the organizer of the
+     * challenge two which a given challenge tasks belong to.
+     * 
+     * @param challengeTaskUri
+     *            URI of the challenge task
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL CONSTRUCT query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getChallengeTaskOrganizer(String challengeTaskUri, String graphUri) {
+        return replacePlaceholders(GET_CHALLENGE_TASK_ORGANIZER,
+                new String[] { CHALLENGE_TASK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { challengeTaskUri, graphUri });
+    }
+
+    /**
      * Replaces the given placeholders in the given query with the given
      * replacements. If a replacement is <code>null</code>, it is replaced by a
      * variable.
-     * 
+     *
      * @param query
      *            the query containing placeholders
      * @param placeholders
@@ -535,6 +656,9 @@ public class SparqlQueries {
                 // create a variable name
                 builder.append("?v");
                 builder.append(i);
+            } else if (replacements[i].charAt(0) == '"') {
+                // create literal
+                builder.append(replacements[i]);
             } else {
                 // create <URI>
                 builder.append('<');
@@ -553,7 +677,14 @@ public class SparqlQueries {
      * the updated model will be put into the DELETE part of the query. Triples
      * that are present in the updated model but can not be found in the
      * original model will be put into the INSERT part of the query.
-     * 
+     *
+     * <p>
+     * <b>Note</b> that some stores might have a maximum number of triples that
+     * can be processed with a single query. In these cases
+     * {@link #getUpdateQueriesFromDiff(Model, Model, String, int)} should be
+     * used.
+     * </p>
+     *
      * @param original
      *            the original RDF model
      * @param updated
@@ -564,31 +695,141 @@ public class SparqlQueries {
      * @return The SPARQL UPDATE query
      */
     public static final String getUpdateQueryFromDiff(Model original, Model updated, String graphUri) {
+        return getUpdateQueryFromStatements(original.difference(updated).listStatements().toList(),
+                updated.difference(original).listStatements().toList(),
+                original.size() > updated.size() ? original : updated, graphUri);
+    }
+
+    /**
+     * Generates a SPARQL UPDATE query based on the given list of statements
+     * that should be deleted and that should be added in the graph with the
+     * given URI.
+     *
+     * @param deleted
+     *            statements that should be deleted from the graph
+     * @param inserted
+     *            statements that should be added to the graph
+     * @param mapping
+     *            A prefix mapping used for the query
+     * @param graphUri
+     *            the URI of the graph which should be updated with the
+     *            generated query
+     * @return the update query
+     */
+    public static final String getUpdateQueryFromStatements(List<Statement> deleted, List<Statement> inserted,
+            PrefixMapping mapping, String graphUri) {
         UpdateDeleteInsert update = new UpdateDeleteInsert();
         Node graph = null;
         if (graphUri != null) {
             graph = NodeFactory.createURI(graphUri);
             update.setWithIRI(graph);
         }
-        StmtIterator iterator;
+        Iterator<Statement> iterator;
 
         // deleted statements
-        Model temp = original.difference(updated);
-        iterator = temp.listStatements();
+        iterator = deleted.iterator();
         QuadAcc quads = update.getDeleteAcc();
         while (iterator.hasNext()) {
             quads.addTriple(iterator.next().asTriple());
         }
 
         // inserted statements
-        temp = updated.difference(original);
-        iterator = temp.listStatements();
+        iterator = inserted.iterator();
         quads = update.getInsertAcc();
         while (iterator.hasNext()) {
             quads.addTriple(iterator.next().asTriple());
         }
 
-        System.out.println(update.toString(original));
-        return update.toString(original);
+        return update.toString(mapping);
+    }
+
+    /**
+     * Generates one or several SPARQL UPDATE queries based on the differences
+     * between the two given models. Triples that are present in the original
+     * model but not in the updated model will be put into the DELETE part of
+     * the query. Triples that are present in the updated model but can not be
+     * found in the original model will be put into the INSERT part of the
+     * query. The changes might be carried out using multiple queries if a
+     * single query could hit a maximum number of triples.
+     *
+     * @param original
+     *            the original RDF model ({@code null} is interpreted as an
+     *            empty model)
+     * @param updated
+     *            the updated RDF model ({@code null} is interpreted as an empty
+     *            model)
+     * @param graphUri
+     *            the URI of the graph to which the UPDATE query should be
+     *            applied or <code>null</code>
+     * @return The SPARQL UPDATE query
+     */
+    public static final String[] getUpdateQueriesFromDiff(Model original, Model updated, String graphUri) {
+        return getUpdateQueriesFromDiff(original, updated, graphUri, DEFAULT_MAX_UPDATE_QUERY_TRIPLES);
+    }
+
+    /**
+     * Generates one or several SPARQL UPDATE queries based on the differences
+     * between the two given models. Triples that are present in the original
+     * model but not in the updated model will be put into the DELETE part of
+     * the query. Triples that are present in the updated model but can not be
+     * found in the original model will be put into the INSERT part of the
+     * query. The changes will be carried out using multiple queries if a single
+     * query would hit the given maximum number of triples per query.
+     *
+     * @param original
+     *            the original RDF model ({@code null} is interpreted as an
+     *            empty model)
+     * @param updated
+     *            the updated RDF model ({@code null} is interpreted as an empty
+     *            model)
+     * @param graphUri
+     *            the URI of the graph to which the UPDATE query should be
+     *            applied or <code>null</code>
+     * @param maxTriplesPerQuery
+     *            the maximum number of triples a single query should contain
+     * @return The SPARQL UPDATE query
+     */
+    public static final String[] getUpdateQueriesFromDiff(Model original, Model updated, String graphUri,
+            int maxTriplesPerQuery) {
+        if (original == null) {
+            original = EMPTY_MODEL;
+        }
+        if (updated == null) {
+            updated = EMPTY_MODEL;
+        }
+        List<Statement> deleted = original.difference(updated).listStatements().toList();
+        List<Statement> inserted = updated.difference(original).listStatements().toList();
+
+        int numberOfDelStmts = deleted.size();
+        int totalSize = Math.toIntExact(numberOfDelStmts + inserted.size());
+        int queries = (totalSize / maxTriplesPerQuery) + 1;
+        String[] results = new String[queries];
+        int startIndex = 0;
+        int endIndex = Math.min(maxTriplesPerQuery, totalSize);
+        List<Statement> delStatements, addStatements;
+        List<Statement> emptyList = new ArrayList<>(0);
+        for (int i = 0; i < queries; i++) {
+            // If we can fill the next query with deleted statements
+            if (endIndex < numberOfDelStmts) {
+                delStatements = deleted.subList(startIndex, endIndex);
+                addStatements = emptyList;
+            } else {
+                if (startIndex < numberOfDelStmts) {
+                    delStatements = deleted.subList(startIndex, numberOfDelStmts);
+                    addStatements = inserted.subList(0, endIndex - numberOfDelStmts);
+                } else {
+                    delStatements = emptyList;
+                    addStatements = inserted.subList(startIndex - numberOfDelStmts, endIndex - numberOfDelStmts);
+                }
+            }
+            String query = getUpdateQueryFromStatements(delStatements, addStatements,
+                    original.size() > updated.size() ? original : updated, graphUri);
+            results[i] = query;
+            // get the indexes of the next query
+            startIndex = endIndex;
+            endIndex = Math.min(endIndex + maxTriplesPerQuery, totalSize);
+        }
+
+        return results;
     }
 }

@@ -141,13 +141,6 @@ public class PairedDataStreamingTest implements RabbitQueueFactory, PairedStream
     }
 
     @Override
-    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = connection.createChannel();
-        channel.queueDeclare(name, false, false, true, null);
-        return new RabbitQueue(channel, name);
-    }
-
-    @Override
     public void handleIncomingStream(String streamId, InputStream stream) {
         try {
             throw new IllegalStateException(
@@ -170,6 +163,27 @@ public class PairedDataStreamingTest implements RabbitQueueFactory, PairedStream
             e.printStackTrace();
             exceptions.add(e);
         }
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
+        return createDefaultRabbitQueue(name, createChannel());
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name, Channel channel) throws IOException {
+        channel.queueDeclare(name, false, false, true, null);
+        return new RabbitQueue(channel, name);
+    }
+
+    @Override
+    public Channel createChannel() throws IOException {
+        return connection.createChannel();
+    }
+
+    @Override
+    public Connection getConnection() {
+        return connection;
     }
 
 }

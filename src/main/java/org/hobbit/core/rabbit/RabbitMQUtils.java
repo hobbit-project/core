@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Contains utility methods for working with RabbitMQ.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -129,7 +129,7 @@ public class RabbitMQUtils {
 
     /**
      * Reads an RDF model from the given byte array.
-     * 
+     *
      * @param data
      *            the byte array containing the serialized RDF model
      * @param offset
@@ -144,7 +144,7 @@ public class RabbitMQUtils {
 
     /**
      * Reads an RDF model from the given String.
-     * 
+     *
      * @param string
      *            the String containing the serialized RDF model
      * @return the deserialized model
@@ -159,7 +159,7 @@ public class RabbitMQUtils {
     /**
      * Reads an RDF model from the given byte buffer assuming that the byte
      * array containing the model is preceded by an int containing its length.
-     * 
+     *
      * @param buffer
      *            the buffer containing the length of the serialized model (as
      *            int) and the byte array containing the serialized model
@@ -174,7 +174,7 @@ public class RabbitMQUtils {
 
     /**
      * Transforms the given byte data into a String using the UTF-8 encoding.
-     * 
+     *
      * @param data
      *            the byte array that should be transformed
      * @return the String or null if the given byte array is null
@@ -226,7 +226,7 @@ public class RabbitMQUtils {
      * writes the given byte arrays and puts their length in front of them.
      * Thus, they can be read using a ByteBuffer and the
      * {@link #readByteArray(ByteBuffer)} method.
-     * 
+     *
      * @param arrays
      *            arrays that should be written to a single array
      * @return the byte array containing all given arrays and their lengths
@@ -239,7 +239,7 @@ public class RabbitMQUtils {
      * writes the given byte arrays and puts their length in front of them.
      * Thus, they can be read using a ByteBuffer and the
      * {@link #readByteArray(ByteBuffer)} method.
-     * 
+     *
      * @param precedingData
      *            data that should be written before the arrays are written.
      *            <b>Note</b> that this data is not preceded with the byte array
@@ -281,7 +281,7 @@ public class RabbitMQUtils {
     /**
      * Creates a byte array representation of the given String using UTF-8
      * encoding.
-     * 
+     *
      * @param string
      *            the String that should be transformed into a byte array
      * @return the UTF-8 byte array of the given String
@@ -297,7 +297,7 @@ public class RabbitMQUtils {
     /**
      * Creates a String containing the serialized RDF model using the
      * {@link RabbitMQUtils#DEFAULT_RDF_LANG}.
-     * 
+     *
      * @param model
      *            the model that should be serialized
      * @return the String containing the model
@@ -315,7 +315,7 @@ public class RabbitMQUtils {
     /**
      * Creates a byte array containing the serialized RDF model using the
      * {@link RabbitMQUtils#DEFAULT_RDF_LANG}.
-     * 
+     *
      * @param model
      *            the model that should be serialized
      * @return the byte array containing the model
@@ -330,7 +330,7 @@ public class RabbitMQUtils {
 
     /**
      * Creates a byte array representing the given long value.
-     * 
+     *
      * @param value
      *            the value that should be serialized
      * @return the byte array containing the given long value
@@ -343,7 +343,7 @@ public class RabbitMQUtils {
 
     /**
      * Reads a long value from the given byte array.
-     * 
+     *
      * @param data
      *            a serialized long value
      * @return the value read from the array
@@ -354,7 +354,7 @@ public class RabbitMQUtils {
 
     /**
      * Reads a long value from the given byte array.
-     * 
+     *
      * @param data
      *            a serialized long value
      * @param offset

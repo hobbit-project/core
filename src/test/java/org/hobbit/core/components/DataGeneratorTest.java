@@ -58,7 +58,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         // We use two data generators
         testConfigs.add(new Object[] { 2, 10000 });
         // We use ten data generators
-        testConfigs.add(new Object[] { 10, 10000 });
+        testConfigs.add(new Object[] { 10, 20000 });
         return testConfigs;
     }
 
@@ -95,7 +95,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        
+
         init();
 
         DummySystemReceiver system = new DummySystemReceiver();
@@ -112,7 +112,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();
         }
-        
+
         systemReady.acquire();
         taskGensReady.acquire(numberOfGenerators);
 

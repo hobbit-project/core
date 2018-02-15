@@ -16,10 +16,12 @@
  */
 package org.hobbit.core;
 
+import org.hobbit.utils.docker.DockerHelper;
+
 import org.junit.Ignore;
 
 @Ignore
 public class TestConstants {
 
-    public static final String RABBIT_HOST = "192.168.99.102";
+    public static final String RABBIT_HOST = DockerHelper.getHost();
 }

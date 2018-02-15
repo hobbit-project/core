@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class contains the main method starting a given {@link Component}.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -47,7 +47,7 @@ public class ComponentStarter {
     /**
      * This is the main method creating and starting an instance of a
      * {@link Component} with the given class name.
-     * 
+     *
      * @param args
      *            The first element has to be the class name of the component.
      */
@@ -84,7 +84,7 @@ public class ComponentStarter {
      * there is a constructor that needs no arguments to be executed and b) the
      * class with the given name is implementing the {@link Constructor}
      * interface.
-     * 
+     *
      * @param className
      *            the name of the class implementing the {@link Component}
      *            interface.

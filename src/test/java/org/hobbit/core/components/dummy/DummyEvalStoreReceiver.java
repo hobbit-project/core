@@ -16,6 +16,7 @@
  */
 package org.hobbit.core.components.dummy;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -32,33 +33,28 @@ import org.junit.Ignore;
 @Ignore
 public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
 
+    protected final boolean addTaskIds;
+    protected final boolean addTimeStamps;
     protected final List<String> receivedResponses = Collections.synchronizedList(new ArrayList<String>());
     protected final List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
+    
+    public DummyEvalStoreReceiver() {
+        this(false, false);
+    }
+    
+    public DummyEvalStoreReceiver(boolean addTaskIds, boolean addTimeStamps) {
+        this.addTaskIds = addTaskIds;
+        this.addTimeStamps = addTimeStamps;
+    }
 
     @Override
     public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskId);
-        builder.append(Long.toString(timestamp));
-        try {
-            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        receivedResponses.add(builder.toString());
+        receivedResponses.add(createStoredString(taskId, timestamp, stream, addTimeStamps, addTaskIds));
     }
 
     @Override
     public void receiveExpectedResponseData(String taskId, long timestamp, InputStream stream) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskId);
-        builder.append(Long.toString(timestamp));
-        try {
-            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        expectedResponses.add(builder.toString());
+        expectedResponses.add(createStoredString(taskId, timestamp, stream, addTimeStamps, addTaskIds));
     }
 
     @Override
@@ -78,6 +74,28 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
      */
     public List<String> getExpectedResponses() {
         return expectedResponses;
+    }
+
+    public static final String createStoredString(String taskId, long timestamp, byte[] data, boolean addTimeStamp,
+            boolean addTaskId) {
+        return createStoredString(taskId, timestamp, new ByteArrayInputStream(data), addTimeStamp, addTaskId);
+    }
+
+    public static final String createStoredString(String taskId, long timestamp, InputStream stream,
+            boolean addTimeStamp, boolean addTaskId) {
+        StringBuilder builder = new StringBuilder();
+        if (addTaskId) {
+            builder.append(taskId);
+        }
+        if (addTimeStamp) {
+            builder.append(Long.toString(timestamp));
+        }
+        try {
+            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return builder.toString();
     }
 
 }

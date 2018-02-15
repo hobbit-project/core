@@ -6,3 +6,5 @@ target
 bin
 .settings
 *.log
+core.iml
+.idea

@@ -21,8 +21,15 @@ import org.junit.Ignore;
 
 @Ignore
 public class DummyTaskGenerator extends AbstractTaskGenerator {
-
+    
+    private final long taskProcessingTime;
+    
     public DummyTaskGenerator(int generatorId, int numberOfGenerators) {
+        this(generatorId, numberOfGenerators, 0L);
+    }
+
+    public DummyTaskGenerator(int generatorId, int numberOfGenerators, long taskProcessingTime) {
+        this.taskProcessingTime = taskProcessingTime;
         this.generatorId = generatorId;
         this.numberOfGenerators = numberOfGenerators;
     }
@@ -30,6 +37,7 @@ public class DummyTaskGenerator extends AbstractTaskGenerator {
     @Override
     protected void generateTask(byte[] data) throws Exception {
         String taskId = getNextTaskId();
+        Thread.sleep(taskProcessingTime);
         sendTaskToSystemAdapter(taskId, data);
     }
 

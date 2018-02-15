@@ -38,7 +38,7 @@ import com.rabbitmq.client.MessageProperties;
  * <li>byte[] data</li>
  * </ol>
  * The end of the file is indicated by a message with an empty data array.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

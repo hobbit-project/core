@@ -26,13 +26,12 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.AbstractEvaluationStorage;
-
 import org.hobbit.core.data.ResultPair;
 
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for
  * testing purposes.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

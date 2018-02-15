@@ -33,7 +33,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /**
  * This test class tests SPARQL CONSTRUCT queries.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -55,16 +55,27 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
                 .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME), null });
 
-        // Construct shallow experiment graph
+        // Construct experiment graph with data cube triples
         testConfigs.add(new Object[] {
-                "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
-                        .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/exampleDiagramExperiment.ttl", SparqlQueries
+                        .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getDiagramExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleDiagramExperiment.ttl",
+                SparqlQueries.getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", null),
+                "org/hobbit/storage/queries/getDiagramExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleDiagramExperiment.ttl", SparqlQueries
+                .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", SECOND_GRAPH_NAME), null });
+
+        // Construct shallow experiment graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
+                .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/getShallowExperimentResult.ttl" });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
                 SparqlQueries.getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", null),
                 "org/hobbit/storage/queries/getShallowExperimentResult.ttl" });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
-                .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME), null });
+                .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME),
+                null });
 
         // Construct experiment graph of challenge task
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl",
@@ -89,8 +100,11 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getShallowChallengeGraphQuery("http://example.org/MyChallenge", null),
                 "org/hobbit/storage/queries/getShallowChallengeResult.ttl" });
-        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
-                SparqlQueries.getShallowChallengeGraphQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME), null });
+        testConfigs
+                .add(new Object[] {
+                        "org/hobbit/storage/queries/exampleChallengeConfig.ttl", SparqlQueries
+                                .getShallowChallengeGraphQuery("http://example.org/MyChallenge", SECOND_GRAPH_NAME),
+                        null });
 
         // Get tasks of challenge
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
@@ -133,12 +147,34 @@ public class ConstructQueryTest extends AbstractQueryTest {
                         FIRST_GRAPH_NAME),
                 null });
 
+        // Construct organizer model of challenge task
+        testConfigs
+                .add(new Object[] {
+                        "org/hobbit/storage/queries/exampleChallengeConfig.ttl", SparqlQueries
+                                .getChallengeTaskOrganizer("http://example.org/MyChallengeTask1", FIRST_GRAPH_NAME),
+                        "org/hobbit/storage/queries/getChallengeOrganizerResult.ttl" });
+        testConfigs
+                .add(new Object[] {
+                        "org/hobbit/storage/queries/exampleChallengeConfig.ttl", SparqlQueries
+                                .getChallengeTaskOrganizer("http://example.org/MyChallengeTask1", SECOND_GRAPH_NAME),
+                        null });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl", SparqlQueries
+                .getChallengeTaskOrganizer("http://example.org/MyChallengeTask_DOES_NOT_EXIST", FIRST_GRAPH_NAME),
+                null });
+
         // Construct challenge publish info graph
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/closedChallengeConfig.ttl",
                 SparqlQueries.getChallengePublishInfoQuery(null, FIRST_GRAPH_NAME),
                 "org/hobbit/storage/queries/getChallengePublishInfoResult.ttl" });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getChallengePublishInfoQuery(null, FIRST_GRAPH_NAME), null });
+
+        // Construct repeatable challenge info graph
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/repeatableChallengeConfig.ttl",
+                SparqlQueries.getRepeatableChallengeInfoQuery(null, FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getRepeatableChallengeInfoResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
+                SparqlQueries.getRepeatableChallengeInfoQuery(null, FIRST_GRAPH_NAME), null });
 
         return testConfigs;
     }

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.jena.rdf.model.Model;
@@ -50,7 +51,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
-    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.1";
+    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.7";
     protected static final String[] DEFAULT_EVAL_STORAGE_PARAMETERS = new String[] { "HOBBIT_RIAK_NODES=1" };
 
     /**
@@ -133,7 +134,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * The URI of the experiment.
      */
     protected String experimentUri;
-    
+
     public AbstractBenchmarkController() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -180,9 +181,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     protected abstract void executeBenchmark() throws Exception;
 
     /**
-     * Creates the given number of data generators using the given image name
-     * and environment variables.
-     * 
+     * Creates the given number of data generators using the given image name and
+     * environment variables.
+     *
      * @param dataGeneratorImageName
      *            name of the data generator Docker image
      * @param numberOfDataGenerators
@@ -196,9 +197,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * Creates the given number of task generators using the given image name
-     * and environment variables.
-     * 
+     * Creates the given number of task generators using the given image name and
+     * environment variables.
+     *
      * @param taskGeneratorImageName
      *            name of the task generator Docker image
      * @param numberOfTaskGenerators
@@ -213,7 +214,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Internal method for creating generator components.
-     * 
+     *
      * @param generatorImageName
      *            name of the generator Docker image
      * @param numberOfGenerators
@@ -274,7 +275,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Creates the evaluate storage using the given image name and environment
      * variables.
-     * 
+     *
      * @param evalStorageImageName
      *            name of the evaluation storage image
      * @param envVariables
@@ -363,6 +364,33 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
+     * This method waits for the benchmarked system to terminate or times out after
+     * the given amount of time (in milliseconds).
+     *
+     * @param maxWaitingTime
+     *            maximum waiting time in milliseconds
+     * @return {@code true} if the system has been terminated or {@code false} if
+     *         the method timed out
+     */
+    protected boolean waitForSystemToFinish(long maxWaitingTime) {
+        LOGGER.debug("Waiting for the benchmarked system to finish.");
+        try {
+            if (systemTerminatedMutex.tryAcquire(1, maxWaitingTime, TimeUnit.MILLISECONDS)) {
+                return true;
+            } else {
+                LOGGER.warn(
+                        "Didn't got a message that the system has been terminated. Stopped waiting after {} milliseconds.",
+                        maxWaitingTime);
+                return false;
+            }
+        } catch (InterruptedException e) {
+            String errorMsg = "Interrupted while waiting for the system to terminate.";
+            LOGGER.error(errorMsg);
+            throw new IllegalStateException(errorMsg, e);
+        }
+    }
+
+    /**
      * This method waits for the benchmarked system to terminate.
      */
     protected void waitForSystemToFinish() {
@@ -402,7 +430,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Uses the given model as result model if the result model is
      * <code>null</code>. Else, the two models are merged.
-     * 
+     *
      * @param resultModel
      *            the new result model
      */
@@ -426,9 +454,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Generates a default model containing an error code and the benchmark
-     * parameters if no result model has been received from the evaluation
-     * module until now. If the model already has been received, the error is
-     * added to the existing model.
+     * parameters if no result model has been received from the evaluation module
+     * until now. If the model already has been received, the error is added to the
+     * existing model.
      */
     protected void generateErrorResultModel() {
         try {
@@ -450,8 +478,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * Adds the {@link #benchmarkParamModel} triples to the {@link #resultModel}
-     * .
+     * Adds the {@link #benchmarkParamModel} triples to the {@link #resultModel} .
      */
     protected void addParametersToResultModel() {
         try {
@@ -475,7 +502,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Sends the result RDF model to the platform controller.
-     * 
+     *
      * @param model
      *            model containing the results
      */
@@ -538,10 +565,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * This method handles messages from the command bus containing the
-     * information that a container terminated. It checks whether the container
-     * belongs to the current benchmark and whether it has to react.
-     * 
+     * This method handles messages from the command bus containing the information
+     * that a container terminated. It checks whether the container belongs to the
+     * current benchmark and whether it has to react.
+     *
      * @param containerName
      *            the name of the terminated container
      * @param exitCode
@@ -586,7 +613,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     protected void containerCrashed(String containerName) {
-        LOGGER.error("A data generator crashed (\"{}\"). Terminating.", containerName);
+        LOGGER.error("A component crashed (\"{}\"). Terminating.", containerName);
         generateErrorResultModel();
         sendResultModel(resultModel);
         System.exit(1);

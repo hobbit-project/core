@@ -336,6 +336,7 @@ public class DataSenderImpl implements DataSender {
         private final Semaphore maxBufferedMessageCount;
         private final SortedMap<Long, Message> unconfirmedMsgs = Collections
                 .synchronizedSortedMap(new TreeMap<Long, Message>());
+        private int successfullySubmitted = 0;
 
         public DataSenderConfirmHandler(int messageConfirmBuffer) {
             this.maxBufferedMessageCount = new Semaphore(messageConfirmBuffer);
@@ -383,11 +384,13 @@ public class DataSenderImpl implements DataSender {
                     int ackMsgCount = negativeMsgs.size();
                     negativeMsgs.clear();
                     maxBufferedMessageCount.release(ackMsgCount);
+                    successfullySubmitted += ackMsgCount;
                     LOGGER.trace("{}\tack\t{}+\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 } else {
                     // Remove the message
                     unconfirmedMsgs.remove(deliveryTag);
+                    ++successfullySubmitted;
                     maxBufferedMessageCount.release();
                     LOGGER.trace("{}\tack\t{}\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
@@ -424,6 +427,7 @@ public class DataSenderImpl implements DataSender {
             while (true) {
                 synchronized (unconfirmedMsgs) {
                     if (unconfirmedMsgs.size() == 0) {
+                        LOGGER.trace("sent {} messages.", successfullySubmitted);
                         return;
                     }
                 }

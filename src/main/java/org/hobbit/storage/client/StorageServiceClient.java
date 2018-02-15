@@ -21,16 +21,15 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sparql.modify.request.QuadDataAcc;
-import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitRpcClient;
+import org.hobbit.encryption.AES;
+import org.hobbit.encryption.AESException;
+import org.hobbit.storage.queries.SparqlQueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ import com.rabbitmq.client.Connection;
 /**
  * Simple client of the storage service implementing a synchronized
  * communication.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -55,7 +54,7 @@ public class StorageServiceClient implements Closeable {
     /**
      * Creates a StorageServiceClient using the given RabbitMQ
      * {@link Connection}.
-     * 
+     *
      * @param connection
      *            RabbitMQ connection used for the communication
      * @return a StorageServiceClient instance
@@ -77,7 +76,7 @@ public class StorageServiceClient implements Closeable {
     /**
      * Constructor creating a StorageServiceClient using the given
      * {@link RabbitRpcClient}.
-     * 
+     *
      * @param rpcClient
      *            RPC client that is used for the communication
      */
@@ -86,10 +85,36 @@ public class StorageServiceClient implements Closeable {
     }
 
     /**
+     * Sends a request using rpcClient.
+     *
+     * If environment vars AES_PASSWORD and AES_SALT are set, the request will be encrypted.
+     */
+    private byte[] sendRequest(String request) {
+        String AES_PASSWORD = System.getenv("AES_PASSWORD");
+        String AES_SALT = System.getenv("AES_SALT");
+        if(AES_PASSWORD != null && AES_SALT != null) {
+            try {
+                AES encryption = new AES(AES_PASSWORD, AES_SALT);
+                byte[] encryptedRequest = new byte[0];
+                encryptedRequest = encryption.encrypt(request);
+                byte[] encryptedResponse = rpcClient.request(encryptedRequest);
+                byte[] response = encryption.decrypt(encryptedResponse);
+                return response;
+            } catch (AESException e) {
+                LOGGER.error("Encryption failed while sending request to storage service. Returning null.", e);
+                return null;
+            }
+        } else {
+            LOGGER.debug("AES_PASSWORD and AES_SALT are not set, sending unencrypted request to Rabbitmq.");
+            return rpcClient.request(RabbitMQUtils.writeString(request));
+        }
+    }
+
+    /**
      * Sends the given ASK query to the storage service and returns a boolean
      * value or throws an Exception if an error occurs, the service needs too
      * much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            ASK query
      * @return result for the query or <code>false</code> if an error occurs
@@ -101,7 +126,7 @@ public class StorageServiceClient implements Closeable {
         if (query == null) {
             throw new IllegalArgumentException("The given query is null.");
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return Boolean.parseBoolean(RabbitMQUtils.readString(response));
@@ -116,7 +141,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given CONSTRUCT query to the storage service and returns a
      * {@link Model} value or <code>null</code> if an error occurs, the service
      * needs too much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            CONSTRUCT query
      * @return result for the query or <code>null</code>
@@ -126,7 +151,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -141,7 +166,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given DESCRIBE query to the storage service and returns a
      * {@link Model} value or <code>null</code> if an error occurs, the service
      * needs too much time to respond or the response couldn't be parsed.
-     * 
+     *
      * @param query
      *            DESCRIBE query
      * @return result for the query or <code>null</code>
@@ -151,7 +176,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 return RabbitMQUtils.readModel(response);
@@ -167,7 +192,7 @@ public class StorageServiceClient implements Closeable {
      * {@link ResultSet} value or <code>null</code> if an error occurs, the
      * service needs too much time to respond or the response couldn't be
      * parsed.
-     * 
+     *
      * @param query
      *            SELECT query
      * @return result for the query or <code>null</code>
@@ -177,7 +202,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("The given query is null. Returning null.");
             return null;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         if (response != null) {
             try {
                 ByteArrayInputStream in = new ByteArrayInputStream(response);
@@ -194,7 +219,7 @@ public class StorageServiceClient implements Closeable {
      * Sends the given UPDATE query to the storage service and returns
      * <code>true</code> if the query is successful or <code>false</code> if an
      * error occurs or the service needs too much time to respond.
-     * 
+     *
      * @param query
      *            UPDATE query
      * @return flag indicating whether the query has been executed successfully
@@ -205,7 +230,7 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("Can not send an update query that is null. Returning false.");
             return false;
         }
-        byte[] response = rpcClient.request(RabbitMQUtils.writeString(query));
+        byte[] response = sendRequest(query);
         return (response != null) && (response.length > 0);
     }
 
@@ -213,7 +238,7 @@ public class StorageServiceClient implements Closeable {
      * Inserts the given model into the storage and returns <code>true</code> if
      * the query is successful or <code>false</code> if an error occurs or the
      * service needs too much time to respond.
-     * 
+     *
      * @param model
      *            RDF model containing triples that should be inserted
      * @param graphURI
@@ -230,16 +255,12 @@ public class StorageServiceClient implements Closeable {
             LOGGER.error("Can not store a model without a graph URI. Returning false.");
             return false;
         }
-        StmtIterator iterator = model.listStatements();
-        QuadDataAcc quads = new QuadDataAcc();
-        quads.setGraph(NodeFactory.createURI(graphURI));
-        while (iterator.hasNext()) {
-            quads.addTriple(iterator.next().asTriple());
+        String queries[] = SparqlQueries.getUpdateQueriesFromDiff(null, model, graphURI);
+        boolean success = true;
+        for (int i = 0; i < queries.length; ++i) {
+            success &= sendUpdateQuery(queries[i]);
         }
-
-        String query = (new UpdateDataInsert(quads)).toString(model);
-        LOGGER.info("Generated query: {}", query.replace('\n', ' '));
-        return sendUpdateQuery(query);
+        return success;
     }
 
     /**

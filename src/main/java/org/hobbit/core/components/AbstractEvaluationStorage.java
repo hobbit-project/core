@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
@@ -33,6 +32,7 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.ResultPair;
+import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -74,6 +74,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public static final int ITERATOR_ID_STREAM_ID = 0;
     public static final int EXPECTED_RESPONSE_STREAM_ID = 1;
     public static final int RECEIVED_RESPONSE_STREAM_ID = 2;
+    public static final String RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY = "HOBBIT_RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS";
 
     /**
      * If a request contains this iterator ID, a new iterator is created and its
@@ -84,15 +85,14 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      * The empty response that is sent if an error occurs.
      */
     private static final byte[] EMPTY_RESPONSE = new byte[0];
-
+    /**
+     * Default value of the {@link #maxParallelProcessedMsgs} attribute.
+     */
+    private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 50;
     /**
      * Mutex used to wait for the termination signal.
      */
     private Semaphore terminationMutex = new Semaphore(0);
-    /**
-     * Iterators that have been started.
-     */
-    protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
     /**
      * The incoming queue from the task generator.
      */
@@ -101,6 +101,23 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      * The incoming queue from the system.
      */
     protected DataReceiverImpl systemResponseReceiver;
+    /**
+     * The maximum number of incoming messages of a single queue that are processed
+     * in parallel. Additional messages have to wait.
+     */
+    private final int maxParallelProcessedMsgs;
+    /**
+     * Iterators that have been started.
+     */
+    protected List<Iterator<? extends ResultPair>> resultPairIterators = Lists.newArrayList();
+    /**
+     * The incoming queue from the task generator.
+     */
+    protected DataReceiver taskResultReceiver;
+    /**
+     * The incoming queue from the system.
+     */
+    protected DataReceiver systemResultReceiver;
     /**
      * The incoming queue from the evaluation module.
      */
@@ -111,54 +128,220 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     protected Channel ackChannel = null;
     protected String ackExchangeName = null;
     protected Map<String, PairedDataSender> replyingSenders = new HashMap<>();
+    protected boolean receiveTimeStamp = false;
 
+    /**
+     * Constructor using the {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
+     * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}.
+     */
     public AbstractEvaluationStorage() {
+        this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
+    }
+
+    /**
+     * Constructor setting the maximum number of messages processed in parallel.
+     *
+     * @param maxParallelProcessedMsgs
+     *            The maximum number of incoming messages of a single queue that are
+     *            processed in parallel. Additional messages have to wait.
+     */
+    public AbstractEvaluationStorage(int maxParallelProcessedMsgs) {
+        this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
         defaultContainerType = Constants.CONTAINER_TYPE_DATABASE;
     }
 
     @Override
     public void init() throws Exception {
         super.init();
-
+        Map<String, String> env = System.getenv();
+        String queueName;
+        
         if (expResponseReceiver == null) {
-            expResponseReceiver = DataReceiverImpl.builder().dataHandler(new ExpectedResponseReceiver())
-                    .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME)).build();
+            queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+      if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+      queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+  }
+            expResponseReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs).dataHandler(new ExpectedResponseReceiver())
+                    .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
         } else {
             // XXX here we could set the data handler if the data receiver would
             // offer such a method
         }
 
         if (systemResponseReceiver == null) {
-            systemResponseReceiver = DataReceiverImpl.builder().dataHandler(new SystemResponseReceiver())
-                    .queue(this, generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME)).build();
+            queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+              if (env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+                  queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+              }
+            systemResponseReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs).dataHandler(new SystemResponseReceiver())
+                    .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
         } else {
             // XXX here we could set the data handler if the data receiver would
             // offer such a method
         }
-
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+      if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+          queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+      }
+        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+              .createDefaultRabbitQueue(generateSessionQueueName(queueName));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
                 new IterationRequestReceiver(evalModule2EvalStoreQueue.channel));
 
         boolean sendAcks = false;
-        if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
-            sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
+        if (env.containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
+            sendAcks = Boolean.parseBoolean(env.getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
             if (sendAcks) {
                 // Create channel for acknowledgements
-                ackChannel = cmdConnection.createChannel();
+                ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
                 ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
                         false, true, null);
             }
         }
+        if (env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
+            try {
+                receiveTimeStamp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
+            } catch (Exception e) {
+                LOGGER.error(
+                        "Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
+            }
+        }
     }
+    
+//    private void init_old() {
+//        Map<String, String> env = System.getenv();
+//        String queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+//        if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+//            queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+//        }
+//        taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+//                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
+//                    @Override
+//                    public void handleData(byte[] data) {
+//                        ByteBuffer buffer = ByteBuffer.wrap(data);
+//                        String taskId = RabbitMQUtils.readString(buffer);
+//                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+//                        long timestamp = buffer.getLong();
+//                        receiveExpectedResponseData(taskId, timestamp, taskData);
+//                    }
+//                }).build();
+//
+//        queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+//        if (env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+//            queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+//        }
+//        boolean temp = false;
+//        if (env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
+//            try {
+//                temp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
+//            } catch (Exception e) {
+//                LOGGER.error(
+//                        "Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
+//            }
+//        }
+//        final boolean receiveTimeStamp = temp;
+//        final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+//        systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+//                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
+//                    @Override
+//                    public void handleData(byte[] data) {
+//                        ByteBuffer buffer = ByteBuffer.wrap(data);
+//                        String taskId = RabbitMQUtils.readString(buffer);
+//                        byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+//                        long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+//                        receiveResponseData(taskId, timestamp, responseData);
+//                        // If we should send acknowledgments (and there was no
+//                        // error until now)
+//                        if (ackChannel != null) {
+//                            try {
+//                                ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+//                            } catch (IOException e) {
+//                                LOGGER.error("Error while sending acknowledgement.", e);
+//                            }
+//                            LOGGER.trace("Sent ack{}.", taskId);
+//                        }
+//                    }
+//                }).build();
+//
+//        queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+//        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+//            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+//        }
+//        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+//                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
+//        evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
+//                new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+//                    @Override
+//                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
+//                            byte[] body) throws IOException {
+//                        byte response[] = null;
+//                        // get iterator id
+//                        ByteBuffer buffer = ByteBuffer.wrap(body);
+//                        if (buffer.remaining() < 1) {
+//                            response = EMPTY_RESPONSE;
+//                            LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+//                        } else {
+//                            byte iteratorId = buffer.get();
+//
+//                            // get the iterator
+//                            Iterator<? extends ResultPair> iterator = null;
+//                            if (iteratorId == NEW_ITERATOR_ID) {
+//                                // create and save a new iterator
+//                                iteratorId = (byte) resultPairIterators.size();
+//                                LOGGER.info("Creating new iterator #{}", iteratorId);
+//                                resultPairIterators.add(iterator = createIterator());
+//                            } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+//                                response = EMPTY_RESPONSE;
+//                                LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+//                                        + "). Returning emtpy response.");
+//                            } else {
+//                                iterator = resultPairIterators.get(iteratorId);
+//                            }
+//                            if ((iterator != null) && (iterator.hasNext())) {
+//                                ResultPair resultPair = iterator.next();
+//                                Result result = resultPair.getExpected();
+//                                byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
+//                                        actualResultTimeStamp[];
+//                                // Make sure that the result is not null
+//                                if (result != null) {
+//                                    // Check whether the data array is null
+//                                    expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+//                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+//                                } else {
+//                                    expectedResultData = new byte[0];
+//                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
+//                                }
+//                                result = resultPair.getActual();
+//                                // Make sure that the result is not null
+//                                if (result != null) {
+//                                    // Check whether the data array is null
+//                                    actualResultData = result.getData() != null ? result.getData() : new byte[0];
+//                                     actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+//                                } else {
+//                                    actualResultData = new byte[0];
+//                                    actualResultTimeStamp = RabbitMQUtils.writeLong(0);
+//                                }
+//
+//                                response = RabbitMQUtils
+//                                        .writeByteArrays(
+//                                                new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
+//                                                        expectedResultData, actualResultTimeStamp, actualResultData },
+//                                                null);
+//                            } else {
+//                                response = new byte[] { iteratorId };
+//                            }
+//                        }
+//                        getChannel().basicPublish("", properties.getReplyTo(), null, response);
+//                    }
+//                });
+//    }
 
     /**
      * Creates a new iterator that iterates over the response pairs.
-     * 
+     *
      * @return a new iterator or null if an error occurred
      */
-    protected abstract Iterator<ResultPair> createIterator();
+    protected abstract Iterator<? extends ResultPair> createIterator();
 
     @Override
     public void run() throws Exception {
@@ -202,8 +385,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         if (ackChannel != null) {
             try {
                 ackChannel.close();
-            } catch (TimeoutException e) {
-                LOGGER.error("Exception while trying to close the acknowledgement channel. It will be ignored.", e);
+            } catch (Exception e) {
+                LOGGER.error("Error while trying to close the acknowledgement channel.", e);
             }
         }
         super.close();
@@ -259,6 +442,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         @Override
         public void handleIncomingStream(String streamId, InputStream stream) {
             String taskId;
+            long timestamp = System.currentTimeMillis();
             try {
                 /*
                  * Check whether this is the old format (backwards compatibility
@@ -269,15 +453,26 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     ByteBuffer buffer = ByteBuffer.wrap(IOUtils.toByteArray(stream));
                     taskId = RabbitMQUtils.readString(buffer);
                     byte[] data = RabbitMQUtils.readByteArray(buffer);
+                    if(receiveTimeStamp) {
+                        timestamp = RabbitMQUtils.readLong(stream);
+                    }
                     IOUtils.closeQuietly(stream);
                     // create a new stream containing only the data
                     stream = new ByteArrayInputStream(data);
                 } else {
-                    // get taskId
+                    // If there is a timestamp in front of the data
+                    if(receiveTimeStamp) {
+                        timestamp = RabbitMQUtils.readLong(stream);
+                    }
+                    // get data
                     int length = RabbitMQUtils.readInt(stream);
                     taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
                 }
-                receiveResponseData(taskId, System.currentTimeMillis(), stream);
+                try {
+                    receiveResponseData(taskId, timestamp, stream);
+                } finally {
+                    acknowledgeResponse(taskId);
+                }
             } catch (IOException e) {
                 LOGGER.error("IO Error while trying to read incoming expected response.", e);
             }
@@ -303,7 +498,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 byte iteratorId = buffer.get();
 
                 // get the iterator
-                Iterator<ResultPair> iterator = null;
+                Iterator<? extends ResultPair> iterator = null;
                 if (iteratorId == NEW_ITERATOR_ID) {
                     // create and save a new iterator
                     iteratorId = (byte) resultPairIterators.size();
@@ -333,7 +528,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 if (replyingSenders.containsKey(properties.getReplyTo())) {
                     sender = replyingSenders.get(properties.getReplyTo());
                 } else {
-                    sender = PairedDataSender.builder().queue(AbstractEvaluationStorage.this, properties.getReplyTo())
+                    sender = PairedDataSender.builder().queue(getFactoryForOutgoingDataQueues(), properties.getReplyTo())
                             .idGenerator(new SteppingIdGenerator(0, 1)).build();
                     replyingSenders.put(properties.getReplyTo(), sender);
                 }
@@ -344,5 +539,4 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
             }
         }
     }
-
 }

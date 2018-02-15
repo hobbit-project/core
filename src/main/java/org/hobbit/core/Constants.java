@@ -20,7 +20,7 @@ import java.util.TimeZone;
 
 /**
  * This class defines constants of the hobbit platform.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -40,7 +40,7 @@ public final class Constants {
     public static final String GENERATOR_COUNT_KEY = "HOBBIT_GENERATOR_COUNT";
 
     public static final String SYSTEM_URI_KEY = "HOBBIT_SYSTEM_URI";
-    
+
     public static final String CONTAINER_NAME_KEY = "HOBBIT_CONTAINER_NAME";
     @Deprecated
     public static final String SYSTEM_CONTAINER_ID_KEY = "HOBBIT_SYSTEM_CONTAINER_ID";
@@ -48,15 +48,15 @@ public final class Constants {
     public static final String BENCHMARK_PARAMETERS_MODEL_KEY = "BENCHMARK_PARAMETERS_MODEL";
 
     public static final String SYSTEM_PARAMETERS_MODEL_KEY = "SYSTEM_PARAMETERS_MODEL";
-    
+
     public static final String HOBBIT_EXPERIMENT_URI_KEY = "HOBBIT_EXPERIMENT_URI";
-    
+
     public static final String DATA_QUEUE_NAME_KEY = "DATA_QUEUE_NAME";
-    
+
     public static final String ACKNOWLEDGEMENT_FLAG_KEY = "ACKNOWLEDGEMENT_FLAG";
     
     public static final String END_OF_STREAM_MESSAGE_TYPE = "EOS";
-    
+
     // =============== RABBIT CONSTANTS ===============
 
     /**
@@ -81,28 +81,36 @@ public final class Constants {
 
     public static final String TASK_GEN_2_SYSTEM_QUEUE_NAME = "hobbit.taskgen-system";
 
-    public static final String TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.taskgen-evalstore";
-    
-    public static final String SYSTEM_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.system-evalstore";
+    public static final String TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.taskgen-evalstore";
 
-    public static final String EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME = "hobbit.evalmod-evalstore";
+    public static final String SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.system-evalstore";
 
-	public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME = "hobbit.evalstore-evalmod";
+    public static final String EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME = "hobbit.evalmod-evalstore";
 
-	public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
+    public static final String EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME = "hobbit.evalstore-evalmod";
+
+    public static final String FRONT_END_2_CONTROLLER_QUEUE_NAME = "hobbit.frontend-controller";
 
     public static final String CONTROLLER_2_FRONT_END_QUEUE_NAME = "hobbit.controller-frontend";
 
     public static final String CONTROLLER_2_ANALYSIS_QUEUE_NAME = "hobbit.controller-analysis";
-	
-	public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
-	
-	// =============== GRAPH CONSTANTS ===============
+
+    public static final String TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY = "TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY = "SYSTEM_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY = "EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME";
+
+    public static final String EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY = "EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME";
+
+    public static final String STORAGE_QUEUE_NAME = "hobbit.storage";
+
+    // =============== GRAPH CONSTANTS ===============
 
     public static final String EXPERIMENT_URI_NS = "http://w3id.org/hobbit/experiments#";
-	public static final String NEW_EXPERIMENT_URI = EXPERIMENT_URI_NS + "New";
-	public static final String CHALLENGE_URI_NS = "http://w3id.org/hobbit/challenges#";
-	public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
+    public static final String NEW_EXPERIMENT_URI = EXPERIMENT_URI_NS + "New";
+    public static final String CHALLENGE_URI_NS = "http://w3id.org/hobbit/challenges#";
+    public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";
 
@@ -117,7 +125,7 @@ public final class Constants {
     public static final String CONTAINER_TYPE_SYSTEM = "system";
 
     public static final String CONTAINER_TYPE_DATABASE = "data";
-    
+
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
-	
+    
 }

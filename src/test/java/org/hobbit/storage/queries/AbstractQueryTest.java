@@ -39,10 +39,10 @@ import org.junit.Test;
  * the graph containing the graph loaded from a given resource is defined by
  * {@link #FIRST_GRAPH_NAME}. The storage contains a second, empty graph with a
  * name defined by {@link #SECOND_GRAPH_NAME}.
- * 
+ *
  * If one of the given resource names is null, the named graph in the storage or
  * the result model will be empty.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -103,16 +103,21 @@ public abstract class AbstractQueryTest {
         // Compare the models
         String expectedModelString = expectedResult.toString();
         String resultModelString = result.toString();
-        // Check the recall
-        Set<Statement> statements = ModelComparisonHelper.getMissingStatements(expectedResult, result);
-        Assert.assertTrue("The result does not contain the expected statements " + statements.toString()
-                + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
-                statements.size() == 0);
-        // Check the precision
-        statements = ModelComparisonHelper.getMissingStatements(result, expectedResult);
-        Assert.assertTrue("The result contains the unexpected statements " + statements.toString()
-                + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString,
-                statements.size() == 0);
+        // Check the precision and recall
+        Set<Statement> missingStatements = ModelComparisonHelper.getMissingStatements(expectedResult, result);
+        Set<Statement> unexpectedStatements = ModelComparisonHelper.getMissingStatements(result, expectedResult);
+
+        StringBuilder builder = new StringBuilder();
+        if (unexpectedStatements.size() != 0) {
+            builder.append("The result contains the unexpected statements " + unexpectedStatements.toString()
+                    + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString + "\n");
+        }
+        if (missingStatements.size() != 0) {
+            builder.append("The result does not contain the expected statements " + missingStatements.toString()
+                    + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString + "\n");
+        }
+
+        Assert.assertTrue(builder.toString(), missingStatements.size() == 0 && unexpectedStatements.size() == 0);
     }
 
     protected abstract Model executeQueries(String[] queries, Dataset storeContent);

@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * {@link AbstractTaskGenerator} classes. Note that this test needs a running
  * RabbitMQ instance. Its host name can be set using the
  * {@link #RABBIT_HOST_NAME} parameter.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -62,18 +62,22 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 1000, 1 });
+        testConfigs.add(new Object[] { 1, 10000, 1, 0 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 1000, 100 });
+        testConfigs.add(new Object[] { 1, 10000, 100, 0 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 1000, 1 });
-        // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 1000, 100 });
-        // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 500, 1 });
-        // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 500, 100 });
+        testConfigs.add(new Object[] { 2, 10000, 1, 0 });
+        // We use two data generators with parallel message processing (max
+        // 100)
+        testConfigs.add(new Object[] { 2, 10000, 100, 0 });
+        // We use six data generators without parallel message processing
+        testConfigs.add(new Object[] { 6, 5000, 1, 0 });
+        // We use six data generators with parallel message processing (max 100)
+        testConfigs.add(new Object[] { 6, 5000, 100, 0 });
+        // We use six data generators with parallel message processing (max 100)
+        // but with a processing time of 5s
+        testConfigs.add(new Object[] { 6, 200, 100, 500 });
         return testConfigs;
     }
 
@@ -88,11 +92,21 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     private Semaphore dataGensReady = new Semaphore(0);
     private Semaphore systemReady = new Semaphore(0);
     private Semaphore evalStoreReady = new Semaphore(0);
+    private long taskProcessingTime;
 
-    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
+    public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel,
+            long taskProcessingTime) {
         super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
+        this.taskProcessingTime = taskProcessingTime;
+    }
+
+    private Semaphore processedMessages = new Semaphore(0);
+
+    @Override
+    public void close() throws IOException {
+        super.close();
     }
 
     @Test(timeout = 60000)
@@ -101,7 +115,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        
+
         init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
@@ -144,6 +158,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             run();
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
+            System.out.println("processed messages: " + processedMessages.availablePermits());
 
             for (int i = 0; i < dataGenThreads.length; ++i) {
                 dataGenThreads[i].join();
@@ -177,6 +192,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     @Override
     protected void generateTask(byte[] data) throws Exception {
         String taskIdString = getNextTaskId();
+        Thread.sleep(taskProcessingTime);
         long timestamp = System.currentTimeMillis();
         sendTaskToSystemAdapter(taskIdString, data);
         String dataString = RabbitMQUtils.readString(data);
@@ -191,6 +207,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         builder.append(Long.toString(timestamp));
         builder.append(dataString);
         expectedResponses.add(builder.toString());
+        processedMessages.release();
     }
 
     protected synchronized void dataGeneratorTerminated() {

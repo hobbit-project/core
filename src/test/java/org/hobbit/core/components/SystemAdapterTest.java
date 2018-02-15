@@ -17,14 +17,12 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -50,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * {@link AbstractTaskGenerator} classes. Note that this test needs a running
  * RabbitMQ instance. Its host name can be set using the
  * {@link #RABBIT_HOST_NAME} parameter.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
@@ -142,16 +140,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
             taskGenThreads[i].start();
         }
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver() {
-            @Override
-            public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
-                try {
-                    receivedResponses.add(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(false, false);
 
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
@@ -248,5 +237,4 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
             e.printStackTrace();
         }
     }
-
 }

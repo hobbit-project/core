@@ -54,7 +54,7 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
     protected Semaphore requestNextResultPair = new Semaphore(0);
 
     protected boolean iterationFinished;
-    
+
     public AbstractStreamingEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -74,11 +74,19 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
             throw new Exception(errorMsg);
         }
 
-        evalModule2EvalStoreQueue = createDefaultRabbitQueue(
-                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME));
+        String queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
+        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
+            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
+        }
+        evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
+                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
+        queueName = Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME;
+        if (env.containsKey(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY)) {
+            queueName = env.get(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY);
+        }
         receiver = DataReceiverImpl.builder().consumerBuilder(PairedConsumerImpl.builder()).dataHandler(this)
                 .maxParallelProcessedMsgs(1)
-                .queue(this, generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME)).build();
+                .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
     }
 
     @Override
@@ -91,8 +99,8 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
     }
 
     /**
-     * This method communicates with the evaluation storage to collect all
-     * response pairs. For every pair the
+     * This method communicates with the evaluation storage to collect all response
+     * pairs. For every pair the
      * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
      * 
      * @throws Exception
@@ -216,8 +224,7 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
      * @param taskSentTimestamp
      *            the time at which the task has been sent to the system
      * @param responseReceivedTimestamp
-     *            the time at which the response has been received from the
-     *            system
+     *            the time at which the response has been received from the system
      * @throws Exception
      *             if an error occurs during the evaluation
      */

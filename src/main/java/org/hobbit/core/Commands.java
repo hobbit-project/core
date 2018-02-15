@@ -95,6 +95,8 @@ public final class Commands {
     public static final byte DOCKER_CONTAINER_TERMINATED = 16;
 
     public static final byte START_BENCHMARK_SIGNAL = 17;
+    
+    public static final byte REQUEST_SYSTEM_RESOURCES_USAGE = 18;
 
     private static final ImmutableMap<Byte, String> ID_TO_COMMAND_NAME_MAP = generateMap();
 
@@ -115,7 +117,7 @@ public final class Commands {
 
     /**
      * Returns the name of the command if it is defined inside the {@link Commands} class or its id as String.
-     * 
+     *
      * @param command the command that should be transformed into a String
      * @return the name of the command or its id if the name is not known
      */

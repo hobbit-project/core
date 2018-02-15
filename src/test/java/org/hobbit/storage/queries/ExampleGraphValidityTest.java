@@ -48,7 +48,7 @@ import org.junit.runners.Parameterized.Parameters;
  * This simple test iterates over test resources that are used to test the
  * SPARQL queries and makes sure that resources of the HOBBIT vocabulary
  * namespace are part of the {@link HOBBIT} vocabulary class.
- * 
+ *
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */

@@ -122,9 +122,23 @@ public class DataStreamingTest implements RabbitQueueFactory, IncomingStreamHand
 
     @Override
     public RabbitQueue createDefaultRabbitQueue(String name) throws IOException {
-        Channel channel = connection.createChannel();
+        return createDefaultRabbitQueue(name, createChannel());
+    }
+
+    @Override
+    public RabbitQueue createDefaultRabbitQueue(String name, Channel channel) throws IOException {
         channel.queueDeclare(name, false, false, true, null);
         return new RabbitQueue(channel, name);
+    }
+
+    @Override
+    public Channel createChannel() throws IOException {
+        return connection.createChannel();
+    }
+
+    @Override
+    public Connection getConnection() {
+        return connection;
     }
 
     @Override

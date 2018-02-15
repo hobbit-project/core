@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
@@ -96,12 +97,12 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         if (sender2TaskGen == null) {
             sender2TaskGen = DataSenderImpl.builder()
                     .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
-                    .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
         }
         if (sender2System == null) {
             sender2System = DataSenderImpl.builder()
                     .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
-                    .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
         }
     }
 
@@ -113,9 +114,9 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
         generateData();
 
-        // Unfortunately, we have to wait until all messages are consumed
-        sender2System.closeWhenFinished();
+        // We have to wait until all messages are consumed
         sender2TaskGen.closeWhenFinished();
+        sender2System.closeWhenFinished();
     }
 
     protected abstract void generateData() throws Exception;
@@ -156,8 +157,8 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void close() throws IOException {
-        sender2TaskGen.close();
-        sender2System.close();
+        IOUtils.closeQuietly(sender2TaskGen);
+        IOUtils.closeQuietly(sender2System);
         super.close();
     }
 }

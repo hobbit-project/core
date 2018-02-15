@@ -147,20 +147,20 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractPlatformCon
             // We don't need to define an id generator since we will set the IDs
             // while sending data
             sender2System = DataSenderImpl.builder()
-                    .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
         }
         if (sender2EvalStore == null) {
             // We don't need to define an id generator since we will set the IDs
             // while sending data
             sender2EvalStore = DataSenderImpl.builder()
-                    .queue(this, generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME)).build();
+                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
         }
 
         if (maxParallelProcessedMsgs > 0) {
             if (dataReceiver == null) {
                 dataReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler())
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                        .queue(this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+                        .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
             } else {
                 // XXX here we could set the data handler if the data receiver
                 // would
@@ -181,6 +181,8 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractPlatformCon
         terminateMutex.acquire();
         // wait until all messages have been read from the queue
         dataReceiver.closeWhenFinished();
+        sender2System.closeWhenFinished();
+        sender2EvalStore.closeWhenFinished();
     }
 
     @Override
