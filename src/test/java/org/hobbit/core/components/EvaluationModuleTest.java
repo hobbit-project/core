@@ -67,10 +67,10 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     private Semaphore evalStoreReady = new Semaphore(0);
     private List<Throwable> evalErrors = new ArrayList<>();
 
-    @Test/*(timeout = 60000)*/
+    @Test(timeout = 60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Long.toString(System.currentTimeMillis()));
         environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
 
         // Create the eval store and add some data

@@ -94,7 +94,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Long.toString(System.currentTimeMillis()));
 
         init();
 

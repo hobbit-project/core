@@ -100,7 +100,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Long.toString(System.currentTimeMillis()));
 
         // Set the acknowledgement flag to true (read by the evaluation storage)
         environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");

@@ -47,7 +47,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBasedMimickingAlgTest.class);
 
-    private static final String HOBBIT_SESSION_ID = "123";
+    private static final String HOBBIT_SESSION_ID = Long.toString(System.currentTimeMillis());
     private static final String MIMICKING_ALGORITHM_DOCKER_IMAGE = "mimickingAlg";
     private static final int DATA_SIZE = 1000;
     private static final String DATA_SIZE_KEY = "DATA_SIZE";

@@ -107,7 +107,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
     @Test(timeout = 30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Long.toString(System.currentTimeMillis()));
 
         init();
 

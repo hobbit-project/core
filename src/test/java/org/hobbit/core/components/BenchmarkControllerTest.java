@@ -50,7 +50,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkControllerTest.class);
 
-    private static final String HOBBIT_SESSION_ID = "123";
     private static final String SYSTEM_CONTAINER_ID = "systemContainerId";
     private static final String DATA_GEN_IMAGE = "datagenimage";
     private static final String TASK_GEN_IMAGE = "taskgenimage";
@@ -76,8 +75,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
     public BenchmarkControllerTest(int numberOfDataGenerators, int numberOfTaskGenerators) {
         this.numberOfDataGenerators = numberOfDataGenerators;
         this.numberOfTaskGenerators = numberOfTaskGenerators;
-        this.sessionId = HOBBIT_SESSION_ID + Integer.toString(numberOfDataGenerators)
-                + Integer.toString(numberOfTaskGenerators);
+        this.sessionId = Long.toString(System.currentTimeMillis());
     }
 
     @Test
