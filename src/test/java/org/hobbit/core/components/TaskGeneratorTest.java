@@ -30,7 +30,7 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
-import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.TestUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -138,7 +138,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(true, true);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
@@ -173,16 +173,17 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
             Collections.sort(sentTasks);
-            List<String> receivedData = system.getReceivedtasks();
-            Collections.sort(receivedData);
+            List<String> receivedTasks = system.getReceivedtasks();
+            Collections.sort(receivedTasks);
             Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
+                    receivedTasks.toArray(new String[receivedTasks.size()]));
             Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
-            receivedData = evalStore.getExpectedResponses();
-            Collections.sort(receivedData);
+            
+            List<String> receivedResponses = evalStore.getExpectedResponses();
+            Collections.sort(receivedResponses);
             Collections.sort(expectedResponses);
             Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
+                    receivedResponses.toArray(new String[receivedResponses.size()]));
             Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
         } finally {
             close();
@@ -195,18 +196,10 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         Thread.sleep(taskProcessingTime);
         long timestamp = System.currentTimeMillis();
         sendTaskToSystemAdapter(taskIdString, data);
-        String dataString = RabbitMQUtils.readString(data);
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskIdString);
-        builder.append(dataString);
-        sentTasks.add(builder.toString());
+        sentTasks.add(TestUtils.concat(taskIdString, data));
 
         sendTaskToEvalStorage(taskIdString, timestamp, data);
-        builder.delete(0, builder.length());
-        builder.append(taskIdString);
-        builder.append(Long.toString(timestamp));
-        builder.append(dataString);
-        expectedResponses.add(builder.toString());
+        expectedResponses.add(TestUtils.concat(taskIdString, data, timestamp));
         processedMessages.release();
     }
 

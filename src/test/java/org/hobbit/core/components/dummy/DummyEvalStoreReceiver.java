@@ -16,18 +16,15 @@
  */
 package org.hobbit.core.components.dummy;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.ResultPair;
-import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.TestUtils;
 import org.junit.Ignore;
 
 @Ignore
@@ -49,12 +46,12 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
 
     @Override
     public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
-        receivedResponses.add(createStoredString(taskId, timestamp, stream, addTimeStamps, addTaskIds));
+        receivedResponses.add(TestUtils.concat(taskId, timestamp, stream, addTimeStamps, addTaskIds));
     }
 
     @Override
     public void receiveExpectedResponseData(String taskId, long timestamp, InputStream stream) {
-        expectedResponses.add(createStoredString(taskId, timestamp, stream, addTimeStamps, addTaskIds));
+        expectedResponses.add(TestUtils.concat(taskId, timestamp, stream, addTimeStamps, addTaskIds));
     }
 
     @Override
@@ -74,28 +71,6 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
      */
     public List<String> getExpectedResponses() {
         return expectedResponses;
-    }
-
-    public static final String createStoredString(String taskId, long timestamp, byte[] data, boolean addTimeStamp,
-            boolean addTaskId) {
-        return createStoredString(taskId, timestamp, new ByteArrayInputStream(data), addTimeStamp, addTaskId);
-    }
-
-    public static final String createStoredString(String taskId, long timestamp, InputStream stream,
-            boolean addTimeStamp, boolean addTaskId) {
-        StringBuilder builder = new StringBuilder();
-        if (addTaskId) {
-            builder.append(taskId);
-        }
-        if (addTimeStamp) {
-            builder.append(Long.toString(timestamp));
-        }
-        try {
-            builder.append(IOUtils.toString(stream, RabbitMQUtils.STRING_ENCODING));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return builder.toString();
     }
 
 }

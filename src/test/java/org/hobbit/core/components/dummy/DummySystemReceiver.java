@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.TestUtils;
 import org.junit.Ignore;
 
 @Ignore
@@ -47,7 +48,7 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
 
     @Override
     public void receiveGeneratedTask(String taskId, byte[] data) {
-        receivedTasks.add(taskId + RabbitMQUtils.readString(data));
+        receivedTasks.add(TestUtils.concat(taskId, data));
     }
 
     /**
