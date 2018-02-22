@@ -32,7 +32,7 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
      * The {@link DataReceiver} which is using this consumer.
      */
     protected DataReceiver receiver;
-    
+
     private ExecutorService executor;
 
     protected Map<String, DataReceiveState> streamStats = new HashMap<>();
@@ -42,11 +42,22 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
     private TerminatableRunnable receiverTask;
     private Thread receiverThread;
     private boolean oldFormatWarningPrinted = false;
+    private String name;
 
     public QueueingConsumerBasedImpl(DataReceiver receiver, RabbitQueue queue, int maxParallelProcessedMsgs) {
+        this(receiver, queue, maxParallelProcessedMsgs, null);
+    }
+
+    public QueueingConsumerBasedImpl(DataReceiver receiver, RabbitQueue queue, int maxParallelProcessedMsgs,
+            String name) {
         super(queue.channel);
         this.receiver = receiver;
         this.queue = queue;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = "Consumer@" + Integer.toHexString(hashCode());
+        }
         receiverTask = buildMsgReceivingTask(this);
         receiverThread = new Thread(receiverTask);
         receiverThread.start();
@@ -57,7 +68,7 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
         // check if we have to handle the deprecated v1.0.0 format
         if ((properties.getCorrelationId() == null) && (properties.getMessageId() == null)) {
             if (!oldFormatWarningPrinted) {
-                LOGGER.info("Encountered old, deprecated message format!");
+                LOGGER.info("{}: Encountered old, deprecated message format!", name);
                 oldFormatWarningPrinted = true;
             }
             // In this old format, every incoming message is a single
@@ -153,10 +164,10 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
             // clear all remaining messages (they should have been removed
             // before. However, maybe a message has been sent a second time)
             state.messageBuffer.clear();
-            LOGGER.trace("Received last message for stream \"{}\".", state.name);
+            LOGGER.trace("{}: Received last message for stream \"{}\".", name, state.name);
             if (state.messageBuffer.size() > 0) {
-                LOGGER.error("Closed the stream \"{}\" while there are still {} messages in its data buffer",
-                        state.name, state.messageBuffer.size());
+                LOGGER.error("{}: Closed the stream \"{}\" while there are still {} messages in its data buffer",
+                        name, state.name, state.messageBuffer.size());
             }
         }
     }
@@ -179,7 +190,7 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
         synchronized (streamStats) {
             for (String name : streamStats.keySet()) {
                 if (streamStats.get(name).outputStream != null) {
-                    LOGGER.warn("Closing stream \"{}\" for which no end message has been received.", name);
+                    LOGGER.warn("{}: Closing stream \"{}\" for which no end message has been received.", this.name, name);
                     IOUtils.closeQuietly(streamStats.get(name).outputStream);
                     receiver.increaseErrorCount();
                 }
@@ -236,6 +247,7 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
     public static class Builder implements MessageConsumerBuilder {
 
         private int maxParallelProcessedMsgs = AbstractMessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private String name = null;
 
         @Override
         public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -244,8 +256,14 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
         }
 
         @Override
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        @Override
         public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue) {
-            return new QueueingConsumerBasedImpl(receiver, queue, maxParallelProcessedMsgs);
+            return new QueueingConsumerBasedImpl(receiver, queue, maxParallelProcessedMsgs, name);
         }
 
     }
@@ -283,7 +301,7 @@ public class QueueingConsumerBasedImpl extends QueueingConsumer implements Messa
                     }
                 }
             }
-            LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
+            LOGGER.debug("{}: Receiver task terminates after receiving {} messages.", name, count);
         }
 
         @Override

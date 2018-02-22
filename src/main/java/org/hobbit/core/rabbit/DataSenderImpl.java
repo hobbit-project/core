@@ -57,14 +57,20 @@ public class DataSenderImpl implements DataSender {
     private final int maxMessageSize;
     private final int deliveryMode;
     private final DataSenderConfirmHandler confirmHandler;
+    private final String name;
 
     protected DataSenderImpl(RabbitQueue queue, IdGenerator idGenerator, int messageSize, int deliveryMode,
-            int messageConfirmBuffer) {
+            int messageConfirmBuffer, String name) {
         this.queue = queue;
         this.idGenerator = idGenerator;
         this.messageSize = messageSize;
         this.maxMessageSize = 2 * messageSize;
         this.deliveryMode = deliveryMode;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = "DS@" + Integer.toHexString(hashCode());
+        }
 
         if (messageConfirmBuffer > 0) {
             try {
@@ -169,7 +175,7 @@ public class DataSenderImpl implements DataSender {
                     Thread.sleep(200);
                 }
             } catch (AlreadyClosedException e) {
-                LOGGER.info("The queue is already closed. Assuming that all messages have been consumed.");
+                LOGGER.info("{}: The queue is already closed. Assuming that all messages have been consumed.", name);
             } catch (Exception e) {
                 LOGGER.warn(
                         "Exception while trying to check whether all messages have been consumed. It will be ignored.",
@@ -204,6 +210,7 @@ public class DataSenderImpl implements DataSender {
         protected int messageSize = DEFAULT_MESSAGE_SIZE;
         protected int messageConfirmBuffer = DEFAULT_MESSAGE_BUFFER_SIZE;
         protected int deliveryMode = DEFAULT_DELIVERY_MODE;
+        protected String name = null;
 
         public Builder() {
         };
@@ -297,6 +304,11 @@ public class DataSenderImpl implements DataSender {
             return this;
         }
 
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
         /**
          * Builds the {@link DataReceiverImpl} instance with the previously given
          * information.
@@ -316,7 +328,7 @@ public class DataSenderImpl implements DataSender {
                     queue = factory.createDefaultRabbitQueue(queueName);
                 }
             }
-            return new DataSenderImpl(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer);
+            return new DataSenderImpl(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer, name);
         }
     }
 
@@ -343,7 +355,7 @@ public class DataSenderImpl implements DataSender {
 
         public synchronized void sendDataWithConfirmation(BasicProperties properties, byte[] data) throws IOException {
             try {
-                LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
+                LOGGER.trace("{}:\tavailable\t{}", name,
                         maxBufferedMessageCount.availablePermits());
                 maxBufferedMessageCount.acquire();
             } catch (InterruptedException e) {
@@ -365,7 +377,7 @@ public class DataSenderImpl implements DataSender {
             // data
             synchronized (queue.channel) {
                 long sequenceNumber = queue.channel.getNextPublishSeqNo();
-                LOGGER.trace("{}\tsending\t{}", DataSenderImpl.this.toString(), sequenceNumber);
+                LOGGER.trace("{}:\tsending\t{}", name, sequenceNumber);
                 unconfirmedMsgs.put(sequenceNumber, message);
                 try {
                     sendData(message.properties, message.data);
@@ -387,7 +399,7 @@ public class DataSenderImpl implements DataSender {
                     permits = negativeMsgs.size();
                     negativeMsgs.clear();
                     successfullySubmitted += permits;
-                    LOGGER.trace("{}\tack\t{}+\t{}", DataSenderImpl.this.toString(), deliveryTag,
+                    LOGGER.trace("{}:\tack\t{}+\t{}", name, deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 } else {
                     // Remove the message
@@ -395,7 +407,7 @@ public class DataSenderImpl implements DataSender {
                     permits = 1;
                     ++successfullySubmitted;
                     maxBufferedMessageCount.release();
-                    LOGGER.trace("{}\tack\t{}\t{}", DataSenderImpl.this.toString(), deliveryTag,
+                    LOGGER.trace("{}:\tack\t{}\t{}", name, deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 }
             }
@@ -405,7 +417,7 @@ public class DataSenderImpl implements DataSender {
         @Override
         public void handleNack(long deliveryTag, boolean multiple) throws IOException {
             synchronized (unconfirmedMsgs) {
-                LOGGER.trace("nack\t{}{}", deliveryTag, (multiple ? "+" : ""));
+                LOGGER.trace("{}:\tnack\t{}{}", name, deliveryTag, (multiple ? "+" : ""));
                 if (multiple) {
                     // Resend all lost messages
                     SortedMap<Long, Message> negativeMsgs = unconfirmedMsgs.headMap(deliveryTag + 1);
@@ -431,7 +443,7 @@ public class DataSenderImpl implements DataSender {
             while (true) {
                 synchronized (unconfirmedMsgs) {
                     if (unconfirmedMsgs.size() == 0) {
-                        LOGGER.trace("sent {} messages.", successfullySubmitted);
+                        LOGGER.trace("{}: sent {} messages.", name, successfullySubmitted);
                         return;
                     }
                 }

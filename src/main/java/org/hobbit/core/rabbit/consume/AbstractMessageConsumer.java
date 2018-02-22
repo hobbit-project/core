@@ -41,12 +41,19 @@ public abstract class AbstractMessageConsumer extends DefaultConsumer implements
      */
     protected Channel channel;
 
-    public AbstractMessageConsumer(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs) {
+    protected String name;
+
+    public AbstractMessageConsumer(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs, String name) {
         super(channel);
         this.receiver = receiver;
         this.channel = channel;
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
         currentlyProcessedMessages = new Semaphore(maxParallelProcessedMsgs);
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = "Consumer@" + Integer.toHexString(hashCode());
+        }
     }
 
     @Override
@@ -79,7 +86,7 @@ public abstract class AbstractMessageConsumer extends DefaultConsumer implements
 
     public void waitForTermination() {
         try {
-            LOGGER.debug("Waiting data processing to finish... ( {} / {} free permits are available)",
+            LOGGER.debug("{}: Waiting data processing to finish... ( {} / {} free permits are available)", name,
                     currentlyProcessedMessages.availablePermits(), maxParallelProcessedMsgs);
             currentlyProcessedMessages.acquire(maxParallelProcessedMsgs);
         } catch (InterruptedException e) {

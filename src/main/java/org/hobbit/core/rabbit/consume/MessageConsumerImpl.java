@@ -27,7 +27,8 @@ import com.rabbitmq.client.Channel;
  * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
  *
  * @deprecated Has major problems receiving all the submitted data. Use
- *             {@link org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl} instead.
+ *             {@link org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl}
+ *             instead.
  */
 @Deprecated
 public class MessageConsumerImpl extends AbstractMessageConsumer {
@@ -52,19 +53,19 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
 
     private boolean oldFormatWarningPrinted = false;
 
-    public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
-    /*
-     * , int maxParallelHandledMessages
-     */
-    ) {
-        super(receiver, channel, maxParallelProcessedMsgs);
+    public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs) {
+        this(receiver, channel, maxParallelProcessedMsgs, null);
+    }
+
+    public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs, String name) {
+        super(receiver, channel, maxParallelProcessedMsgs, name);
     }
 
     protected boolean handleMessage(BasicProperties properties, byte[] body) throws IOException {
         // check if we have to handle the deprecated v1.0.0 format
         if ((properties.getCorrelationId() == null) && (properties.getMessageId() == null)) {
             if (!oldFormatWarningPrinted) {
-                LOGGER.info("Encountered old, deprecated message format!");
+                LOGGER.info("{}: Encountered old, deprecated message format!", name);
                 oldFormatWarningPrinted = true;
             }
             // In this old format, every incoming message is a single
@@ -160,9 +161,9 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
             // clear all remaining messages (they should have been removed
             // before. However, maybe a message has been sent a second time)
             state.messageBuffer.clear();
-            LOGGER.trace("Received last message for stream \"{}\".", state.name);
+            LOGGER.trace("{}: Received last message for stream \"{}\".", name, state.name);
             if (state.messageBuffer.size() > 0) {
-                LOGGER.error("Closed the stream \"{}\" while there are still {} messages in its data buffer",
+                LOGGER.error("{}: Closed the stream \"{}\" while there are still {} messages in its data buffer", name,
                         state.name, state.messageBuffer.size());
             }
         }
@@ -186,7 +187,8 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
         synchronized (streamStats) {
             for (String name : streamStats.keySet()) {
                 if (streamStats.get(name).outputStream != null) {
-                    LOGGER.warn("Closing stream \"{}\" for which no end message has been received.", name);
+                    LOGGER.warn("{}: Closing stream \"{}\" for which no end message has been received.", this.name,
+                            name);
                     IOUtils.closeQuietly(streamStats.get(name).outputStream);
                     receiver.increaseErrorCount();
                 }
@@ -211,6 +213,7 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
     public static class Builder implements MessageConsumerBuilder {
 
         private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private String name = null;
 
         @Override
         public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -219,8 +222,14 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
         }
 
         @Override
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        @Override
         public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue) {
-            return new MessageConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs);
+            return new MessageConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs, name);
         }
 
     }

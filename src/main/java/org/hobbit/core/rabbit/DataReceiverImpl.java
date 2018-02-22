@@ -8,7 +8,6 @@ import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.consume.AbstractMessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumerBuilder;
-import org.hobbit.core.rabbit.consume.MessageConsumerImpl;
 import org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,26 +59,31 @@ public class DataReceiverImpl implements DataReceiver {
     // private MessageConsumerBuilder consumerBuilder; XXX could be used to
     // create the consumer later on
     private MessageConsumer consumer;
+    private String name;
 
     protected DataReceiverImpl(RabbitQueue queue, IncomingStreamHandler handler, MessageConsumerBuilder consumerBuilder,
-            int maxParallelProcessedMsgs) throws IOException {
+            int maxParallelProcessedMsgs, String name) throws IOException {
         this.queue = queue;
         this.dataHandler = handler;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = "DR@" + Integer.toHexString(hashCode());
+        }
         // consumer = new MessageConsumer(this, queue.channel,
         // maxParallelProcessedMsgs);
-        consumer = consumerBuilder.maxParallelProcessedMsgs(maxParallelProcessedMsgs).build(this, queue);
+        consumer = consumerBuilder.name(name).maxParallelProcessedMsgs(maxParallelProcessedMsgs).build(this, queue);
         // While defining the consumer we have to make sure that the auto
         // acknowledgement is turned off to make sure that the consumer will be
         // able to reject messages
         queue.channel.basicConsume(queue.name, false, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
         /*
-         * XXX It might be possible to adapt the receiver to an implementation
-         * that is more flexible, i.e., that offers a method to set the handler
-         * and another method that "starts" the receiving by defining the
-         * consumer (the two lines above). Note that setting the handler after
-         * the receiver has been started is not working since the consumer might
-         * encounter NullPointerExceptions
+         * XXX It might be possible to adapt the receiver to an implementation that is
+         * more flexible, i.e., that offers a method to set the handler and another
+         * method that "starts" the receiving by defining the consumer (the two lines
+         * above). Note that setting the handler after the receiver has been started is
+         * not working since the consumer might encounter NullPointerExceptions
          */
     }
 
@@ -119,8 +123,8 @@ public class DataReceiverImpl implements DataReceiver {
                     checks = 0;
                     if (LOGGER.isDebugEnabled() && ((iteration % 10) == 0)) {
                         LOGGER.debug(
-                                "Waiting for {} remaining messages to be processed and {} remaining streams to be closed. (check #{})",
-                                messageCount, openStreamsCount, iteration);
+                                "{}: Waiting for {} remaining messages to be processed and {} remaining streams to be closed. (check #{})",
+                                name, messageCount, openStreamsCount, iteration);
                     }
                 } else {
                     ++checks;
@@ -136,9 +140,9 @@ public class DataReceiverImpl implements DataReceiver {
     }
 
     /**
-     * A rude way to close the receiver. Note that this method directly closes
-     * the incoming queue and only notifies the internal consumer to stop its
-     * work but won't wait for the handler threads to finish their work.
+     * A rude way to close the receiver. Note that this method directly closes the
+     * incoming queue and only notifies the internal consumer to stop its work but
+     * won't wait for the handler threads to finish their work.
      */
     public void close() {
         IOUtils.closeQuietly(consumer);
@@ -165,6 +169,7 @@ public class DataReceiverImpl implements DataReceiver {
         private int maxParallelProcessedMsgs = AbstractMessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
         private RabbitQueueFactory factory;
         private MessageConsumerBuilder consumerBuilder;
+        private String name;
 
         public Builder() {
         };
@@ -194,9 +199,9 @@ public class DataReceiverImpl implements DataReceiver {
         }
 
         /**
-         * Method for providing the necessary information to create a queue if
-         * it has not been provided with the {@link #queue(RabbitQueue)} method.
-         * Note that this information is not used if a queue has been provided.
+         * Method for providing the necessary information to create a queue if it has
+         * not been provided with the {@link #queue(RabbitQueue)} method. Note that this
+         * information is not used if a queue has been provided.
          * 
          * @param factory
          *            the queue factory used to create a queue
@@ -211,12 +216,12 @@ public class DataReceiverImpl implements DataReceiver {
         }
 
         /**
-         * Sets the maximum number of incoming messages that are processed in
-         * parallel. Additional messages have to wait in the queue.
+         * Sets the maximum number of incoming messages that are processed in parallel.
+         * Additional messages have to wait in the queue.
          * 
          * @param maxParallelProcessedMsgs
-         *            the maximum number of incoming messages that are processed
-         *            in parallel
+         *            the maximum number of incoming messages that are processed in
+         *            parallel
          * @return this builder instance
          */
         public Builder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -237,20 +242,24 @@ public class DataReceiverImpl implements DataReceiver {
             return this;
         }
 
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
         /**
-         * Builds the {@link DataReceiverImpl} instance with the previously
-         * given information.
+         * Builds the {@link DataReceiverImpl} instance with the previously given
+         * information.
          * 
          * @return The newly created DataReceiver instance
          * @throws IllegalStateException
-         *             if the dataHandler is missing or if neither a queue nor
-         *             the information needed to create a queue have been
-         *             provided.
+         *             if the dataHandler is missing or if neither a queue nor the
+         *             information needed to create a queue have been provided.
          * @throws IOException
-         *             if an exception is thrown while creating a new queue or
-         *             if the given queue can not be configured by the newly
-         *             created DataReceiver. <b>Note</b> that in the latter case
-         *             the queue will be closed.
+         *             if an exception is thrown while creating a new queue or if the
+         *             given queue can not be configured by the newly created
+         *             DataReceiver. <b>Note</b> that in the latter case the queue will
+         *             be closed.
          */
         public DataReceiverImpl build() throws IllegalStateException, IOException {
             if (dataHandler == null) {
@@ -269,7 +278,7 @@ public class DataReceiverImpl implements DataReceiver {
                 consumerBuilder = QueueingConsumerBasedImpl.builder();
             }
             try {
-                return new DataReceiverImpl(queue, dataHandler, consumerBuilder, maxParallelProcessedMsgs);
+                return new DataReceiverImpl(queue, dataHandler, consumerBuilder, maxParallelProcessedMsgs, name);
             } catch (IOException e) {
                 IOUtils.closeQuietly(queue);
                 throw e;

@@ -19,22 +19,13 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.hobbit.core.Commands;
-import org.hobbit.core.Constants;
-import org.hobbit.core.TestConstants;
-import org.hobbit.core.components.dummy.DummyComponentExecutor;
-import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
-import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.TestUtils;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -50,7 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 @RunWith(Parameterized.class)
-public class TaskGeneratorSequencingTest extends AbstractTaskGenerator {
+public class TaskGeneratorSequencingTest extends TaskGeneratorTest {//extends AbstractTaskGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskGeneratorSequencingTest.class);
 
@@ -69,114 +60,26 @@ public class TaskGeneratorSequencingTest extends AbstractTaskGenerator {
         return testConfigs;
     }
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
-    private List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
-    private List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
-    private int terminationCount = 0;
-    private int numberOfGenerators;
-    private int numberOfMessages;
-    private Semaphore dataGensReady = new Semaphore(0);
-    private Semaphore systemReady = new Semaphore(0);
-    private Semaphore evalStoreReady = new Semaphore(0);
-    private long taskProcessingTime;
     private List<String> taskIds = new ArrayList<String>();
 
     public TaskGeneratorSequencingTest(int numberOfGenerators, int numberOfMessages, long taskProcessingTime) {
-        super(1);
-        this.numberOfGenerators = numberOfGenerators;
-        this.numberOfMessages = numberOfMessages;
-        this.taskProcessingTime = taskProcessingTime;
+        super(numberOfGenerators, numberOfMessages, 1, taskProcessingTime);
     }
 
-    private Semaphore processedMessages = new Semaphore(0);
+    private AtomicInteger processedMessages = new AtomicInteger(0);
 
     @Override
     public void close() throws IOException {
         super.close();
     }
 
-    @Test(timeout = 60000)
-    public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        this.generatorId = 0;
-
-        init();
-
-        Thread[] dataGenThreads = new Thread[numberOfGenerators];
-        DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
-        for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(0,1,numberOfMessages);
-            dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
-                @Override
-                public void run() {
-                    super.run();
-                    dataGeneratorTerminated();
-                }
-            };
-            dataGenThreads[i] = new Thread(dataGenExecutors[i]);
-            dataGenThreads[i].start();
-        }
-
-        DummySystemReceiver system = new DummySystemReceiver();
-        DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
-        Thread systemThread = new Thread(systemExecutor);
-        systemThread.start();
-
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
-        DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
-        Thread evalStoreThread = new Thread(evalStoreExecutor);
-        evalStoreThread.start();
-
-        dataGensReady.acquire(numberOfGenerators);
-        systemReady.acquire();
-        evalStoreReady.acquire();
-
-        try {
-            // start dummy
-            sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
-            sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
-
-            run();
-            sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
-            sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
-            System.out.println("processed messages: " + processedMessages.availablePermits());
-
-            for (int i = 0; i < dataGenThreads.length; ++i) {
-                dataGenThreads[i].join();
-            }
-            systemThread.join();
-            evalStoreThread.join();
-
-            for (int i = 0; i < dataGenExecutors.length; ++i) {
-                Assert.assertTrue(dataGenExecutors[i].isSuccess());
-            }
-            Assert.assertTrue(systemExecutor.isSuccess());
-            Assert.assertTrue(evalStoreExecutor.isSuccess());
-
-            List<String> receivedData = system.getReceivedtasks();
-            Collections.sort(sentTasks);
-            Collections.sort(receivedData);
-            Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
-            receivedData = evalStore.getExpectedResponses();
-            Collections.sort(expectedResponses);
-            Collections.sort(receivedData);
-            Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
-
-            // Make sure that all tasks have been processed sequentially, i.e.,
-            // that the pairs of ids are equal
-            for (int i = 0; i < taskIds.size(); i += 2) {
-                Assert.assertEquals(taskIds.get(i), taskIds.get(i + 1));
-            }
-        } finally {
-            close();
-        }
+    public void checkResults(DummySystemReceiver system, DummyEvalStoreReceiver evalStore)  {
+        super.checkResults(system, evalStore);
+        // Make sure that all tasks have been processed sequentially, i.e.,
+      // that the pairs of ids are equal
+      for (int i = 0; i < taskIds.size(); i += 2) {
+          Assert.assertEquals(taskIds.get(i), taskIds.get(i + 1));
+      }
     }
 
     @Override
@@ -187,47 +90,13 @@ public class TaskGeneratorSequencingTest extends AbstractTaskGenerator {
         Thread.sleep(taskProcessingTime);
         long timestamp = System.currentTimeMillis();
         sendTaskToSystemAdapter(taskIdString, data);
-        String dataString = RabbitMQUtils.readString(data);
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskIdString);
-        builder.append(dataString);
-        sentTasks.add(builder.toString());
+        sentTasks.add(TestUtils.concat(taskIdString, data));
 
         sendTaskToEvalStorage(taskIdString, timestamp, data);
-        builder.delete(0, builder.length());
-        builder.append(taskIdString);
-        builder.append(Long.toString(timestamp));
-        builder.append(dataString);
-        expectedResponses.add(builder.toString());
+        expectedResponses.add(TestUtils.concat(taskIdString, data, timestamp));
         // Add the Id a second time
         taskIds.add(taskIdString);
-        processedMessages.release();
-    }
-
-    protected synchronized void dataGeneratorTerminated() {
-        ++terminationCount;
-        if (terminationCount == numberOfGenerators) {
-            try {
-                sendToCmdQueue(Commands.DATA_GENERATION_FINISHED);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        LOGGER.info("received command {}", Commands.toString(command));
-        if (command == Commands.DATA_GENERATOR_READY_SIGNAL) {
-            dataGensReady.release();
-        }
-        if (command == Commands.SYSTEM_READY_SIGNAL) {
-            systemReady.release();
-        }
-        if (command == Commands.EVAL_STORAGE_READY_SIGNAL) {
-            evalStoreReady.release();
-        }
-        super.receiveCommand(command, data);
+        processedMessages.incrementAndGet();
     }
 
 }

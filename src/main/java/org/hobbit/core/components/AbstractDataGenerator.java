@@ -95,12 +95,12 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         }
 
         if (sender2TaskGen == null) {
-            sender2TaskGen = DataSenderImpl.builder()
+            sender2TaskGen = DataSenderImpl.builder().name("DG" + getGeneratorId() + "-DS-to-TG")
                     .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
                     .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
         }
         if (sender2System == null) {
-            sender2System = DataSenderImpl.builder()
+            sender2System = DataSenderImpl.builder().name("DG" + getGeneratorId() + "-DS-to-SA")
                     .idGenerator(new SteppingIdGenerator(generatorId, numberOfGenerators))
                     .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
         }

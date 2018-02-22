@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 import org.hobbit.core.Commands;
@@ -84,15 +85,15 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
-    private List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
+    protected List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
+    protected List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
     private int terminationCount = 0;
     private int numberOfGenerators;
     private int numberOfMessages;
     private Semaphore dataGensReady = new Semaphore(0);
     private Semaphore systemReady = new Semaphore(0);
     private Semaphore evalStoreReady = new Semaphore(0);
-    private long taskProcessingTime;
+    protected long taskProcessingTime;
 
     public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel,
             long taskProcessingTime) {
@@ -111,10 +112,11 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
 
     @Test(timeout = 60000)
     public void test() throws Exception {
+        Random random = new Random();
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Integer.toString(random.nextInt()));
 
         init();
 
@@ -172,22 +174,25 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Assert.assertTrue(systemExecutor.isSuccess());
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
-            Collections.sort(sentTasks);
-            List<String> receivedTasks = system.getReceivedtasks();
-            Collections.sort(receivedTasks);
-            Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
-                    receivedTasks.toArray(new String[receivedTasks.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
-            
-            List<String> receivedResponses = evalStore.getExpectedResponses();
-            Collections.sort(receivedResponses);
-            Collections.sort(expectedResponses);
-            Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
-                    receivedResponses.toArray(new String[receivedResponses.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
         } finally {
             close();
         }
+    }
+    
+    public void checkResults(DummySystemReceiver system, DummyEvalStoreReceiver evalStore)  {
+        Collections.sort(sentTasks);
+        List<String> receivedTasks = system.getReceivedtasks();
+        Collections.sort(receivedTasks);
+        Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
+                receivedTasks.toArray(new String[receivedTasks.size()]));
+        Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
+        
+        List<String> receivedResponses = evalStore.getExpectedResponses();
+        Collections.sort(receivedResponses);
+        Collections.sort(expectedResponses);
+        Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
+                receivedResponses.toArray(new String[receivedResponses.size()]));
+        Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
     }
 
     @Override

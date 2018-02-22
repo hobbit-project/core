@@ -18,8 +18,8 @@ import com.rabbitmq.client.AMQP.BasicProperties;
 public class PairedDataSender extends DataSenderImpl {
 
     protected PairedDataSender(RabbitQueue queue, IdGenerator idGenerator, int messageSize, int deliveryMode,
-            int messageConfirmBuffer) {
-        super(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer);
+            int messageConfirmBuffer, String name) {
+        super(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer, name);
     }
 
     public void sendData(InputStream[] is) throws IOException {
@@ -147,6 +147,11 @@ public class PairedDataSender extends DataSenderImpl {
             return this;
         }
 
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
         /**
          * Builds the {@link DataReceiverImpl} instance with the previously
          * given information.
@@ -166,7 +171,7 @@ public class PairedDataSender extends DataSenderImpl {
                     queue = factory.createDefaultRabbitQueue(queueName);
                 }
             }
-            return new PairedDataSender(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer);
+            return new PairedDataSender(queue, idGenerator, messageSize, deliveryMode, messageConfirmBuffer, name);
         }
     }
 

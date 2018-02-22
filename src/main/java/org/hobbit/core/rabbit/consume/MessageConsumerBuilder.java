@@ -22,4 +22,6 @@ public interface MessageConsumerBuilder {
     public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue);
     
     public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs);
+    
+    public MessageConsumerBuilder name(String name);
 }

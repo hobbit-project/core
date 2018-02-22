@@ -18,7 +18,7 @@ public class TestUtils {
      * @return
      */
     public static String concat(String taskId, byte[] data) {
-        return concat(taskId, 0, data, false, false);
+        return concat(taskId, 0, data, false, true);
     }
 
     /**

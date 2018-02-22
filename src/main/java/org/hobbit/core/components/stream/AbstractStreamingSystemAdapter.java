@@ -107,24 +107,26 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
         if (sender2EvalStore == null) {
             // We don't need to define an id generator since we will set the IDs
             // while sending data
-            sender2EvalStore = DataSenderImpl.builder()
-                    .queue(getFactoryForOutgoingDataQueues(), generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
+            sender2EvalStore = DataSenderImpl.builder().name("SA-DS-to-ES").queue(getFactoryForOutgoingDataQueues(),
+                    generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
         }
 
         if (maxParallelProcessedMsgs > 0) {
             if (dataReceiver == null) {
-                dataReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler())
-                        .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                        .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                dataReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler()).name("SA-DR-from-DG")
+                        .maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
+                                generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
+                        .build();
             } else {
                 // XXX here we could set the data handler if the data receiver
                 // would
                 // offer such a method
             }
             if (taskReceiver == null) {
-                taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler())
-                        .maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                        .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
+                taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler()).name("SA-DR-from-TG")
+                        .maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
+                                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
+                        .build();
             } else {
                 // XXX here we could set the data handler if the data receiver
                 // would
@@ -166,9 +168,9 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
     }
 
     /**
-     * Starts termination of the main thread of this system adapter. If a cause
-     * is given, it will be thrown causing an abortion from the main thread
-     * instead of a normal termination.
+     * Starts termination of the main thread of this system adapter. If a cause is
+     * given, it will be thrown causing an abortion from the main thread instead of
+     * a normal termination.
      * 
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
@@ -188,8 +190,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
     }
 
     /**
-     * This method sends the given result data for the task with the given task
-     * id to the evaluation storage.
+     * This method sends the given result data for the task with the given task id
+     * to the evaluation storage.
      * 
      * @param taskIdString
      *            the id of the task
@@ -215,8 +217,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
 
     /**
      * A simple internal handler class that calls
-     * {@link AbstractStreamingSystemAdapter#receiveGeneratedData(InputStream)}
-     * with the given {@link InputStream}.
+     * {@link AbstractStreamingSystemAdapter#receiveGeneratedData(InputStream)} with
+     * the given {@link InputStream}.
      * 
      * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
      *
@@ -244,8 +246,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
             try {
                 String taskId;
                 /*
-                 * Check whether this is the old format (backwards compatibility
-                 * to version 1.0.0 in which the data is preceded by its length)
+                 * Check whether this is the old format (backwards compatibility to version
+                 * 1.0.0 in which the data is preceded by its length)
                  */
                 if (streamId == null) {
                     // get taskId/streamId and timestamp

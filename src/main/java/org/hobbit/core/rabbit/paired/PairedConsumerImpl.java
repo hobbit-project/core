@@ -48,18 +48,18 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
 
     protected Map<String, DataReceiveState> streamStats = new HashMap<>();
 
-    public PairedConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
-    /*
-     * , int maxParallelHandledMessages
-     */
-    ) {
-        super(receiver, channel, maxParallelProcessedMsgs);
+    public PairedConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs) {
+        this(receiver, channel, maxParallelProcessedMsgs, null);
+    }
+
+    public PairedConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs, String name) {
+        super(receiver, channel, maxParallelProcessedMsgs, name);
     }
 
     protected boolean handleMessage(BasicProperties properties, byte[] body) throws IOException {
         // check if we have to handle the deprecated v0.0.1 format
         if ((properties.getCorrelationId() == null) || (properties.getMessageId() == null)) {
-            LOGGER.error("Received a message without the needed correlation and message Ids. It will be ignored.");
+            LOGGER.error("{}: Received a message without the needed correlation and message Ids. It will be ignored.", name);
             return true;
         }
         String streamId = properties.getCorrelationId();
@@ -167,10 +167,10 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
             // if this is the last message for this stream
             IOUtils.closeQuietly(state.outputStream);
             state.outputStream = null;
-            LOGGER.debug("Received last message for stream \"{}\".", state.name);
+            LOGGER.debug("{}: Received last message for stream \"{}\".", name, state.name);
             if (state.messageBuffer.size() > 0) {
-                LOGGER.error("Closed the stream \"{}\" while there are still {} messages in its data buffer",
-                        state.name, state.messageBuffer.size());
+                LOGGER.error("{}: Closed the stream \"{}\" while there are still {} messages in its data buffer",
+                        name, state.name, state.messageBuffer.size());
             }
         }
     }
@@ -193,7 +193,7 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
         synchronized (streamStats) {
             for (String name : streamStats.keySet()) {
                 if (streamStats.get(name).outputStream != null) {
-                    LOGGER.warn("Closing stream \"{}\" for which no end message has been received.", name);
+                    LOGGER.warn("{}: Closing stream \"{}\" for which no end message has been received.", this.name, name);
                     IOUtils.closeQuietly(streamStats.get(name).outputStream);
                     receiver.increaseErrorCount();
                 }
@@ -218,6 +218,7 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
     public static class Builder implements MessageConsumerBuilder {
 
         private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private String name = null;
 
         @Override
         public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -226,8 +227,14 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
         }
 
         @Override
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        @Override
         public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue) {
-            return new PairedConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs);
+            return new PairedConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs, name);
         }
 
     }
