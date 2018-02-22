@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.TestConstants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
@@ -29,9 +30,6 @@ import com.rabbitmq.client.ConnectionFactory;
 
 @RunWith(Parameterized.class)
 public class PairedDataStreamingTest implements RabbitQueueFactory, PairedStreamHandler {
-
-    // TODO find a better way to define the host
-    public static final String RABBIT_HOST = "192.168.99.100";
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -73,7 +71,7 @@ public class PairedDataStreamingTest implements RabbitQueueFactory, PairedStream
     @Before
     public void before() throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(RABBIT_HOST);
+        factory.setHost(TestConstants.RABBIT_HOST);
         connection = factory.newConnection();
     }
 

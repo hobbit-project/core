@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
+@SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
 public class SenderReceiverTest {
     
@@ -34,7 +35,6 @@ public class SenderReceiverTest {
 
     private static final String QUEUE_NAME = "sender-receiver-test";
 
-    @SuppressWarnings("deprecation")
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();

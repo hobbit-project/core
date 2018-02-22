@@ -29,8 +29,6 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests the workflow like the {@link TaskGeneratorTest} but makes sure that the
@@ -41,9 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 @RunWith(Parameterized.class)
-public class TaskGeneratorSequencingTest extends TaskGeneratorTest {//extends AbstractTaskGenerator {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskGeneratorSequencingTest.class);
+public class TaskGeneratorSequencingTest extends TaskGeneratorTest {
 
     @Parameters
     public static Collection<Object[]> data() {
