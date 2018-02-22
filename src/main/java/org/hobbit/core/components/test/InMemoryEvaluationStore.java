@@ -130,14 +130,20 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
         @Override
         public InputStream getActual() {
-            return new ByteArrayInputStream(actual != null ? actual : new byte[0]);
-
+            return new ByteArrayInputStream(actual != null ? actual : new byte[Long.BYTES]);
         }
 
         @Override
         public InputStream getExpected() {
-            return new ByteArrayInputStream(expected != null ? expected : new byte[0]);
-
+            return new ByteArrayInputStream(expected != null ? expected : new byte[Long.BYTES]);
+        }
+        
+        public byte[] getActualAsArray() {
+            return actual;
+        }
+        
+        public byte[] getExpectedAsArray() {
+            return expected;
         }
     }
 }

@@ -16,16 +16,17 @@
  */
 package org.hobbit.core.components;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
@@ -33,7 +34,6 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
-
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Assert;
@@ -65,8 +65,9 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     private int numberOfMessages = 30000;
     private Set<String> receivedResults = Collections.synchronizedSet(new HashSet<>());
     private Semaphore evalStoreReady = new Semaphore(0);
+    private List<Throwable> evalErrors = new ArrayList<>();
 
-    @Test(timeout = 60000)
+    @Test/*(timeout = 60000)*/
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
@@ -118,6 +119,9 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
             evalStoreThread.join();
 
             Assert.assertTrue(evalStoreExecutor.isSuccess());
+            if (evalErrors.size() > 0) {
+                throw new RuntimeException(evalErrors.get(0));
+            }
 
             String expectedTaskIds[] = expectedResults.keySet().toArray(new String[expectedResults.size()]);
             Arrays.sort(expectedTaskIds);
@@ -140,25 +144,33 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
             ResultPairImpl pair = expectedResults.get(taskId);
 
             if (expectedData.length == 0) {
-                Assert.assertNull(pair.getExpected());
+                Assert.assertNull(pair.getExpectedAsArray());
                 Assert.assertEquals(0, taskSentTimestamp);
             } else {
-                Assert.assertNotNull(pair.getExpected());
-                Assert.assertArrayEquals(IOUtils.toByteArray(pair.getExpected()), expectedData);
+                byte data[] = pair.getExpectedAsArray();
+                Assert.assertNotNull(data);
+                // cut off the timestamp at the beginning
+                data = Arrays.copyOfRange(data, Long.BYTES, data.length);
+                Assert.assertArrayEquals(data, expectedData);
             }
 
             if (receivedData.length == 0) {
-                Assert.assertNull(pair.getActual());
+                Assert.assertNull(pair.getActualAsArray());
                 Assert.assertEquals(0, responseReceivedTimestamp);
             } else {
-                Assert.assertNotNull(pair.getActual());
-                Assert.assertArrayEquals(IOUtils.toByteArray(pair.getActual()), receivedData);
+                byte data[] = pair.getActualAsArray();
+                Assert.assertNotNull(data);
+                // cut off the timestamp at the beginning
+                data = Arrays.copyOfRange(data, Long.BYTES, data.length);
+                Assert.assertArrayEquals(data, receivedData);
             }
 
             receivedResults.add(taskId);
         } catch (Throwable e) {
-            e.printStackTrace();
-            System.exit(1);
+            if (evalErrors.size() == 0) {
+                LOGGER.error("Catched a throwable while checking responses.", e);
+            }
+            evalErrors.add(e);
         }
     }
 

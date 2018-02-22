@@ -167,7 +167,7 @@ public class PairedConsumerImpl extends AbstractMessageConsumer {
             // if this is the last message for this stream
             IOUtils.closeQuietly(state.outputStream);
             state.outputStream = null;
-            LOGGER.debug("{}: Received last message for stream \"{}\".", name, state.name);
+            LOGGER.trace("{}: Received last message for stream \"{}\".", name, state.name);
             if (state.messageBuffer.size() > 0) {
                 LOGGER.error("{}: Closed the stream \"{}\" while there are still {} messages in its data buffer",
                         name, state.name, state.messageBuffer.size());

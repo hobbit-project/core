@@ -21,6 +21,8 @@ import java.io.InputStream;
 /**
  * Wrapper for an expected an actual result. The results are InputStreams
  * starting with timestamps followed by the expected or actual received data.
+ * <b>Note</b> that the results should never be {@code null} but the
+ * InputStreams might contain a timestamp = 0 and an empty data array.
  *
  * @author Ruben Taelman (ruben.taelman@ugent.be)
  */

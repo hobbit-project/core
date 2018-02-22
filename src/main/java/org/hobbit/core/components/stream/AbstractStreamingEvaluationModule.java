@@ -189,16 +189,16 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
                 long taskSentTimestamp = 0;
                 long responseReceivedTimestamp = 0;
                 try {
-                    if (streams[AbstractEvaluationStorage.EXPECTED_RESPONSE_STREAM_ID].available() > 0) {
-                        taskSentTimestamp = RabbitMQUtils
-                                .readLong(streams[AbstractEvaluationStorage.EXPECTED_RESPONSE_STREAM_ID]);
-                    }
-                    if (streams[AbstractEvaluationStorage.RECEIVED_RESPONSE_STREAM_ID].available() > 0) {
-                        responseReceivedTimestamp = RabbitMQUtils
-                                .readLong(streams[AbstractEvaluationStorage.RECEIVED_RESPONSE_STREAM_ID]);
-                    }
+                    taskSentTimestamp = RabbitMQUtils
+                            .readLong(streams[AbstractEvaluationStorage.EXPECTED_RESPONSE_STREAM_ID]);
                 } catch (Exception e) {
-                    LOGGER.error("Couldn't read timestamp.");
+//                    LOGGER.error("Couldn't read timestamp.", e);
+                }
+                try {
+                    responseReceivedTimestamp = RabbitMQUtils
+                            .readLong(streams[AbstractEvaluationStorage.RECEIVED_RESPONSE_STREAM_ID]);
+                } catch (Exception e) {
+//                    LOGGER.error("Couldn't read timestamp.", e);
                 }
                 try {
                     evaluateResponse(streams[AbstractEvaluationStorage.EXPECTED_RESPONSE_STREAM_ID],
