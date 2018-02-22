@@ -1,9 +1,8 @@
 package org.hobbit.core.rabbit.consume;
 
+import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
-
-import com.rabbitmq.client.Channel;
 
 /**
  * Interface of a builder class that can create a {@link MessageConsumer} instance.
@@ -17,10 +16,10 @@ public interface MessageConsumerBuilder {
      * Builds a consumer for the given {@link DataReceiver}
      * 
      * @param receiver
-     * @param channel
+     * @param queue
      * @return
      */
-    public MessageConsumer build(DataReceiverImpl receiver, Channel channel);
+    public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue);
     
     public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs);
 }

@@ -16,48 +16,41 @@ import org.hobbit.core.data.DataReceiveState;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.QueueingConsumer;
 
-/**
- * 
- * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
- *
- * @deprecated Has major problems receiving all the submitted data. Use
- *             {@link org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl} instead.
- */
-@Deprecated
-public class MessageConsumerImpl extends AbstractMessageConsumer {
+public class QueueingConsumerBasedImpl extends QueueingConsumer implements MessageConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MessageConsumerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueueingConsumerBasedImpl.class);
 
     private static final int MAX_MESSAGE_BUFFER_SIZE = 50;
-    // private static final int MAX_CLOSED_STREAM_BUFFER_SIZE = 100;
     /**
-     * Default value of the {@link #maxParallelProcessedMsgs} attribute.
+     * The {@link DataReceiver} which is using this consumer.
      */
-    protected static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-    // public static final int NO_MAX_HANDLING = -1;
-
-    /**
-     * Semaphore used to control the number of messages that can be processed in
-     * parallel.
-     */
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    protected DataReceiver receiver;
+    
+    private ExecutorService executor;
 
     protected Map<String, DataReceiveState> streamStats = new HashMap<>();
 
+    protected RabbitQueue queue;
+    private int errorCount = 0;
+    private TerminatableRunnable receiverTask;
+    private Thread receiverThread;
     private boolean oldFormatWarningPrinted = false;
 
-    public MessageConsumerImpl(DataReceiver receiver, Channel channel, int maxParallelProcessedMsgs
-    /*
-     * , int maxParallelHandledMessages
-     */
-    ) {
-        super(receiver, channel, maxParallelProcessedMsgs);
+    public QueueingConsumerBasedImpl(DataReceiver receiver, RabbitQueue queue, int maxParallelProcessedMsgs) {
+        super(queue.channel);
+        this.receiver = receiver;
+        this.queue = queue;
+        receiverTask = buildMsgReceivingTask(this);
+        receiverThread = new Thread(receiverTask);
+        receiverThread.start();
+        executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
     }
 
     protected boolean handleMessage(BasicProperties properties, byte[] body) throws IOException {
@@ -195,13 +188,45 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
     }
 
     public void waitForTermination() {
-        super.waitForTermination();
+        receiverTask.terminate();
+        // Try to wait for the receiver task to finish
         try {
-            executor.shutdown();
-            executor.awaitTermination(30, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            LOGGER.error("Interrupted while waiting for termination.", e);
+            receiverThread.join();
+        } catch (Exception e) {
+            LOGGER.error("Exception while waiting for termination of receiver task. Closing receiver.", e);
         }
+        // After the receiver task finished, no new tasks are added to the
+        // executor. Now we can ask the executor to shut down.
+        executor.shutdown();
+        try {
+            executor.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            LOGGER.error("Exception while waiting for termination. Closing receiver.", e);
+        }
+    }
+
+    public void finishProcessing() throws InterruptedException {
+    }
+
+    public synchronized void increaseErrorCount() {
+        ++errorCount;
+    }
+
+    public int getErrorCount() {
+        return errorCount;
+    }
+
+    /**
+     * This factory method creates a runnable task that uses the given consumer to
+     * receive incoming messages.
+     * 
+     * @param consumer
+     *            the consumer that can be used to receive messages
+     * @return a Runnable instance that will handle incoming messages as soon as it
+     *         will be executed
+     */
+    protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
+        return new MsgReceivingTask(consumer);
     }
 
     public static Builder builder() {
@@ -210,7 +235,7 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
 
     public static class Builder implements MessageConsumerBuilder {
 
-        private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private int maxParallelProcessedMsgs = AbstractMessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
 
         @Override
         public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -220,9 +245,56 @@ public class MessageConsumerImpl extends AbstractMessageConsumer {
 
         @Override
         public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue) {
-            return new MessageConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs);
+            return new QueueingConsumerBasedImpl(receiver, queue, maxParallelProcessedMsgs);
         }
 
+    }
+
+    protected class MsgReceivingTask implements TerminatableRunnable {
+
+        private QueueingConsumer consumer;
+        private boolean runFlag = true;
+
+        public MsgReceivingTask(QueueingConsumer consumer) {
+            this.consumer = consumer;
+        }
+
+        @Override
+        public void run() {
+            int count = 0;
+            Delivery delivery = null;
+            while (runFlag || (queue.messageCount() > 0) || (delivery != null)) {
+                try {
+                    delivery = consumer.nextDelivery(3000);
+                } catch (Exception e) {
+                    LOGGER.error("Exception while waiting for delivery.", e);
+                    increaseErrorCount();
+                }
+                if (delivery != null) {
+                    try {
+                        if (handleMessage(delivery.getProperties(), delivery.getBody())) {
+                            queue.channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+                            ++count;
+                        } else {
+                            queue.channel.basicReject(delivery.getEnvelope().getDeliveryTag(), true);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Got exception while trying to process incoming data.", e);
+                    }
+                }
+            }
+            LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
+        }
+
+        @Override
+        public void terminate() {
+            runFlag = false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return !runFlag;
+        }
     }
 
 }

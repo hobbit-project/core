@@ -5,9 +5,11 @@ import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.consume.AbstractMessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumerBuilder;
 import org.hobbit.core.rabbit.consume.MessageConsumerImpl;
+import org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class DataReceiverImpl implements DataReceiver {
         this.dataHandler = handler;
         // consumer = new MessageConsumer(this, queue.channel,
         // maxParallelProcessedMsgs);
-        consumer = consumerBuilder.maxParallelProcessedMsgs(maxParallelProcessedMsgs).build(this, queue.channel);
+        consumer = consumerBuilder.maxParallelProcessedMsgs(maxParallelProcessedMsgs).build(this, queue);
         // While defining the consumer we have to make sure that the auto
         // acknowledgement is turned off to make sure that the consumer will be
         // able to reject messages
@@ -126,7 +128,6 @@ public class DataReceiverImpl implements DataReceiver {
                 Thread.sleep(200);
                 ++iteration;
             }
-            ;
             consumer.waitForTermination();
         } catch (Exception e) {
             LOGGER.error("Exception while waiting for remaining data to be processed.", e);
@@ -140,8 +141,8 @@ public class DataReceiverImpl implements DataReceiver {
      * work but won't wait for the handler threads to finish their work.
      */
     public void close() {
-        IOUtils.closeQuietly(queue);
         IOUtils.closeQuietly(consumer);
+        IOUtils.closeQuietly(queue);
     }
 
     /**
@@ -161,7 +162,7 @@ public class DataReceiverImpl implements DataReceiver {
         private IncomingStreamHandler dataHandler;
         private RabbitQueue queue;
         private String queueName;
-        private int maxParallelProcessedMsgs = MessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private int maxParallelProcessedMsgs = AbstractMessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
         private RabbitQueueFactory factory;
         private MessageConsumerBuilder consumerBuilder;
 
@@ -265,7 +266,7 @@ public class DataReceiverImpl implements DataReceiver {
             }
             // If there is no consumer builder use the default implementation
             if (consumerBuilder == null) {
-                consumerBuilder = MessageConsumerImpl.builder();
+                consumerBuilder = QueueingConsumerBasedImpl.builder();
             }
             try {
                 return new DataReceiverImpl(queue, dataHandler, consumerBuilder, maxParallelProcessedMsgs);

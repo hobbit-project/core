@@ -16,9 +16,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.DataReceiveState;
+import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.consume.AbstractMessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumer;
 import org.hobbit.core.rabbit.consume.MessageConsumerBuilder;
 import org.slf4j.Logger;
@@ -27,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 
-public class PairedConsumerImpl extends MessageConsumer {
+public class PairedConsumerImpl extends AbstractMessageConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PairedConsumerImpl.class);
 
@@ -215,7 +217,7 @@ public class PairedConsumerImpl extends MessageConsumer {
 
     public static class Builder implements MessageConsumerBuilder {
 
-        private int maxParallelProcessedMsgs = MessageConsumer.DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
+        private int maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
 
         @Override
         public MessageConsumerBuilder maxParallelProcessedMsgs(int maxParallelProcessedMsgs) {
@@ -224,8 +226,8 @@ public class PairedConsumerImpl extends MessageConsumer {
         }
 
         @Override
-        public MessageConsumer build(DataReceiverImpl receiver, Channel channel) {
-            return new PairedConsumerImpl(receiver, channel, maxParallelProcessedMsgs);
+        public MessageConsumer build(DataReceiverImpl receiver, RabbitQueue queue) {
+            return new PairedConsumerImpl(receiver, queue.channel, maxParallelProcessedMsgs);
         }
 
     }

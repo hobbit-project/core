@@ -233,9 +233,9 @@ public class DataSenderImpl implements DataSender {
         }
 
         /**
-         * Method for providing the necessary information to create a queue if
-         * it has not been provided with the {@link #queue(RabbitQueue)} method.
-         * Note that this information is not used if a queue has been provided.
+         * Method for providing the necessary information to create a queue if it has
+         * not been provided with the {@link #queue(RabbitQueue)} method. Note that this
+         * information is not used if a queue has been provided.
          * 
          * @param factory
          *            the queue factory used to create a queue
@@ -250,8 +250,8 @@ public class DataSenderImpl implements DataSender {
         }
 
         /**
-         * Sets the size of the messages that will be send. Note that the
-         * maximum size of a message can be 2 * the given value.
+         * Sets the size of the messages that will be send. Note that the maximum size
+         * of a message can be 2 * the given value.
          * 
          * @param messageSize
          *            the size of the messages that will be send
@@ -265,13 +265,13 @@ public class DataSenderImpl implements DataSender {
         /**
          * <p>
          * Sets the number of messages that are buffered while waiting for a
-         * confirmation that they have been received by the broker. Note that if
-         * the message buffer has reached is maximum size, the sender will block
-         * until confirmations are received.
+         * confirmation that they have been received by the broker. Note that if the
+         * message buffer has reached is maximum size, the sender will block until
+         * confirmations are received.
          * </p>
          * <p>
-         * If the given message buffer size is {@code <1} the usage of
-         * confirmation messages is turned off.
+         * If the given message buffer size is {@code <1} the usage of confirmation
+         * messages is turned off.
          * </p>
          * 
          * @param messageConfirmBuffer
@@ -284,10 +284,9 @@ public class DataSenderImpl implements DataSender {
         }
 
         /**
-         * Sets the delivery mode used for the RabbitMQ messages. Please have a
-         * look into the RabbitMQ documentation to see the different meanings of
-         * the values. By default, the sender uses
-         * {@link DataSenderImpl#DEFAULT_DELIVERY_MODE}.
+         * Sets the delivery mode used for the RabbitMQ messages. Please have a look
+         * into the RabbitMQ documentation to see the different meanings of the values.
+         * By default, the sender uses {@link DataSenderImpl#DEFAULT_DELIVERY_MODE}.
          * 
          * @param deliveryMode
          *            the delivery mode used for the RabbitMQ messages
@@ -299,13 +298,13 @@ public class DataSenderImpl implements DataSender {
         }
 
         /**
-         * Builds the {@link DataReceiverImpl} instance with the previously
-         * given information.
+         * Builds the {@link DataReceiverImpl} instance with the previously given
+         * information.
          * 
          * @return The newly created DataReceiver instance
          * @throws IllegalStateException
-         *             if neither a queue nor the information needed to create a
-         *             queue have been provided.
+         *             if neither a queue nor the information needed to create a queue
+         *             have been provided.
          * @throws IOException
          *             if an exception is thrown while creating a new queue.
          */
@@ -343,16 +342,20 @@ public class DataSenderImpl implements DataSender {
         }
 
         public synchronized void sendDataWithConfirmation(BasicProperties properties, byte[] data) throws IOException {
-            synchronized (unconfirmedMsgs) {
-                try {
-                    LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
-                            maxBufferedMessageCount.availablePermits());
-                    maxBufferedMessageCount.acquire();
-                } catch (InterruptedException e) {
-                    throw new IOException(
-                            "Interrupted while waiting for free buffer to store the message before sending.", e);
+            try {
+                LOGGER.trace("{}\tavailable\t{}", DataSenderImpl.this.toString(),
+                        maxBufferedMessageCount.availablePermits());
+                maxBufferedMessageCount.acquire();
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted while waiting for free buffer to store the message before sending.",
+                        e);
+            }
+            try {
+                synchronized (unconfirmedMsgs) {
+                    sendData_unsecured(new Message(properties, data));
                 }
-                sendData_unsecured(new Message(properties, data));
+            } finally {
+                maxBufferedMessageCount.release();
             }
         }
 
@@ -369,7 +372,6 @@ public class DataSenderImpl implements DataSender {
                 } catch (IOException e) {
                     // the message hasn't been sent, remove it from the set
                     unconfirmedMsgs.remove(sequenceNumber);
-                    maxBufferedMessageCount.release();
                     throw e;
                 }
             }
@@ -377,25 +379,27 @@ public class DataSenderImpl implements DataSender {
 
         @Override
         public void handleAck(long deliveryTag, boolean multiple) throws IOException {
+            int permits = 0;
             synchronized (unconfirmedMsgs) {
                 if (multiple) {
                     // Remove all acknowledged messages
                     SortedMap<Long, Message> negativeMsgs = unconfirmedMsgs.headMap(deliveryTag + 1);
-                    int ackMsgCount = negativeMsgs.size();
+                    permits = negativeMsgs.size();
                     negativeMsgs.clear();
-                    maxBufferedMessageCount.release(ackMsgCount);
-                    successfullySubmitted += ackMsgCount;
+                    successfullySubmitted += permits;
                     LOGGER.trace("{}\tack\t{}+\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 } else {
                     // Remove the message
                     unconfirmedMsgs.remove(deliveryTag);
+                    permits = 1;
                     ++successfullySubmitted;
                     maxBufferedMessageCount.release();
                     LOGGER.trace("{}\tack\t{}\t{}", DataSenderImpl.this.toString(), deliveryTag,
                             maxBufferedMessageCount.availablePermits());
                 }
             }
+            maxBufferedMessageCount.release(permits);
         }
 
         @Override
