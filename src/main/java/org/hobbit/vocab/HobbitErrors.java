@@ -50,11 +50,11 @@ public class HobbitErrors {
     public static final Resource BenchmarkCrashed = resource("BenchmarkCrashed");
     public static final Resource BenchmarkImageMissing = resource("BenchmarkImageMissing");
     public static final Resource BenchmarkCreationError = resource("BenchmarkCreationError");
+    public static final Resource ClusterNotHealthy = resource("ClusterNotHealthy");
     public static final Resource ExperimentTookTooMuchTime = resource("ExperimentTookTooMuchTime");
     public static final Resource SystemCrashed = resource("SystemCrashed");
     public static final Resource SystemImageMissing = resource("SystemImageMissing");
     public static final Resource SystemCreationError = resource("SystemCreationError");
     public static final Resource TerminatedByUser = resource("TerminatedByUser");
     public static final Resource UnexpectedError = resource("UnexpectedError");
-    public static final Resource ClusterNotHealthy = resource("ClusterNotHealthy");
 }

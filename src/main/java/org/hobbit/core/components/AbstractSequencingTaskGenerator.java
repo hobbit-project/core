@@ -79,13 +79,12 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     protected Channel ackChannel;
 
     public AbstractSequencingTaskGenerator() {
-        // TODO remove this 1 from the constructor
         super(1);
     }
-    // TODO reactivate this constructor
-    // public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
-    // super(numberOfMessagesInParallel);
-    // }
+
+//    public AbstractSequencingTaskGenerator(int numberOfMessagesInParallel) {
+//        super(numberOfMessagesInParallel);
+//    }
 
     @Override
     public void init() throws Exception {
@@ -120,7 +119,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
      */
     protected void handleAck(byte[] body) {
         String ackTaskId = RabbitMQUtils.readString(body);
-        LOGGER.trace("Received ack{}.", ackTaskId);
+        LOGGER.trace("Received ack {}.", ackTaskId);
         // Make sure that the task id is not changed while we work with it
         synchronized (this) {
             if ((seqTaskId != null) && (seqTaskId.equals(ackTaskId))) {
@@ -131,28 +130,30 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     }
 
     /**
-     * Sends the given task with the given task id and data to the system and
-     * blocks until an acknowledgement has been received for the task or the
-     * timeout has been reached. If an information is needed which of these two
-     * cases happened {@link #sendTaskToSystemAdapterInSequence(String, byte[])}
-     * should be used.
+     * Sends the given task with the given task id and data to the system and blocks
+     * until an acknowledgement has been received for the task or the timeout has
+     * been reached. If an information is needed which of these two cases happened
+     * {@link #sendTaskToSystemAdapterInSequence(String, byte[])} should be used.
      */
     @Override
     protected void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-        sendTaskToSystemAdapterInSequence(taskIdString, data);
+        if(!sendTaskToSystemAdapterInSequence(taskIdString, data)) {
+            LOGGER.info("Waiting for acknowledgement of task {} timed out. Moving on.", taskIdString);
+        }
     }
 
     /**
-     * Sends the given task with the given task id and data to the system and
-     * blocks until an acknowledgement has been received for the task or the
-     * timeout has been reached. The return value shows which of these two cases
-     * happened.
+     * Sends the given task with the given task id and data to the system and blocks
+     * until an acknowledgement has been received for the task or the timeout has
+     * been reached. The return value shows which of these two cases happened.
      *
-     * @param taskIdString the task id
-     * @param data the data of the task
+     * @param taskIdString
+     *            the task id
+     * @param data
+     *            the data of the task
      * @return <code>true</code> if the acknowledgement has been received,
-     *         <code>false</code> if the timeout has been reached or the method
-     *         has been interrupted.
+     *         <code>false</code> if the timeout has been reached or the method has
+     *         been interrupted.
      * @throws IOException
      *             if there is an error during the sending
      */
@@ -169,32 +170,14 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     }
 
     /**
-     * Method to set the task id for which the task generator will wait when
-     * calling {@link #waitForAck()}.
-     *
-     * @param taskId
-     *            id of the task for which the acknowledgement should be
-     *            received
-     *
-     * @deprecated It is not necessary anymore since its usage has been
-     *             integrated into the
-     *             {@link #sendTaskToSystemAdapterInSequence(String, byte[])}
-     *             method.
-     */
-    @Deprecated
-    protected void setTaskIdToWaitFor(String taskId) {
-        this.seqTaskId = taskId;
-    }
-
-    /**
      * Method to wait for the acknowledgement of a task with the given Id.
      *
      * @return <code>true</code> if the acknowledgement has been received,
-     *         <code>false</code> if the timeout has been reached or the method
-     *         has been interrupted.
+     *         <code>false</code> if the timeout has been reached or the method has
+     *         been interrupted.
      */
     private boolean waitForAck() {
-        LOGGER.trace("Waiting for ack{}.", seqTaskId);
+        LOGGER.trace("Waiting for ack {}.", seqTaskId);
         boolean ack = false;
         try {
             ack = taskIdMutex.tryAcquire(ackTimeout, TimeUnit.MILLISECONDS);
@@ -205,8 +188,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     }
 
     /**
-     * Setter for the maximum time the task generator waits for an
-     * acknowledgement.
+     * Setter for the maximum time the task generator waits for an acknowledgement.
      *
      * @param ackTimeout
      *            the new timeout in milliseconds

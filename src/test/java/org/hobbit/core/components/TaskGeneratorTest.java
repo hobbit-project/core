@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -93,6 +93,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     private Semaphore dataGensReady = new Semaphore(0);
     private Semaphore systemReady = new Semaphore(0);
     private Semaphore evalStoreReady = new Semaphore(0);
+    private AtomicInteger processedMessages = new AtomicInteger(0);
     protected long taskProcessingTime;
 
     public TaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel,
@@ -102,8 +103,6 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         this.numberOfMessages = numberOfMessages;
         this.taskProcessingTime = taskProcessingTime;
     }
-
-    private Semaphore processedMessages = new Semaphore(0);
 
     @Override
     public void close() throws IOException {
@@ -159,7 +158,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             run();
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
-            System.out.println("processed messages: " + processedMessages.availablePermits());
+            System.out.println("processed messages: " + processedMessages.get());
 
             for (int i = 0; i < dataGenThreads.length; ++i) {
                 dataGenThreads[i].join();
@@ -173,6 +172,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             Assert.assertTrue(systemExecutor.isSuccess());
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
+//            checkResults(system, evalStore);
         } finally {
             close();
         }
@@ -204,7 +204,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
 
         sendTaskToEvalStorage(taskIdString, timestamp, data);
         expectedResponses.add(TestUtils.concat(taskIdString, data, timestamp));
-        processedMessages.release();
+        processedMessages.incrementAndGet();
     }
 
     protected synchronized void dataGeneratorTerminated() {

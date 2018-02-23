@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -30,7 +31,8 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystem;
-import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.components.dummy.DummySystemReceiver;
+import org.hobbit.utils.TestUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,18 +64,22 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 5000, 1 });
+        testConfigs.add(new Object[] { 1, 10000, 1, 0 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-//        testConfigs.add(new Object[] { 1, 5000, 100 });
+//        testConfigs.add(new Object[] { 1, 10000, 100, 0 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 2, 5000, 1 });
-        // We use two data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 2, 5000, 100 });
-        // We use ten data generators without parallel message processing
-        testConfigs.add(new Object[] { 10, 500, 1 });
-        // We use ten data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 10, 500, 100 });
+        testConfigs.add(new Object[] { 2, 10000, 1, 0 });
+        // We use two data generators with parallel message processing (max
+        // 100)
+//        testConfigs.add(new Object[] { 2, 10000, 100, 0 });
+        // We use six data generators without parallel message processing
+        testConfigs.add(new Object[] { 6, 5000, 1, 0 });
+        // We use six data generators with parallel message processing (max 100)
+//        testConfigs.add(new Object[] { 6, 5000, 100, 0 });
+        // We use six data generators with parallel message processing (max 100)
+        // but with a processing time of 5s
+        testConfigs.add(new Object[] { 6, 200, 100, 500 });
         return testConfigs;
     }
 
@@ -88,14 +94,18 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
     private Semaphore dataGensReady = new Semaphore(0);
     private Semaphore systemReady = new Semaphore(0);
     private Semaphore evalStoreReady = new Semaphore(0);
+    private AtomicInteger processedMessages = new AtomicInteger(0);
+    protected long taskProcessingTime;
 
-    public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel) {
-        // TODO add me super(numberOfMessagesInParallel);
+    public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel,
+            long taskProcessingTime) {
+//        super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
+        this.taskProcessingTime = taskProcessingTime;
     }
 
-    @Test(timeout = 60000)
+    @Test/*(timeout = 60000)*/
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
@@ -103,7 +113,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, Long.toString(System.currentTimeMillis()));
 
         // Set the acknowledgement flag to true (read by the evaluation storage)
-        environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
+        environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, Boolean.TRUE.toString());
 
         init();
 
@@ -122,19 +132,22 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             dataGenThreads[i].start();
         }
 
-        DummySystem system = new DummySystem();
+        DummySystemReceiver system = new DummySystem();
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(true, true);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
 
         dataGensReady.acquire(numberOfGenerators);
+        System.out.println("data gen ready");
         systemReady.acquire();
+        System.out.println("system ready");
         evalStoreReady.acquire();
+        System.out.println("eval store ready");
 
         try {
             // start dummy
@@ -144,6 +157,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             run();
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
+            System.out.println("processed messages: " + processedMessages.get());
 
             for (int i = 0; i < dataGenThreads.length; ++i) {
                 dataGenThreads[i].join();
@@ -157,40 +171,39 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             Assert.assertTrue(systemExecutor.isSuccess());
             Assert.assertTrue(evalStoreExecutor.isSuccess());
 
-            Collections.sort(sentTasks);
-            List<String> receivedData = system.getReceivedtasks();
-            Collections.sort(receivedData);
-            Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
-            receivedData = evalStore.getExpectedResponses();
-            Collections.sort(receivedData);
-            Collections.sort(expectedResponses);
-            Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
-                    receivedData.toArray(new String[receivedData.size()]));
-            Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
+            checkResults(system, evalStore);
         } finally {
             close();
         }
+    }
+    
+    public void checkResults(DummySystemReceiver system, DummyEvalStoreReceiver evalStore)  {
+        Collections.sort(sentTasks);
+        List<String> receivedTasks = system.getReceivedtasks();
+        Collections.sort(receivedTasks);
+        Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
+                receivedTasks.toArray(new String[receivedTasks.size()]));
+        Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
+        
+        List<String> receivedResponses = evalStore.getExpectedResponses();
+        Collections.sort(receivedResponses);
+        Collections.sort(expectedResponses);
+        Assert.assertArrayEquals(expectedResponses.toArray(new String[expectedResponses.size()]),
+                receivedResponses.toArray(new String[receivedResponses.size()]));
+        Assert.assertEquals(numberOfGenerators * numberOfMessages, expectedResponses.size());
     }
 
     @Override
     protected void generateTask(byte[] data) throws Exception {
         String taskIdString = getNextTaskId();
-        sendTaskToSystemAdapterInSequence(taskIdString, data);
+        Thread.sleep(taskProcessingTime);
         long timestamp = System.currentTimeMillis();
-        String dataString = RabbitMQUtils.readString(data);
-        StringBuilder builder = new StringBuilder();
-        builder.append(taskIdString);
-        builder.append(dataString);
-        sentTasks.add(builder.toString());
+        sendTaskToSystemAdapter(taskIdString, data);
+        sentTasks.add(TestUtils.concat(taskIdString, data));
 
         sendTaskToEvalStorage(taskIdString, timestamp, data);
-        builder.delete(0, builder.length());
-        builder.append(taskIdString);
-        builder.append(Long.toString(timestamp));
-        builder.append(dataString);
-        expectedResponses.add(builder.toString());
+        expectedResponses.add(TestUtils.concat(taskIdString, data, timestamp));
+        processedMessages.incrementAndGet();
     }
 
     protected synchronized void dataGeneratorTerminated() {

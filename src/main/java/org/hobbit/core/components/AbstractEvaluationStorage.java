@@ -196,7 +196,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
             if (sendAcks) {
                 // Create channel for acknowledgements
                 ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
-                ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
+                ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+                ackChannel.exchangeDeclare(ackExchangeName, "fanout",
                         false, true, null);
             }
         }
