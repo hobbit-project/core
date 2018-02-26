@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
     /**
      * Map containing a mapping from task Ids to result pairs.
      */
-    private Map<String, ResultPair> results = new HashMap<String, ResultPair>();
+    private Map<String, ResultPair> results = Collections.synchronizedMap(new HashMap<String, ResultPair>());
 
     @Override
     public void receiveResponseData(String taskId, long timestamp, InputStream stream) {
