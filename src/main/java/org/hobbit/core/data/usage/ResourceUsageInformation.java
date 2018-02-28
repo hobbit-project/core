@@ -2,17 +2,30 @@ package org.hobbit.core.data.usage;
 
 public class ResourceUsageInformation {
 
+    private CpuStats cpuStats;
     private DiskStats diskStats;
     private MemoryStats memoryStats;
-    private CpuStats cpuStats;
     
     public ResourceUsageInformation() {
     }
     
-    public ResourceUsageInformation(DiskStats diskStats, MemoryStats memoryStats, CpuStats cpuStats) {
-        super();
+    public ResourceUsageInformation(CpuStats cpuStats, DiskStats diskStats, MemoryStats memoryStats) {
         this.diskStats = diskStats;
         this.memoryStats = memoryStats;
+        this.cpuStats = cpuStats;
+    }
+
+    /**
+     * @return the cpuStats
+     */
+    public CpuStats getCpuStats() {
+        return cpuStats;
+    }
+
+    /**
+     * @param cpuStats the cpuStats to set
+     */
+    public void setCpuStats(CpuStats cpuStats) {
         this.cpuStats = cpuStats;
     }
 
@@ -42,20 +55,6 @@ public class ResourceUsageInformation {
      */
     public void setMemoryStats(MemoryStats memoryStats) {
         this.memoryStats = memoryStats;
-    }
-
-    /**
-     * @return the cpuStats
-     */
-    public CpuStats getCpuStats() {
-        return cpuStats;
-    }
-
-    /**
-     * @param cpuStats the cpuStats to set
-     */
-    public void setCpuStats(CpuStats cpuStats) {
-        this.cpuStats = cpuStats;
     }
     
     public ResourceUsageInformation merge(ResourceUsageInformation other) {
@@ -100,6 +99,11 @@ public class ResourceUsageInformation {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("ResourceUsageInformation [");
+        if (cpuStats != null) {
+            builder.append("cpuStats=");
+            builder.append(cpuStats);
+            builder.append(", ");
+        }
         if (diskStats != null) {
             builder.append("diskStats=");
             builder.append(diskStats);
@@ -108,11 +112,6 @@ public class ResourceUsageInformation {
         if (memoryStats != null) {
             builder.append("memoryStats=");
             builder.append(memoryStats);
-            builder.append(", ");
-        }
-        if (cpuStats != null) {
-            builder.append("cpuStats=");
-            builder.append(cpuStats);
         }
         builder.append("]");
         return builder.toString();

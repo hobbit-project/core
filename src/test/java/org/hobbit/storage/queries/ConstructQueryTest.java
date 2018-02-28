@@ -55,6 +55,17 @@ public class ConstructQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
                 .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", SECOND_GRAPH_NAME), null });
 
+        // Construct experiment graph with data cube triples
+        testConfigs.add(new Object[] {
+                "org/hobbit/storage/queries/exampleDiagramExperiment.ttl", SparqlQueries
+                        .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getDiagramExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleDiagramExperiment.ttl",
+                SparqlQueries.getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", null),
+                "org/hobbit/storage/queries/getDiagramExperimentResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleDiagramExperiment.ttl", SparqlQueries
+                .getExperimentGraphQuery("http://w3id.org/hobbit/experiments#1516893771172", SECOND_GRAPH_NAME), null });
+
         // Construct shallow experiment graph
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleExperiment.ttl", SparqlQueries
                 .getShallowExperimentGraphQuery("http://w3id.org/hobbit/experiments#LinkingExp10", FIRST_GRAPH_NAME),

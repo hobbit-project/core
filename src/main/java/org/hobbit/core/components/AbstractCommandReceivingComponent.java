@@ -48,7 +48,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCommandReceivingComponent.class);
 
-    private static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
+    public static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
 
     /**
      * Name of this Docker container.
