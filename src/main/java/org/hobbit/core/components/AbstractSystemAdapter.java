@@ -66,8 +66,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      */
     private Semaphore causeMutex = new Semaphore(1);
     /**
-     * The maximum number of incoming messages of a single queue that are
-     * processed in parallel. Additional messages have to wait.
+     * The maximum number of incoming messages of a single queue that are processed
+     * in parallel. Additional messages have to wait.
      */
     private final int maxParallelProcessedMsgs;
     /**
@@ -100,8 +100,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * Constructor setting the maximum number of messages processed in parallel.
      *
      * @param maxParallelProcessedMsgs
-     *            The maximum number of incoming messages of a single queue that
-     *            are processed in parallel. Additional messages have to wait.
+     *            The maximum number of incoming messages of a single queue that are
+     *            processed in parallel. Additional messages have to wait.
      */
     public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
@@ -167,9 +167,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         } catch (InterruptedException e) {
             LOGGER.error("Interrupted while waiting to set the termination cause.");
         }
+        // Close receivers as soon as all messages have been received
         dataGenReceiver.closeWhenFinished();
         taskGenReceiver.closeWhenFinished();
-        sender2EvalStore.closeWhenFinished();
     }
 
     @Override
@@ -182,8 +182,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     }
 
     /**
-     * This method sends the given result data for the task with the given task
-     * id to the evaluation storage.
+     * This method sends the given result data for the task with the given task id
+     * to the evaluation storage.
      *
      * @param taskIdString
      *            the id of the task
@@ -206,9 +206,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     }
 
     /**
-     * Starts termination of the main thread of this system adapter. If a cause
-     * is given, it will be thrown causing an abortion from the main thread
-     * instead of a normal termination.
+     * Starts termination of the main thread of this system adapter. If a cause is
+     * given, it will be thrown causing an abortion from the main thread instead of
+     * a normal termination.
      * 
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
@@ -229,9 +229,12 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     @Override
     public void close() throws IOException {
+        // Make sure that the receivers are closed
         IOUtils.closeQuietly(dataGenReceiver);
         IOUtils.closeQuietly(taskGenReceiver);
-        IOUtils.closeQuietly(sender2EvalStore);
+        // Close the sender (we shouldn't close it before this point since we want to be
+        // sure that all results have been sent)
+        sender2EvalStore.closeWhenFinished();
         super.close();
     }
 }
