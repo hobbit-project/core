@@ -48,7 +48,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCommandReceivingComponent.class);
 
-    public static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 60000;
+    public static final long DEFAULT_CMD_RESPONSE_TIMEOUT = 300000;
 
     /**
      * Name of this Docker container.
@@ -87,6 +87,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Threadsafe JSON parser.
      */
     private Gson gson = new Gson();
+    /**
+     * Time the component waits for a response of the platform controller.
+     */
+    protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
     @Override
     public void init() throws Exception {
@@ -258,7 +262,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
-            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(DEFAULT_CMD_RESPONSE_TIMEOUT);
+            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(cmdResponseTimeout);
             Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
             if (delivery.getBody().length > 0) {
                 return RabbitMQUtils.readString(delivery.getBody());
@@ -301,6 +305,20 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             responseConsumer = new QueueingConsumer(cmdChannel);
             cmdChannel.basicConsume(responseQueueName, responseConsumer);
         }
+    }
+
+    /**
+     * @return the cmdResponseTimeout
+     */
+    public long getCmdResponseTimeout() {
+        return cmdResponseTimeout;
+    }
+
+    /**
+     * @param cmdResponseTimeout the cmdResponseTimeout to set
+     */
+    public void setCmdResponseTimeout(long cmdResponseTimeout) {
+        this.cmdResponseTimeout = cmdResponseTimeout;
     }
 
     @Override
