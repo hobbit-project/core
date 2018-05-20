@@ -18,8 +18,10 @@ package org.hobbit.core.run;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.Constants;
 import org.hobbit.core.components.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +35,6 @@ import org.slf4j.LoggerFactory;
 public class ComponentStarter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ComponentStarter.class);
-
-    /**
-     * Exit code that is used if the program has to terminate because of an
-     * internal error.
-     */
-    private static final int ERROR_EXIT_CODE = 1;
 
     private static Component component;
 
@@ -55,7 +51,7 @@ public class ComponentStarter {
         if (args.length < 1) {
             LOGGER.error("Not enough arguments. The name of a class implementing the "
                     + Component.class.getCanonicalName() + " interface was expected.");
-            System.exit(ERROR_EXIT_CODE);
+            System.exit(Constants.COMPONENT_STARTER_ERROR_EXIT_CODE);
         }
         addShutdownHook();
         boolean success = true;
@@ -73,17 +69,18 @@ public class ComponentStarter {
         }
 
         if (!success) {
-            System.exit(ERROR_EXIT_CODE);
+            System.exit(Constants.COMPONENT_STARTER_ERROR_EXIT_CODE);
+        } else if (forceTermination()) {
+            System.exit(0);
         }
     }
 
     /**
      * This method simply creates an instance of the given class by calling a
-     * constructor that needs no arguments and cats the newly created instance
-     * into a {@link Component} instance. Note that this method assumes that a)
-     * there is a constructor that needs no arguments to be executed and b) the
-     * class with the given name is implementing the {@link Constructor}
-     * interface.
+     * constructor that needs no arguments and cats the newly created instance into
+     * a {@link Component} instance. Note that this method assumes that a) there is
+     * a constructor that needs no arguments to be executed and b) the class with
+     * the given name is implementing the {@link Constructor} interface.
      *
      * @param className
      *            the name of the class implementing the {@link Component}
@@ -97,18 +94,18 @@ public class ComponentStarter {
      *             - If the constructor can not be accessed because of security
      *             policies.
      * @throws InstantiationException
-     *             - If the class with the given class name represents an
-     *             abstract class.
+     *             - If the class with the given class name represents an abstract
+     *             class.
      * @throws IllegalAccessException
      *             - If the Constructor object is enforcing Java language access
      *             control and the underlying constructor is inaccessible.
      * @throws IllegalArgumentException
      *             - If the number of actual and formal parameters differ; if an
-     *             unwrapping conversion for primitive arguments fails; or if,
-     *             after possible unwrapping, a parameter value cannot be
-     *             converted to the corresponding formal parameter type by a
-     *             method invocation conversion; if this constructor pertains to
-     *             an enum type. (Should not occur)
+     *             unwrapping conversion for primitive arguments fails; or if, after
+     *             possible unwrapping, a parameter value cannot be converted to the
+     *             corresponding formal parameter type by a method invocation
+     *             conversion; if this constructor pertains to an enum type. (Should
+     *             not occur)
      * @throws InvocationTargetException
      *             - If the constructor throws an exception.
      */
@@ -133,5 +130,19 @@ public class ComponentStarter {
                 closeComponent();
             }
         });
+    }
+
+    private static boolean forceTermination() {
+        Map<String, String> env = System.getenv();
+        if (env.containsKey(Constants.COMPONENT_STARTER_FORCE_EXIT_WHEN_TERMINATING_ENV_KEY)) {
+            String value = env.get(Constants.COMPONENT_STARTER_FORCE_EXIT_WHEN_TERMINATING_ENV_KEY);
+            try {
+                return Boolean.parseBoolean(value);
+            } catch (Exception e) {
+                LOGGER.error("Couldn't parse value of "
+                        + Constants.COMPONENT_STARTER_FORCE_EXIT_WHEN_TERMINATING_ENV_KEY + ". It will be ignored.", e);
+            }
+        }
+        return false;
     }
 }

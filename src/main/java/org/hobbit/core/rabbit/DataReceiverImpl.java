@@ -163,6 +163,7 @@ public class DataReceiverImpl implements DataReceiver {
 
         private QueueingConsumer consumer;
         private boolean runFlag = true;
+        private boolean terminatedFlag = false;
 
         public MsgReceivingTask(QueueingConsumer consumer) {
             this.consumer = consumer;
@@ -170,6 +171,7 @@ public class DataReceiverImpl implements DataReceiver {
 
         @Override
         public void run() {
+            terminatedFlag = false;
             int count = 0;
             Delivery delivery = null;
             while (runFlag || (queue.messageCount() > 0) || (delivery != null)) {
@@ -185,6 +187,7 @@ public class DataReceiverImpl implements DataReceiver {
                 }
             }
             LOGGER.debug("Receiver task terminates after receiving {} messages.", count);
+            terminatedFlag = true;
         }
 
         @Override
@@ -194,7 +197,7 @@ public class DataReceiverImpl implements DataReceiver {
 
         @Override
         public boolean isTerminated() {
-            return !runFlag;
+            return terminatedFlag;
         }
 
     }
