@@ -55,6 +55,10 @@ public final class Constants {
 
     public static final String ACKNOWLEDGEMENT_FLAG_KEY = "ACKNOWLEDGEMENT_FLAG";
 
+    public static final String HARDWARE_NUMBER_OF_NODES_KEY = "HOBBIT_HARDWARE_NODES";
+
+    public static final String HARDWARE_INFO_KEY = "HOBBIT_HARDWARE_INFO";
+
     // =============== RABBIT CONSTANTS ===============
 
     /**
@@ -111,6 +115,15 @@ public final class Constants {
     public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";
+    
+    // =============== COMPONENT STARTER CONSTANTS ===============
+
+    /**
+     * Exit code that is used if the program has to terminate because of an
+     * internal error.
+     */
+    public static final int COMPONENT_STARTER_ERROR_EXIT_CODE = -1;
+    public static final String COMPONENT_STARTER_FORCE_EXIT_WHEN_TERMINATING_ENV_KEY="COMPONENT_STARTER_FORCE_EXIT_WHEN_TERMINATING";
 
     // =============== OTHER CONSTANTS ===============
 

@@ -18,7 +18,6 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +135,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     public void handleData(byte[] data) {
                         ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
+                        LOGGER.trace("Received from task generator {}.", taskId);
                         byte[] taskData = RabbitMQUtils.readByteArray(buffer);
                         long timestamp = buffer.getLong();
                         receiveExpectedResponseData(taskId, timestamp, taskData);
@@ -163,6 +163,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     public void handleData(byte[] data) {
                         ByteBuffer buffer = ByteBuffer.wrap(data);
                         String taskId = RabbitMQUtils.readString(buffer);
+                        LOGGER.trace("Received from system {}.", taskId);
                         byte[] responseData = RabbitMQUtils.readByteArray(buffer);
                         long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
                         receiveResponseData(taskId, timestamp, responseData);
@@ -174,7 +175,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                             } catch (IOException e) {
                                 LOGGER.error("Error while sending acknowledgement.", e);
                             }
-                            LOGGER.trace("Sent ack{}.", taskId);
+                            LOGGER.trace("Sent ack {}.", taskId);
                         }
                     }
                 }).build();
