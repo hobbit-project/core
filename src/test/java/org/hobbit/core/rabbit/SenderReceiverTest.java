@@ -14,7 +14,6 @@ import org.apache.log4j.lf5.util.StreamUtils;
 import org.hobbit.core.TestConstants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.consume.MessageConsumerBuilder;
-import org.hobbit.core.rabbit.consume.MessageConsumerImpl;
 import org.hobbit.core.rabbit.consume.QueueingConsumerBasedImpl;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
-@SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
 public class SenderReceiverTest {
     
@@ -52,19 +50,20 @@ public class SenderReceiverTest {
         testConfigs.add(new Object[] { 2, 1, 50, 1, 500, QueueingConsumerBasedImpl.builder() });
         testConfigs.add(new Object[] { 1, 2, 50, 1, 500, QueueingConsumerBasedImpl.builder() });
 
-        testConfigs.add(new Object[] { 1, 1, 20, 1, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 1, 10000, 1, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 1, 10000, 100, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 2, 1, 10000, 1, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 2, 1, 10000, 100, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 2, 10000, 1, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 2, 10000, 100, 0, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 1, 1000, 100, 1000, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 2, 1, 1000, 100, 1000, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 2, 1000, 100, 1000, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 1, 50, 1, 500, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 2, 1, 50, 1, 500, MessageConsumerImpl.builder() });
-        testConfigs.add(new Object[] { 1, 2, 50, 1, 500, MessageConsumerImpl.builder() });
+//        Commented out since the MessageConsumerImpl class is deprecated
+//        testConfigs.add(new Object[] { 1, 1, 20, 1, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 1, 10000, 1, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 1, 10000, 100, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 2, 1, 10000, 1, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 2, 1, 10000, 100, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 2, 10000, 1, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 2, 10000, 100, 0, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 1, 1000, 100, 1000, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 2, 1, 1000, 100, 1000, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 2, 1000, 100, 1000, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 1, 50, 1, 500, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 2, 1, 50, 1, 500, MessageConsumerImpl.builder() });
+//        testConfigs.add(new Object[] { 1, 2, 50, 1, 500, MessageConsumerImpl.builder() });
         
         return testConfigs;
     }

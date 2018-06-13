@@ -110,8 +110,6 @@ public class DataReceiverImpl implements DataReceiver {
         long messageCount;
         int openStreamsCount;
         try {
-            messageCount = queue.messageCount();
-            openStreamsCount = consumer.getOpenStreamCount();
             int checks = 0;
             int iteration = 0;
             while (checks < CHECKS_BEFORE_CLOSING) {
