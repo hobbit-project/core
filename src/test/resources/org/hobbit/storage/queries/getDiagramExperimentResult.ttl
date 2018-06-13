@@ -242,7 +242,7 @@ bench:vos3	rdf:type	hobbit:SystemInstance ;
 	<http://purl.org/linked-data/cube#structure>	<http://w3id.org/bench#PrecisionStructure_for_1516893771172>;
 	<http://purl.org/dc/terms/subject>	<http://purl.org/linked-data/sdmx/2009/subject#2.9>;
 	<http://purl.org/dc/terms/publisher>	"Kleanthi Georgala for HOBBIT"@en;
-	<http://purl.org/dc/terms/issued>	"2018-01-25T16:16:00";
+	<http://purl.org/dc/terms/issued>	"2018-01-25T16:16:00Z";
 	<http://purl.org/dc/terms/description>	"Detailed evaluation of Precision performance for each SELECT SPARQL query"@en .
 
 <http://w3id.org/bench#PrecisionStructure_for_1516893771172>

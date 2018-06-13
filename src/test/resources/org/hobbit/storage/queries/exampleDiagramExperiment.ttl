@@ -77,8 +77,8 @@ exp:LinkingExp10 a hobbit:Experiment ;
   hobbit:involvesSystemInstance sys:limesV1;
   hobbit:involvesBenchmark bench:lance;
   hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
-  hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
-  hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
+  hobbit:startTime "2016-11-30T22:57:00Z"^^xsd:dateTime ;
+  hobbit:endTime "2016-11-30T23:01:00Z"^^xsd:dateTime ;
   hobbit:hobbitPlatformVersion "V1.3" ;
   hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
   bench:lanceDataFormat bench:RDF_XML;
@@ -319,7 +319,7 @@ bench:vos3	rdf:type	hobbit:SystemInstance ;
   hobbit:hasNetworkAdapters "...." ;
   hobbit:hasOS "Linux .." ;
   hobbit:hasFileSystem "..." ;
-  hobbit:hasCPUTypeCount ""^^xsd:int ;
+  hobbit:hasCPUTypeCount "-1"^^xsd:int ;
   hobbit:hasRAM "..." .
 
 # --- Challenge Task ---
@@ -353,7 +353,7 @@ bench:vos3	rdf:type	hobbit:SystemInstance ;
 	<http://purl.org/linked-data/cube#structure>	<http://w3id.org/bench#PrecisionStructure_for_1516893771172>;
 	<http://purl.org/dc/terms/subject>	<http://purl.org/linked-data/sdmx/2009/subject#2.9>;
 	<http://purl.org/dc/terms/publisher>	"Kleanthi Georgala for HOBBIT"@en;
-	<http://purl.org/dc/terms/issued>	"2018-01-25T16:16:00";
+	<http://purl.org/dc/terms/issued>	"2018-01-25T16:16:00Z";
 	<http://purl.org/dc/terms/description>	"Detailed evaluation of Precision performance for each SELECT SPARQL query"@en .
 
 <http://w3id.org/bench#PrecisionStructure_for_1516893771172>
