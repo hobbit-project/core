@@ -155,7 +155,6 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         super.init();
         Map<String, String> env = System.getenv();
         String queueName;
-
         if (expResponseReceiver == null) {
             queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
             if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
@@ -298,6 +297,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     int length = RabbitMQUtils.readInt(stream);
                     taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
                 }
+                LOGGER.trace("Received from task generator {}.", taskId);
 
                 receiveExpectedResponseData(taskId, timestamp, stream);
             } catch (IOException e) {
@@ -342,6 +342,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     int length = RabbitMQUtils.readInt(stream);
                     taskId = RabbitMQUtils.readString(RabbitMQUtils.readByteArray(stream, length));
                 }
+                LOGGER.trace("Received from system {}.", taskId);
                 try {
                     receiveResponseData(taskId, timestamp, stream);
                 } finally {

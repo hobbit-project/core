@@ -46,19 +46,6 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
      */
     private Semaphore terminateMutex = new Semaphore(0);
     /**
-     * The maximum number of incoming messages that are processed in parallel.
-     * Additional messages have to wait.
-     */
-    private final int maxParallelProcessedMsgs;
-    /**
-     * The RDF model containing the system parameters.
-     */
-    protected Model systemParamModel;
-
-    protected DataSender sender2EvalStore;
-    protected DataReceiver dataReceiver;
-    protected DataReceiver taskReceiver;
-    /**
      * The cause for an unusual termination.
      */
     private Exception cause;
@@ -66,21 +53,50 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
      * Mutex used to manage access to the {@link #cause} object.
      */
     private Semaphore causeMutex = new Semaphore(1);
+    /**
+     * The maximum number of incoming messages of a single queue that are processed
+     * in parallel. Additional messages have to wait.
+     */
+    private final int maxParallelProcessedMsgs;
+    /**
+     * Receiver for data coming from the data generator.
+     */
+    protected DataReceiver dataGenReceiver;
+    /**
+     * Receiver for tasks coming from the task generator.
+     */
+    protected DataReceiver taskGenReceiver;
+    /**
+     * Sender for sending messages from the benchmarked system to the evaluation
+     * storage.
+     */
+    protected DataSender sender2EvalStore;
+    /**
+     * The RDF model containing the system parameters.
+     */
+    protected Model systemParamModel;
 
     public AbstractStreamingSystemAdapter() {
         this(DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES);
     }
 
+    /**
+     * Constructor setting the maximum number of messages processed in parallel.
+     *
+     * @param maxParallelProcessedMsgs
+     *            The maximum number of incoming messages of a single queue that are
+     *            processed in parallel. Additional messages have to wait.
+     */
     public AbstractStreamingSystemAdapter(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
         defaultContainerType = Constants.CONTAINER_TYPE_SYSTEM;
     }
 
-    public AbstractStreamingSystemAdapter(DataSender sender2EvalStore, DataReceiver dataReceiver,
-            DataReceiver taskReceiver) {
+    public AbstractStreamingSystemAdapter(DataSender sender2EvalStore, DataReceiver dataGenReceiver,
+            DataReceiver taskGenReceiver) {
         this.sender2EvalStore = sender2EvalStore;
-        this.dataReceiver = dataReceiver;
-        this.taskReceiver = taskReceiver;
+        this.dataGenReceiver = dataGenReceiver;
+        this.taskGenReceiver = taskGenReceiver;
         defaultContainerType = Constants.CONTAINER_TYPE_SYSTEM;
         maxParallelProcessedMsgs = DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES;
     }
@@ -112,8 +128,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
         }
 
         if (maxParallelProcessedMsgs > 0) {
-            if (dataReceiver == null) {
-                dataReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler()).name("SA-DR-from-DG")
+            if (dataGenReceiver == null) {
+                dataGenReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedDataHandler()).name("SA-DR-from-DG")
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
                                 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
                         .build();
@@ -122,8 +138,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
                 // would
                 // offer such a method
             }
-            if (taskReceiver == null) {
-                taskReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler()).name("SA-DR-from-TG")
+            if (taskGenReceiver == null) {
+                taskGenReceiver = DataReceiverImpl.builder().dataHandler(new GeneratedTaskHandler()).name("SA-DR-from-TG")
                         .maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
                                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
                         .build();
@@ -143,8 +159,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
 
         terminateMutex.acquire();
         // wait until all messages have been read from the queue
-        dataReceiver.closeWhenFinished();
-        taskReceiver.closeWhenFinished();
+        dataGenReceiver.closeWhenFinished();
+        taskGenReceiver.closeWhenFinished();
         sender2EvalStore.closeWhenFinished();
         // Check whether the system should abort
         try {
@@ -209,8 +225,8 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(dataReceiver);
-        IOUtils.closeQuietly(taskReceiver);
+        IOUtils.closeQuietly(dataGenReceiver);
+        IOUtils.closeQuietly(taskGenReceiver);
         IOUtils.closeQuietly(sender2EvalStore);
         super.close();
     }

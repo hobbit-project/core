@@ -39,6 +39,13 @@ public abstract class AbstractSystemAdapter extends AbstractStreamingSystemAdapt
         super();
     }
 
+    /**
+     * Constructor setting the maximum number of messages processed in parallel.
+     *
+     * @param maxParallelProcessedMsgs
+     *            The maximum number of incoming messages of a single queue that are
+     *            processed in parallel. Additional messages have to wait.
+     */
     public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
         super(maxParallelProcessedMsgs);
     }

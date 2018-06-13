@@ -70,8 +70,6 @@ public class DataReceiverImpl implements DataReceiver {
         } else {
             this.name = "DR@" + Integer.toHexString(hashCode());
         }
-        // consumer = new MessageConsumer(this, queue.channel,
-        // maxParallelProcessedMsgs);
         consumer = consumerBuilder.name(name).maxParallelProcessedMsgs(maxParallelProcessedMsgs).build(this, queue);
         // While defining the consumer we have to make sure that the auto
         // acknowledgement is turned off to make sure that the consumer will be
