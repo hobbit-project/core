@@ -67,19 +67,19 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         testConfigs.add(new Object[] { 1, 10000, 1, 0 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-//        testConfigs.add(new Object[] { 1, 10000, 100, 0 });
+        // testConfigs.add(new Object[] { 1, 10000, 100, 0 });
         // We use two data generators without parallel message processing
         testConfigs.add(new Object[] { 2, 10000, 1, 0 });
         // We use two data generators with parallel message processing (max
         // 100)
-//        testConfigs.add(new Object[] { 2, 10000, 100, 0 });
+        // testConfigs.add(new Object[] { 2, 10000, 100, 0 });
         // We use six data generators without parallel message processing
         testConfigs.add(new Object[] { 6, 5000, 1, 0 });
         // We use six data generators with parallel message processing (max 100)
-//        testConfigs.add(new Object[] { 6, 5000, 100, 0 });
-        // We use six data generators with parallel message processing (max 100)
-        // but with a processing time of 5s
-        testConfigs.add(new Object[] { 6, 200, 100, 500 });
+        // testConfigs.add(new Object[] { 6, 5000, 100, 0 });
+        // We use six data generators creating 120 messages with parallel message
+        // processing (max 100) but with a processing time of 0.5s
+        testConfigs.add(new Object[] { 6, 20, 100, 500 });
         return testConfigs;
     }
 
@@ -99,13 +99,13 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
     public SequencingTaskGeneratorTest(int numberOfGenerators, int numberOfMessages, int numberOfMessagesInParallel,
             long taskProcessingTime) {
-//        super(numberOfMessagesInParallel);
+        // super(numberOfMessagesInParallel);
         this.numberOfGenerators = numberOfGenerators;
         this.numberOfMessages = numberOfMessages;
         this.taskProcessingTime = taskProcessingTime;
     }
 
-    @Test/*(timeout = 60000)*/
+    @Test(timeout = 120000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
@@ -176,15 +176,15 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             close();
         }
     }
-    
-    public void checkResults(DummySystemReceiver system, DummyEvalStoreReceiver evalStore)  {
+
+    public void checkResults(DummySystemReceiver system, DummyEvalStoreReceiver evalStore) {
         Collections.sort(sentTasks);
         List<String> receivedTasks = system.getReceivedtasks();
         Collections.sort(receivedTasks);
         Assert.assertArrayEquals(sentTasks.toArray(new String[sentTasks.size()]),
                 receivedTasks.toArray(new String[receivedTasks.size()]));
         Assert.assertEquals(numberOfGenerators * numberOfMessages, sentTasks.size());
-        
+
         List<String> receivedResponses = evalStore.getExpectedResponses();
         Collections.sort(receivedResponses);
         Collections.sort(expectedResponses);
