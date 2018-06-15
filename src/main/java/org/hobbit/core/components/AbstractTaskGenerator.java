@@ -17,7 +17,6 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -29,6 +28,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +58,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
 
     /**
-     * Mutex used to wait for the start signal after the component has been
-     * started and initialized.
+     * Mutex used to wait for the start signal after the component has been started
+     * and initialized.
      */
     private Semaphore startTaskGenMutex = new Semaphore(0);
     /**
@@ -93,8 +93,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     protected boolean runFlag;
 
     /**
-     * Default constructor creating an {@link AbstractTaskGenerator} processing
-     * up to {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
+     * Default constructor creating an {@link AbstractTaskGenerator} processing up
+     * to {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
      * {@value #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES} messages in parallel.
      */
     public AbstractTaskGenerator() {
@@ -102,9 +102,9 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     }
 
     /**
-     * Constructor setting the maximum number of parallel processed messages.
-     * Note that this parameter has to be larger or equal to 1 or the
-     * {@link #init()} method will throw an exception. Setting
+     * Constructor setting the maximum number of parallel processed messages. Note
+     * that this parameter has to be larger or equal to 1 or the {@link #init()}
+     * method will throw an exception. Setting
      * <code>maxParallelProcessedMsgs=1</code> leads to the usage of a
      * {@link QueueingConsumer}.
      *
@@ -119,30 +119,10 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void init() throws Exception {
         super.init();
-        Map<String, String> env = System.getenv();
 
-        if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
-        }
+        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
         nextTaskId = generatorId;
-
-        if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
-        }
+        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
@@ -154,9 +134,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
             public void handleData(byte[] data) {
                 receiveGeneratedData(data);
             }
-        }).maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME))
-                .build();
+        }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
+                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
     }
 
     @Override
@@ -184,9 +163,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     /**
      * Generates a task from the given data, sends it to the system, takes the
-     * timestamp of the moment at which the message has been sent to the system
-     * and sends it together with the expected response to the evaluation
-     * storage.
+     * timestamp of the moment at which the message has been sent to the system and
+     * sends it together with the expected response to the evaluation storage.
      *
      * @param data
      *            incoming data generated by a data generator
@@ -221,14 +199,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     }
 
     /**
-     * This method sends the given data and the given timestamp of the task with
-     * the given task id to the evaluation storage.
+     * This method sends the given data and the given timestamp of the task with the
+     * given task id to the evaluation storage.
      *
      * @param taskIdString
      *            the id of the task
      * @param timestamp
-     *            the timestamp of the moment in which the task has been sent to
-     *            the system
+     *            the timestamp of the moment in which the task has been sent to the
+     *            system
      * @param data
      *            the expected response for the task with the given id
      * @throws IOException

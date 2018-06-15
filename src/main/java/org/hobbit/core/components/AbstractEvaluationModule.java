@@ -19,7 +19,6 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -29,6 +28,7 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,16 +72,8 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     public void init() throws Exception {
         super.init();
 
-        Map<String, String> env = System.getenv();
         // Get the experiment URI
-        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
-            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
-        } else {
-            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
-                    + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
+        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
 
         evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));

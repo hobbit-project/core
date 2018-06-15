@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +35,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.hobbit.vocab.HobbitErrors;
 import org.slf4j.Logger;
@@ -145,29 +145,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         // benchmark controllers should be able to accept broadcasts
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
-        Map<String, String> env = System.getenv();
         // Get the benchmark parameter model
-        if (env.containsKey(Constants.BENCHMARK_PARAMETERS_MODEL_KEY)) {
-            try {
-                benchmarkParamModel = RabbitMQUtils.readModel(env.get(Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
-            } catch (Exception e) {
-                LOGGER.error("Couldn't deserialize the given parameter model. Aborting.", e);
-            }
-        } else {
-            String errorMsg = "Couldn't get the expected parameter model from the variable "
-                    + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
+        benchmarkParamModel = EnvVariables.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
         // Get the experiment URI
-        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
-            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
-        } else {
-            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
-                    + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
+        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
     }
 
     @Override
