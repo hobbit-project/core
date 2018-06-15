@@ -21,7 +21,7 @@ public class EnvVariables {
      * function. The behavior in case of an error is defined by the given default
      * value and {@link Logger} objects. If a problem occurs and a {@link Logger} is
      * available, the error will be logged using the {@link Logger#error(String)}
-     * method. If excpetionWhenFailing is set to {@code true} an
+     * method. If exceptionWhenFailing is set to {@code true} an
      * {@link IllegalStateException} is thrown. Else, if a defaultValueFactory is
      * available, a default value will be returned. Otherwise {@code null} is
      * returned.
@@ -38,18 +38,18 @@ public class EnvVariables {
      *            error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static <T> T getVariableValue(String name, Function<String, T> conversion,
-            Supplier<T> defaultValueFactory, Logger logger, boolean excpetionWhenFailing) throws IllegalStateException {
+            Supplier<T> defaultValueFactory, Logger logger, boolean exceptionWhenFailing) throws IllegalStateException {
         Map<String, String> env = System.getenv();
         String errorMsg;
         Throwable error = null;
@@ -71,7 +71,7 @@ public class EnvVariables {
                 logger.error(errorMsg);
             }
         }
-        if (excpetionWhenFailing) {
+        if (exceptionWhenFailing) {
             if (error != null) {
                 throw new IllegalStateException(errorMsg, error);
             } else {
@@ -205,7 +205,7 @@ public class EnvVariables {
      *            be found or if an error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @param hasDefaultValue
@@ -213,13 +213,13 @@ public class EnvVariables {
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static String getStringValue(String name, String defaultValue, Logger logger,
-            boolean excpetionWhenFailing, boolean hasDefaultValue) throws IllegalStateException {
-        return getStringValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, excpetionWhenFailing);
+            boolean exceptionWhenFailing, boolean hasDefaultValue) throws IllegalStateException {
+        return getStringValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, exceptionWhenFailing);
     }
 
     /**
@@ -238,19 +238,19 @@ public class EnvVariables {
      *            error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static String getStringValue(String name, Supplier<String> defaultValueFactory, Logger logger,
-            boolean excpetionWhenFailing) throws IllegalStateException {
-        return getVariableValue(name, (s -> s), defaultValueFactory, logger, excpetionWhenFailing);
+            boolean exceptionWhenFailing) throws IllegalStateException {
+        return getVariableValue(name, (s -> s), defaultValueFactory, logger, exceptionWhenFailing);
     }
 
     /**
@@ -374,7 +374,7 @@ public class EnvVariables {
      *            be found or if an error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @param hasDefaultValue
@@ -382,13 +382,13 @@ public class EnvVariables {
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
-    protected static Model getModelValue(String name, Model defaultValue, Logger logger, boolean excpetionWhenFailing,
+    protected static Model getModelValue(String name, Model defaultValue, Logger logger, boolean exceptionWhenFailing,
             boolean hasDefaultValue) throws IllegalStateException {
-        return getModelValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, excpetionWhenFailing);
+        return getModelValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, exceptionWhenFailing);
     }
 
     /**
@@ -407,19 +407,19 @@ public class EnvVariables {
      *            error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static Model getModelValue(String name, Supplier<Model> defaultValueFactory, Logger logger,
-            boolean excpetionWhenFailing) throws IllegalStateException {
-        return getModelValue(name, defaultValueFactory, logger, excpetionWhenFailing);
+            boolean exceptionWhenFailing) throws IllegalStateException {
+        return getModelValue(name, defaultValueFactory, logger, exceptionWhenFailing);
     }
 
     /**
@@ -543,7 +543,7 @@ public class EnvVariables {
      *            be found or if an error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @param hasDefaultValue
@@ -551,14 +551,14 @@ public class EnvVariables {
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
-    protected static int getIntValue(String name, int defaultValue, Logger logger, boolean excpetionWhenFailing,
+    protected static int getIntValue(String name, int defaultValue, Logger logger, boolean exceptionWhenFailing,
             boolean hasDefaultValue) throws IllegalStateException {
         return getVariableValue(name, Integer::parseInt, hasDefaultValue ? (() -> defaultValue) : null, logger,
-                excpetionWhenFailing);
+                exceptionWhenFailing);
     }
 
     /**
@@ -577,19 +577,19 @@ public class EnvVariables {
      *            error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static int getIntValue(String name, Supplier<Integer> defaultValueFactory, Logger logger,
-            boolean excpetionWhenFailing) throws IllegalStateException {
-        return getIntValue(name, defaultValueFactory, logger, excpetionWhenFailing);
+            boolean exceptionWhenFailing) throws IllegalStateException {
+        return getIntValue(name, defaultValueFactory, logger, exceptionWhenFailing);
     }
 
     /**
@@ -713,7 +713,7 @@ public class EnvVariables {
      *            be found or if an error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @param hasDefaultValue
@@ -721,13 +721,13 @@ public class EnvVariables {
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static boolean getBooleanValue(String name, boolean defaultValue, Logger logger,
-            boolean excpetionWhenFailing, boolean hasDefaultValue) throws IllegalStateException {
-        return getBooleanValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, excpetionWhenFailing);
+            boolean exceptionWhenFailing, boolean hasDefaultValue) throws IllegalStateException {
+        return getBooleanValue(name, hasDefaultValue ? (() -> defaultValue) : null, logger, exceptionWhenFailing);
     }
 
     /**
@@ -746,18 +746,18 @@ public class EnvVariables {
      *            error occurs.
      * @param logger
      *            the {@link Logger} which will be used to log errors if they occur.
-     * @param excpetionWhenFailing
+     * @param exceptionWhenFailing
      *            flag indicating whether an exception should be thrown if an error
      *            occurs.
      * @return the variable value converted to the expected value or the default
      *         value if an error occurred and a default value is available.
      * @throws IllegalStateException
-     *             if excpetionWhenFailing is set to {@code true} and one of the
+     *             if exceptionWhenFailing is set to {@code true} and one of the
      *             following two errors occurs: 1) the variable is not available or
      *             2) the conversion function throws an exception.
      */
     protected static boolean getBooleanValue(String name, Supplier<Boolean> defaultValueFactory, Logger logger,
-            boolean excpetionWhenFailing) throws IllegalStateException {
+            boolean exceptionWhenFailing) throws IllegalStateException {
         return getVariableValue(name, (s -> {
             try {
                 return Boolean.parseBoolean(s);
@@ -768,7 +768,7 @@ public class EnvVariables {
                     throw e;
                 }
             }
-        }), defaultValueFactory, logger, excpetionWhenFailing);
+        }), defaultValueFactory, logger, exceptionWhenFailing);
     }
 
 }
