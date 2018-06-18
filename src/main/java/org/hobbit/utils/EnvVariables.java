@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.jena.rdf.model.Model;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 
 /**
@@ -419,7 +420,7 @@ public class EnvVariables {
      */
     protected static Model getModelValue(String name, Supplier<Model> defaultValueFactory, Logger logger,
             boolean exceptionWhenFailing) throws IllegalStateException {
-        return getModelValue(name, defaultValueFactory, logger, exceptionWhenFailing);
+        return getVariableValue(name, RabbitMQUtils::readModel, defaultValueFactory, logger, exceptionWhenFailing);
     }
 
     /**

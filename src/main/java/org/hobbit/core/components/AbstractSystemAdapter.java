@@ -113,7 +113,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         super.init();
 
         // Get the benchmark parameter model
-        systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY, ModelFactory.createDefaultModel(), LOGGER);
+        systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
+                () -> ModelFactory.createDefaultModel(), LOGGER);
 
         dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
