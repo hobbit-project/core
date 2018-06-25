@@ -57,6 +57,10 @@ public final class Constants {
 
     public static final String HARDWARE_NUMBER_OF_NODES_KEY = "HOBBIT_HARDWARE_NODES";
 
+    public static final String HARDWARE_NUMBER_OF_SYSTEM_NODES_KEY = "HOBBIT_HARDWARE_NODES_SYSTEM";
+
+    public static final String HARDWARE_NUMBER_OF_BENCHMARK_NODES_KEY = "HOBBIT_HARDWARE_NODES_BENCHMARK";
+
     public static final String HARDWARE_INFO_KEY = "HOBBIT_HARDWARE_INFO";
 
     // =============== RABBIT CONSTANTS ===============
