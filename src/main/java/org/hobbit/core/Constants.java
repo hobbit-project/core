@@ -115,7 +115,7 @@ public final class Constants {
     public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";
-    
+
     // =============== COMPONENT STARTER CONSTANTS ===============
 
     /**
@@ -138,5 +138,5 @@ public final class Constants {
     public static final String CONTAINER_TYPE_DATABASE = "data";
 
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
-    
+
 }
