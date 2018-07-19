@@ -17,7 +17,6 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -25,6 +24,7 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.utils.EnvVariables;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
@@ -41,29 +41,9 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     @Override
     public void init() throws Exception {
         super.init();
-        Map<String, String> env = System.getenv();
 
-        if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
-        }
-
-        if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
-        }
-        try {
-            numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(
-                    "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
-        }
+        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY);
+        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();

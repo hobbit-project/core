@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -34,6 +33,7 @@ import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,11 +124,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void init() throws Exception {
         super.init();
 
-        Map<String, String> env = System.getenv();
-        String queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-        }
+        String queueName = EnvVariables.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
                     @Override
@@ -142,20 +139,10 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-        }
-        boolean temp = false;
-        if (env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
-            try {
-                temp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
-            } catch (Exception e) {
-                LOGGER.error(
-                        "Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
-            }
-        }
-        final boolean receiveTimeStamp = temp;
+        queueName = EnvVariables.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+        final boolean receiveTimeStamp = EnvVariables.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
+                LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
@@ -180,10 +167,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-        }
+        queueName = EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(queueName));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
@@ -233,7 +218,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                                 if (result != null) {
                                     // Check whether the data array is null
                                     actualResultData = result.getData() != null ? result.getData() : new byte[0];
-                                     actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                                    actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
                                 } else {
                                     actualResultData = new byte[0];
                                     actualResultTimeStamp = RabbitMQUtils.writeLong(0);
@@ -252,15 +237,12 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 });
 
-        boolean sendAcks = false;
-        if (System.getenv().containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
-            sendAcks = Boolean.parseBoolean(System.getenv().getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
-            if (sendAcks) {
-                // Create channel for acknowledgements
-                ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
-                ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout",
-                        false, true, null);
-            }
+        boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
+        if (sendAcks) {
+            // Create channel for acknowledgements
+            ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
+            ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout", false,
+                    true, null);
         }
     }
 
