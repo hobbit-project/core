@@ -38,6 +38,7 @@ import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.paired.PairedDataSender;
 import org.hobbit.core.utils.SteppingIdGenerator;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,61 +154,45 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     @Override
     public void init() throws Exception {
         super.init();
-        Map<String, String> env = System.getenv();
-        String queueName;
         if (expResponseReceiver == null) {
-            queueName = Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-            if (env.containsKey(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-                queueName = env.get(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-            }
             expResponseReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                     .name("ES-DR-from-TG").dataHandler(new ExpectedResponseReceiver())
-                    .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
+                    .queue(getFactoryForIncomingDataQueues(),
+                            generateSessionQueueName(
+                                    EnvVariables.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                                            Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)))
+                    .build();
         } else {
             // XXX here we could set the data handler if the data receiver would
             // offer such a method
         }
 
         if (systemResponseReceiver == null) {
-            queueName = Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-            if (env.containsKey(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-                queueName = env.get(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-            }
             systemResponseReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                     .name("ES-DR-from-SA").dataHandler(new SystemResponseReceiver())
-                    .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
+                    .queue(getFactoryForIncomingDataQueues(),
+                            generateSessionQueueName(
+                                    EnvVariables.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                                            Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)))
+                    .build();
         } else {
             // XXX here we could set the data handler if the data receiver would
             // offer such a method
         }
-        queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-        }
-        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
+        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues().createDefaultRabbitQueue(
+                generateSessionQueueName(EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+                        Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)));
         evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
                 new IterationRequestReceiver(evalModule2EvalStoreQueue.channel));
 
-        boolean sendAcks = false;
-        if (env.containsKey(Constants.ACKNOWLEDGEMENT_FLAG_KEY)) {
-            sendAcks = Boolean.parseBoolean(env.getOrDefault(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "false"));
-            if (sendAcks) {
-                // Create channel for acknowledgements
-                ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
-                ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-                ackChannel.exchangeDeclare(ackExchangeName, "fanout",
-                        false, true, null);
-            }
+        boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
+        if (sendAcks) {
+            // Create channel for acknowledgements
+            ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
+            ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+            ackChannel.exchangeDeclare(ackExchangeName, "fanout", false, true, null);
         }
-        if (env.containsKey(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY)) {
-            try {
-                receiveTimeStamp = Boolean.parseBoolean(env.get(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY));
-            } catch (Exception e) {
-                LOGGER.error(
-                        "Couldn't read the value of the " + RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY + " variable.", e);
-            }
-        }
+        receiveTimeStamp = EnvVariables.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false, LOGGER);
     }
 
     /**

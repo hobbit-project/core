@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -21,6 +20,7 @@ import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,20 +105,9 @@ public abstract class AbstractStreamingSystemAdapter extends AbstractPlatformCon
     public void init() throws Exception {
         super.init();
 
-        Map<String, String> env = System.getenv();
         // Get the benchmark parameter model
-        if (env.containsKey(Constants.SYSTEM_PARAMETERS_MODEL_KEY)) {
-            try {
-                systemParamModel = RabbitMQUtils.readModel(env.get(Constants.SYSTEM_PARAMETERS_MODEL_KEY));
-            } catch (Exception e) {
-                LOGGER.warn("Couldn't deserialize the given parameter model. The parameter model will be empty.", e);
-                systemParamModel = ModelFactory.createDefaultModel();
-            }
-        } else {
-            LOGGER.warn("Couldn't get the expected parameter model from the variable "
-                    + Constants.SYSTEM_PARAMETERS_MODEL_KEY + ". The parameter model will be empty.");
-            systemParamModel = ModelFactory.createDefaultModel();
-        }
+        systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
+                () -> ModelFactory.createDefaultModel(), LOGGER);
 
         if (sender2EvalStore == null) {
             // We don't need to define an id generator since we will set the IDs

@@ -27,6 +27,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.utils.SteppingIdGenerator;
+import org.hobbit.utils.EnvVariables;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
@@ -64,34 +65,15 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     @Override
     public void init() throws Exception {
         super.init();
-        Map<String, String> env = System.getenv();
 
         // If the generator ID is not predefined
         if (generatorId < 0) {
-            if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
-            }
-            try {
-                generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
-            }
+            generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY);
         }
 
         // If the number of generators is not predefined
         if (numberOfGenerators < 0) {
-            if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
-            }
-            try {
-                numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
-            }
+            numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
         }
 
         if (sender2TaskGen == null) {

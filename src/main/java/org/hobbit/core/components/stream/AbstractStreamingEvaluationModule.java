@@ -3,7 +3,6 @@ package org.hobbit.core.components.stream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
@@ -20,6 +19,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.paired.PairedConsumerImpl;
 import org.hobbit.core.rabbit.paired.PairedStreamHandler;
+import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,39 +54,23 @@ public abstract class AbstractStreamingEvaluationModule extends AbstractPlatform
     protected Semaphore requestNextResultPair = new Semaphore(0);
 
     protected boolean iterationFinished;
-
+    
     public AbstractStreamingEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
-
+    
     @Override
     public void init() throws Exception {
         super.init();
 
-        Map<String, String> env = System.getenv();
         // Get the experiment URI
-        if (env.containsKey(Constants.HOBBIT_EXPERIMENT_URI_KEY)) {
-            experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
-        } else {
-            String errorMsg = "Couldn't get the experiment URI from the variable " + Constants.HOBBIT_EXPERIMENT_URI_KEY
-                    + ". Aborting.";
-            LOGGER.error(errorMsg);
-            throw new Exception(errorMsg);
-        }
+        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
 
-        String queueName = Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY);
-        }
         evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
-        queueName = Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME;
-        if (env.containsKey(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY)) {
-            queueName = env.get(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY);
-        }
+                .createDefaultRabbitQueue(generateSessionQueueName(EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)));
         receiver = DataReceiverImpl.builder().consumerBuilder(PairedConsumerImpl.builder()).dataHandler(this)
                 .maxParallelProcessedMsgs(1)
-                .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(queueName)).build();
+                .queue(getFactoryForIncomingDataQueues(), generateSessionQueueName(EnvVariables.getString(Constants.EVAL_STORAGE_2_EVAL_MODULE_QUEUE_NAME_KEY,Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME))).build();
     }
 
     @Override

@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -17,6 +16,7 @@ import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.IncomingStreamHandler;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,35 +112,16 @@ public abstract class AbstractStreamingTaskGenerator extends AbstractPlatformCon
     @Override
     public void init() throws Exception {
         super.init();
-        Map<String, String> env = System.getenv();
 
         // If the generator ID is not predefined
         if (generatorId < 0) {
-            if (!env.containsKey(Constants.GENERATOR_ID_KEY)) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.");
-            }
-            try {
-                generatorId = Integer.parseInt(env.get(Constants.GENERATOR_ID_KEY));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_ID_KEY + "\" from the environment. Aborting.", e);
-            }
+            generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
         }
         nextTaskId = generatorId;
 
         // If the number of generators is not predefined
         if (numberOfGenerators < 0) {
-            if (!env.containsKey(Constants.GENERATOR_COUNT_KEY)) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.");
-            }
-            try {
-                numberOfGenerators = Integer.parseInt(env.get(Constants.GENERATOR_COUNT_KEY));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Couldn't get \"" + Constants.GENERATOR_COUNT_KEY + "\" from the environment. Aborting.", e);
-            }
+            numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
         }
 
         if (sender2System == null) {
