@@ -85,6 +85,16 @@ public class StorageServiceClient implements Closeable {
     }
 
     /**
+     * Sets the maximum amount of time the client is waiting for a response.
+     *
+     * @param maxWaitingTime
+     *            the maximum waiting time in milliseconds
+     */
+    public void setMaxWaitingTime(long maxWaitingTime) {
+        this.rpcClient.setMaxWaitingTime(maxWaitingTime);
+    }
+
+    /**
      * Sends a request using rpcClient.
      *
      * If environment vars AES_PASSWORD and AES_SALT are set, the request will be encrypted.
