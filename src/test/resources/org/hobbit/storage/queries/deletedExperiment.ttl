@@ -80,7 +80,7 @@ sys:threshold a hobbit:FeatureParameter;
   hobbit:hasNetworkAdapters "...." ;
   hobbit:hasOS "Linux .." ;
   hobbit:hasFileSystem "..." ;
-  hobbit:hasCPUTypeCount ""^^xsd:int ;
+  hobbit:hasCPUTypeCount "-1"^^xsd:int ;
   hobbit:hasRAM "..." .
 
 # --- Challenge Task ---

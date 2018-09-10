@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
+import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +44,8 @@ public abstract class AbstractComponent implements Component {
      */
     public static final int NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ = 5;
     /**
-     * Time, the system waits before retrying to connect to RabbitMQ. Note that
-     * this time will be multiplied with the number of already failed tries.
+     * Time, the system waits before retrying to connect to RabbitMQ. Note that this
+     * time will be multiplied with the number of already failed tries.
      */
     public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
 
@@ -62,8 +63,8 @@ public abstract class AbstractComponent implements Component {
      */
     protected String rabbitMQHostName;
     /**
-     * The factory that can be used to create additional connections. However,
-     * in most cases it is sufficient to create a new channel using the already
+     * The factory that can be used to create additional connections. However, in
+     * most cases it is sufficient to create a new channel using the already
      * existing {@link #incomingDataQueueFactory} and
      * {@link #outgoingDataQueuefactory} objects.
      */
@@ -71,29 +72,17 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void init() throws Exception {
-        hobbitSessionId = null;
-        if (System.getenv().containsKey(Constants.HOBBIT_SESSION_ID_KEY)) {
-            hobbitSessionId = System.getenv().get(Constants.HOBBIT_SESSION_ID_KEY);
-        }
-        if (hobbitSessionId == null) {
-            hobbitSessionId = Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS;
-        }
+        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+                Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        if (System.getenv().containsKey(Constants.RABBIT_MQ_HOST_NAME_KEY)) {
-            connectionFactory = new ConnectionFactory();
-            rabbitMQHostName = System.getenv().get(Constants.RABBIT_MQ_HOST_NAME_KEY);
-            connectionFactory.setHost(rabbitMQHostName);
-            connectionFactory.setAutomaticRecoveryEnabled(true);
-            // attempt recovery every 10 seconds
-            connectionFactory.setNetworkRecoveryInterval(10000);
-            incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
-            outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
-        } else {
-            String msg = "Couldn't get " + Constants.RABBIT_MQ_HOST_NAME_KEY
-                    + " from the environment. This component won't be able to connect to RabbitMQ.";
-            LOGGER.error(msg);
-            throw new Exception(msg);
-        }
+        rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        connectionFactory = new ConnectionFactory();
+        connectionFactory.setHost(rabbitMQHostName);
+        connectionFactory.setAutomaticRecoveryEnabled(true);
+        // attempt recovery every 10 seconds
+        connectionFactory.setNetworkRecoveryInterval(10000);
+        incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
     }
 
     protected Connection createConnection() throws Exception {

@@ -73,8 +73,8 @@ exp:LinkingExp10 a hobbit:Experiment ;
   hobbit:involvesSystemInstance sys:limesV1;
   hobbit:involvesBenchmark bench:lance;
   hobbit:wasCarriedOutOn <http://example.org/ExampleHardware> ;
-  hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ;
-  hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ;
+  hobbit:startTime "2016-11-30T22:57:00Z"^^xsd:dateTime ;
+  hobbit:endTime "2016-11-30T23:01:00Z"^^xsd:dateTime ;
   hobbit:hobbitPlatformVersion "V1.3" ;
   hobbit:isPartOf <http://w3id.org/hobbit/challenges#OAEILinkingChallenge> ;
   bench:lanceDataFormat bench:RDF_XML;
@@ -92,7 +92,7 @@ hobbit:hasModel "...." ;
     hobbit:hasNetworkAdapters "...." ;
     hobbit:hasOS "Linux .." ;
     hobbit:hasFileSystem "..." ;
-    hobbit:hasCPUTypeCount ""^^xsd:int ;
+    hobbit:hasCPUTypeCount "-1"^^xsd:int ;
     hobbit:hasRAM "..." .
 
 # --- Challenge ---
@@ -102,7 +102,7 @@ hobbit:hasModel "...." ;
   rdfs:comment	"This is an example for a challenge."@en;
   hobbit:executionDate "2016-12-24"^^xsd:date;
   hobbit:publicationDate "2016-12-26"^^xsd:date;
-  hobbit:registrationCutoffDate "2016-12-26"^^xsd:dateTime;
+  hobbit:registrationCutoffDate "2016-12-26T00:00:00Z"^^xsd:dateTime;
   hobbit:dateOfNextExecution "2016-12-24T21:00:00Z"^^xsd:dateTime;
   hobbit:executionPeriod "P1DT6H"^^xsd:duration;
   hobbit:organizer "Michael Roeder"@en;
