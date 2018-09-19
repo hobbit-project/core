@@ -77,7 +77,12 @@ public abstract class AbstractComponent implements Component {
 
         rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost(rabbitMQHostName);
+        if(rabbitMQHostName.contains(":")){
+            String[] splitted = rabbitMQHostName.split(":");
+            connectionFactory.setHost(splitted[0]);
+            connectionFactory.setPort(Integer.parseInt(splitted[1]));
+        }else
+            connectionFactory.setHost(rabbitMQHostName);
         connectionFactory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
