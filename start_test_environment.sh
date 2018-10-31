@@ -15,4 +15,4 @@
 # along with core.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-docker run -p "8081:15672" -p "5672:5672" rabbitmq:management
+docker run -p "8081:15672" -p "5672:5672" rabbitmq:3-management
