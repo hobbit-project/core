@@ -18,6 +18,7 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -347,21 +348,10 @@ public class SparqlQueries {
             return null;
         }
 
-        StringBuilder triplesBuilder = new StringBuilder();
-        triplesBuilder.append('{');
-        boolean first = true;
-        for (String systemUri : systemUris) {
-            if (first) {
-                first = false;
-            } else {
-                triplesBuilder.append("} UNION {");
-            }
-            triplesBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
-            triplesBuilder.append(systemUri);
-            triplesBuilder.append('>');
-        }
-        triplesBuilder.append("} . \n");
-        String triples = triplesBuilder.toString();
+        String triples = systemUris.stream()
+                .map(uri -> "%EXPERIMENT_URI% hobbit:involvesSystemInstance <" + uri + ">")
+                .map(triple -> "{ " + triple + " }")
+                .collect(Collectors.joining(" UNION ")) + " . \n";
 
         // Replace the system triple in the normal select query by a set of
         // possible systems
