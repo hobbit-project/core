@@ -346,6 +346,23 @@ public class SparqlQueries {
         if ((systemUris == null) || (systemUris.size() == 0)) {
             return null;
         }
+
+        StringBuilder triplesBuilder = new StringBuilder();
+        triplesBuilder.append('{');
+        boolean first = true;
+        for (String systemUri : systemUris) {
+            if (first) {
+                first = false;
+            } else {
+                triplesBuilder.append("} UNION {");
+            }
+            triplesBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
+            triplesBuilder.append(systemUri);
+            triplesBuilder.append('>');
+        }
+        triplesBuilder.append("} . \n");
+        String triples = triplesBuilder.toString();
+
         // Replace the system triple in the normal select query by a set of
         // possible systems
         StringBuilder queryBuilder = new StringBuilder();
@@ -361,19 +378,7 @@ public class SparqlQueries {
         pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos);
         while (pos > 0) {
             queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos, pos));
-            queryBuilder.append('{');
-            boolean first = true;
-            for (String systemUri : systemUris) {
-                if (first) {
-                    first = false;
-                } else {
-                    queryBuilder.append("} UNION {");
-                }
-                queryBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
-                queryBuilder.append(systemUri);
-                queryBuilder.append('>');
-            }
-            queryBuilder.append("} . \n");
+            queryBuilder.append(triples);
             oldpos = pos;
             pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos + EXPERIMENT_SELECTION.length());
         }
