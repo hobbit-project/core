@@ -353,8 +353,7 @@ public class SparqlQueries {
                 .map(triple -> "{ " + triple + " }")
                 .collect(Collectors.joining(" UNION ")) + " . \n";
 
-        // Replace the system triple in the normal select query by a set of
-        // possible systems
+        // Append a set of possible systems every time an experiment is selected
         StringBuilder queryBuilder = new StringBuilder();
         int pos = GET_EXPERIMENT_QUERY.indexOf("WHERE");
         if (pos < 0) {
