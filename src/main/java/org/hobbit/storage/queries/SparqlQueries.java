@@ -59,6 +59,8 @@ public class SparqlQueries {
     private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
     private static final Model EMPTY_MODEL = ModelFactory.createDefaultModel();
 
+    private static final String EXPERIMENT_SELECTION = "%EXPERIMENT_URI% a hobbit:Experiment .";
+
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
      *
@@ -332,6 +334,39 @@ public class SparqlQueries {
     }
 
     /**
+     * Extends a SPARQL query by inserting specified extension string
+     * every time a target string is found.
+     *
+     * @param query
+     *            The original query.
+     * @param target
+     *            Target string to find.
+     * @param extension
+     *            Extension string to insert.
+     * @return the modified query or <code>null</code> if the query is invalid.
+     */
+    private static final String extendQuery(String query, String target, String extension) {
+        StringBuilder queryBuilder = new StringBuilder();
+        int pos = query.indexOf("WHERE");
+        if (pos < 0) {
+            return null;
+        }
+        // Add everything before the WHERE
+        queryBuilder.append(query.subSequence(0, pos));
+        int oldpos = pos;
+        // For every selection triple, insert the extension in front of it
+        pos = query.indexOf(target, oldpos);
+        while (pos > 0) {
+            queryBuilder.append(query.substring(oldpos, pos));
+            queryBuilder.append(extension);
+            oldpos = pos;
+            pos = query.indexOf(target, oldpos + target.length());
+        }
+        queryBuilder.append(query.substring(oldpos));
+        return queryBuilder.toString();
+    }
+
+    /**
      * Returns a SPARQL query for retrieving the graphs of experiments that
      * involve one of the given systems.
      *
@@ -354,25 +389,10 @@ public class SparqlQueries {
                 .collect(Collectors.joining(" UNION ")) + " . \n";
 
         // Append a set of possible systems every time an experiment is selected
-        StringBuilder queryBuilder = new StringBuilder();
-        int pos = GET_EXPERIMENT_QUERY.indexOf("WHERE");
-        if (pos < 0) {
-            return null;
-        }
-        // Add everything before the WHERE
-        queryBuilder.append(GET_EXPERIMENT_QUERY.subSequence(0, pos));
-        int oldpos = pos;
-        // For every selection triple, insert the list of systems in front of it
-        final String EXPERIMENT_SELECTION = "%EXPERIMENT_URI% a hobbit:Experiment .";
-        pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos);
-        while (pos > 0) {
-            queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos, pos));
-            queryBuilder.append(triples);
-            oldpos = pos;
-            pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos + EXPERIMENT_SELECTION.length());
-        }
-        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos));
-        return replacePlaceholders(queryBuilder.toString(), new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
+        String query = extendQuery(GET_EXPERIMENT_QUERY, EXPERIMENT_SELECTION, triples);
+
+        return replacePlaceholders(query,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
                 new String[] { null, graphUri });
     }
 
