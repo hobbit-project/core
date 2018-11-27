@@ -130,7 +130,24 @@ public class ConstructQueryTest extends AbstractQueryTest {
                         "http://example.org/MyChallengeTask2", "http://example.org/SystemC", null),
                 "org/hobbit/storage/queries/createExpFromTaskSystemC.ttl" });
 
-        // Construct experiment from challenge task
+        // Construct experiments of benchmarks
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarksQuery(
+                        Arrays.asList("http://w3id.org/bench#lance", "http://w3id.org/bench#test2"),
+                        FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getExperimentForBenchmarksResults.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarksQuery(
+                        Arrays.asList("http://w3id.org/bench#lance", "http://w3id.org/bench#test2"),
+                        SECOND_GRAPH_NAME),
+                null });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarksQuery(
+                        Arrays.asList("http://w3id.org/bench#DoesNotExistV1", "http://w3id.org/bench#DoesNotExistV2"),
+                        FIRST_GRAPH_NAME),
+                null });
+
+        // Construct experiments of systems
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForSystems.ttl",
                 SparqlQueries.getExperimentGraphOfSystemsQuery(
                         Arrays.asList("http://w3id.org/system#limesV1", "http://w3id.org/system#limesV2"),

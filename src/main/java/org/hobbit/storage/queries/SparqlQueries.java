@@ -368,6 +368,36 @@ public class SparqlQueries {
 
     /**
      * Returns a SPARQL query for retrieving the graphs of experiments that
+     * involve one of the given benchmarks.
+     *
+     * @param benchmarkUris
+     *            URIs of the benchmarks that might be involved in the experiment.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentGraphOfBenchmarksQuery(List<String> benchmarkUris, String graphUri) {
+        if ((benchmarkUris == null) || (benchmarkUris.size() == 0)) {
+            return null;
+        }
+
+        String triples = benchmarkUris.stream()
+                .map(uri -> "%EXPERIMENT_URI% hobbit:involvesBenchmark <" + uri + ">")
+                .map(triple -> "{ " + triple + " }")
+                .collect(Collectors.joining(" UNION ")) + " . \n";
+
+        // Append a set of possible systems every time an experiment is selected
+        String query = extendQuery(GET_EXPERIMENT_QUERY, EXPERIMENT_SELECTION, triples);
+
+        return replacePlaceholders(query,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { null, graphUri });
+    }
+
+    /**
+     * Returns a SPARQL query for retrieving the graphs of experiments that
      * involve one of the given systems.
      *
      * @param systemUris
