@@ -14,17 +14,17 @@ CONSTRUCT {
 }
 WHERE {
 GRAPH %GRAPH_URI% {
-    {
+    {SELECT ?e ?experimentProp ?experimentObj
+    WHERE {
+        {
         SELECT ?e
         WHERE {
             ?e hobbit:involvesBenchmark %BENCHMARK_URI% .
             ?e a hobbit:Experiment .
-        }
-    }
-    {
-        ?e ?experimentProp ?experimentObj .
-    }
-    UNION
+        }}
+        OPTIONAL { ?e ?experimentProp ?experimentObj . }
+    }}
+
     {
         ?e hobbit:involvesSystemInstance ?system .
         OPTIONAL { ?system ?systemProp ?systemObject . }
