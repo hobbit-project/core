@@ -130,6 +130,23 @@ public class ConstructQueryTest extends AbstractQueryTest {
                         "http://example.org/MyChallengeTask2", "http://example.org/SystemC", null),
                 "org/hobbit/storage/queries/createExpFromTaskSystemC.ttl" });
 
+        // Construct experiments of a single benchmark
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarkQuery(
+                        "http://w3id.org/bench#lance",
+                        FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getExperimentForBenchmarkResults.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarkQuery(
+                        "http://w3id.org/bench#lance",
+                        SECOND_GRAPH_NAME),
+                null });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
+                SparqlQueries.getExperimentGraphOfBenchmarkQuery(
+                        "http://w3id.org/bench#DoesNotExistV1",
+                        FIRST_GRAPH_NAME),
+                null });
+
         // Construct experiments of benchmarks
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/getExperimentForBenchmarks.ttl",
                 SparqlQueries.getExperimentGraphOfBenchmarksQuery(

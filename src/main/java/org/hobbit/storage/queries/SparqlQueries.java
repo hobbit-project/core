@@ -49,6 +49,7 @@ public class SparqlQueries {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SparqlQueries.class);
 
+    private static final String BENCHMARK_PLACEHOLDER = "%BENCHMARK_URI%";
     private static final String CHALLENGE_PLACEHOLDER = "%CHALLENGE_URI%";
     private static final String CHALLENGE_TASK_PLACEHOLDER = "%CHALLENGE_TASK_URI%";
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
@@ -430,6 +431,35 @@ public class SparqlQueries {
      * A construct query that selects the graph of an experiment that is part of
      * a given challenge task.
      */
+    private static final String GET_EXPERIMENT_OF_BENCHMARK_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getExperimentOfBenchmark.query");
+
+    /**
+     * Returns a SPARQL query for retrieving the graphs of experiments that
+     * involve the given benchmark.
+     *
+     * @param benchmarkUri
+     *            URIs of the benchmark that might be involved in the experiment.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentGraphOfBenchmarkQuery(String benchmarkUri, String graphUri) {
+        if (benchmarkUri == null) {
+            return null;
+        }
+
+        return replacePlaceholders(GET_EXPERIMENT_OF_BENCHMARK_QUERY,
+                new String[] { BENCHMARK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { benchmarkUri, graphUri });
+    }
+
+    /**
+     * A construct query that selects the graph of an experiment that is part of
+     * a given challenge task.
+     */
     private static final String GET_EXPERIMENT_OF_TASK_QUERY = loadQuery(
             "org/hobbit/storage/queries/getExperimentOfTask.query");
 
@@ -657,7 +687,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL CONSTRUCT query for getting the organizer of the
      * challenge two which a given challenge tasks belong to.
-     * 
+     *
      * @param challengeTaskUri
      *            URI of the challenge task
      * @param graphUri
