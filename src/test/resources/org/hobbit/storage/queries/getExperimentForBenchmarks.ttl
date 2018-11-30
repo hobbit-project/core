@@ -73,6 +73,8 @@ sys:limesV1 a  hobbit:SystemInstance ;
 sys:limes a hobbit:System ;
 hobbit:hasParameter sys:threshold .
 
+sys:unrelatedSystem a hobbit:System .
+
 sys:threshold a hobbit:FeatureParameter;
   rdfs:label	"Limes Parameter"@en;
   rdfs:comment	"Threshold parameter for Limes system."@en;
