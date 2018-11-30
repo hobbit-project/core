@@ -116,6 +116,7 @@ public final class Constants {
     public static final String EXPERIMENT_URI_NS = "http://w3id.org/hobbit/experiments#";
     public static final String NEW_EXPERIMENT_URI = EXPERIMENT_URI_NS + "New";
     public static final String CHALLENGE_URI_NS = "http://w3id.org/hobbit/challenges#";
+    public static final String HARDWARE_URI_NS = "http://w3id.org/hobbit/hardware#";
     public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";

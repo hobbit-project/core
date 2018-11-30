@@ -18,6 +18,7 @@ package org.hobbit.storage.queries;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -48,6 +49,7 @@ public class SparqlQueries {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SparqlQueries.class);
 
+    private static final String BENCHMARK_PLACEHOLDER = "%BENCHMARK_URI%";
     private static final String CHALLENGE_PLACEHOLDER = "%CHALLENGE_URI%";
     private static final String CHALLENGE_TASK_PLACEHOLDER = "%CHALLENGE_TASK_URI%";
     private static final String EXPERIMENT_PLACEHOLDER = "%EXPERIMENT_URI%";
@@ -57,6 +59,8 @@ public class SparqlQueries {
     private static final String VALUE_PLACEHOLDER = "%VALUE_LITERAL%";
     private static final int DEFAULT_MAX_UPDATE_QUERY_TRIPLES = 200;
     private static final Model EMPTY_MODEL = ModelFactory.createDefaultModel();
+
+    private static final String EXPERIMENT_SELECTION = "%EXPERIMENT_URI% a hobbit:Experiment .";
 
     /**
      * Loads the given resource, e.g., a SPARQL query, as String.
@@ -331,6 +335,69 @@ public class SparqlQueries {
     }
 
     /**
+     * Extends a SPARQL query by inserting specified extension string
+     * every time a target string is found.
+     *
+     * @param query
+     *            The original query.
+     * @param target
+     *            Target string to find.
+     * @param extension
+     *            Extension string to insert.
+     * @return the modified query or <code>null</code> if the query is invalid.
+     */
+    private static final String extendQuery(String query, String target, String extension) {
+        StringBuilder queryBuilder = new StringBuilder();
+        int pos = query.indexOf("WHERE");
+        if (pos < 0) {
+            return null;
+        }
+        // Add everything before the WHERE
+        queryBuilder.append(query.subSequence(0, pos));
+        int oldpos = pos;
+        // For every selection triple, insert the extension in front of it
+        pos = query.indexOf(target, oldpos);
+        while (pos > 0) {
+            queryBuilder.append(query.substring(oldpos, pos));
+            queryBuilder.append(extension);
+            oldpos = pos;
+            pos = query.indexOf(target, oldpos + target.length());
+        }
+        queryBuilder.append(query.substring(oldpos));
+        return queryBuilder.toString();
+    }
+
+    /**
+     * Returns a SPARQL query for retrieving the graphs of experiments that
+     * involve one of the given benchmarks.
+     *
+     * @param benchmarkUris
+     *            URIs of the benchmarks that might be involved in the experiment.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentGraphOfBenchmarksQuery(List<String> benchmarkUris, String graphUri) {
+        if ((benchmarkUris == null) || (benchmarkUris.size() == 0)) {
+            return null;
+        }
+
+        String triples = benchmarkUris.stream()
+                .map(uri -> "%EXPERIMENT_URI% hobbit:involvesBenchmark <" + uri + ">")
+                .map(triple -> "{ " + triple + " }")
+                .collect(Collectors.joining(" UNION ")) + " . \n";
+
+        // Append a set of possible systems every time an experiment is selected
+        String query = extendQuery(GET_EXPERIMENT_QUERY, EXPERIMENT_SELECTION, triples);
+
+        return replacePlaceholders(query,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { null, graphUri });
+    }
+
+    /**
      * Returns a SPARQL query for retrieving the graphs of experiments that
      * involve one of the given systems.
      *
@@ -346,40 +413,47 @@ public class SparqlQueries {
         if ((systemUris == null) || (systemUris.size() == 0)) {
             return null;
         }
-        // Replace the system triple in the normal select query by a set of
-        // possible systems
-        StringBuilder queryBuilder = new StringBuilder();
-        int pos = GET_EXPERIMENT_QUERY.indexOf("WHERE");
-        if (pos < 0) {
+
+        String triples = systemUris.stream()
+                .map(uri -> "%EXPERIMENT_URI% hobbit:involvesSystemInstance <" + uri + ">")
+                .map(triple -> "{ " + triple + " }")
+                .collect(Collectors.joining(" UNION ")) + " . \n";
+
+        // Append a set of possible systems every time an experiment is selected
+        String query = extendQuery(GET_EXPERIMENT_QUERY, EXPERIMENT_SELECTION, triples);
+
+        return replacePlaceholders(query,
+                new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { null, graphUri });
+    }
+
+    /**
+     * A construct query that selects the graph of an experiment that is part of
+     * a given challenge task.
+     */
+    private static final String GET_EXPERIMENT_OF_BENCHMARK_QUERY = loadQuery(
+            "org/hobbit/storage/queries/getExperimentOfBenchmark.query");
+
+    /**
+     * Returns a SPARQL query for retrieving the graphs of experiments that
+     * involve the given benchmark.
+     *
+     * @param benchmarkUri
+     *            URIs of the benchmark that might be involved in the experiment.
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code>
+     *            works like a wildcard.
+     * @return the SPARQL construct query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getExperimentGraphOfBenchmarkQuery(String benchmarkUri, String graphUri) {
+        if (benchmarkUri == null) {
             return null;
         }
-        // Add everything before the WHERE
-        queryBuilder.append(GET_EXPERIMENT_QUERY.subSequence(0, pos));
-        int oldpos = pos;
-        // For every selection triple, insert the list of systems in front of it
-        final String EXPERIMENT_SELECTION = "%EXPERIMENT_URI% a hobbit:Experiment .";
-        pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos);
-        while (pos > 0) {
-            queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos, pos));
-            queryBuilder.append('{');
-            boolean first = true;
-            for (String systemUri : systemUris) {
-                if (first) {
-                    first = false;
-                } else {
-                    queryBuilder.append("} UNION {");
-                }
-                queryBuilder.append("%EXPERIMENT_URI% hobbit:involvesSystemInstance <");
-                queryBuilder.append(systemUri);
-                queryBuilder.append('>');
-            }
-            queryBuilder.append("} . \n");
-            oldpos = pos;
-            pos = GET_EXPERIMENT_QUERY.indexOf(EXPERIMENT_SELECTION, oldpos + EXPERIMENT_SELECTION.length());
-        }
-        queryBuilder.append(GET_EXPERIMENT_QUERY.substring(oldpos));
-        return replacePlaceholders(queryBuilder.toString(), new String[] { EXPERIMENT_PLACEHOLDER, GRAPH_PLACEHOLDER },
-                new String[] { null, graphUri });
+
+        return replacePlaceholders(GET_EXPERIMENT_OF_BENCHMARK_QUERY,
+                new String[] { BENCHMARK_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { benchmarkUri, graphUri });
     }
 
     /**
@@ -613,7 +687,7 @@ public class SparqlQueries {
     /**
      * Returns a SPARQL CONSTRUCT query for getting the organizer of the
      * challenge two which a given challenge tasks belong to.
-     * 
+     *
      * @param challengeTaskUri
      *            URI of the challenge task
      * @param graphUri
