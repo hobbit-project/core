@@ -23,7 +23,10 @@ GRAPH %GRAPH_URI% {
     }} UNION
     {SELECT ?system ?systemProp ?systemObject
     WHERE {
-        {SELECT ?system WHERE { ?e hobbit:involvesSystemInstance ?system . }}
+        {SELECT ?system WHERE {
+            ?e hobbit:involvesBenchmark %BENCHMARK_URI% .
+            ?e hobbit:involvesSystemInstance ?system .
+        }}
         ?system ?systemProp ?systemObject .
     }} UNION
     {SELECT ?benchmarkProp ?benchmarkObject WHERE { %BENCHMARK_URI% ?benchmarkProp ?benchmarkObject . }} UNION
