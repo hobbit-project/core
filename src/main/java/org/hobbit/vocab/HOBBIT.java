@@ -67,6 +67,7 @@ public class HOBBIT {
     public static final Resource SystemInstance = resource("SystemInstance");
 
     // Properties sorted alphabetically
+    public static final Property comprises = property("comprises");
     public static final Property closed = property("closed");
     public static final Property dateOfNextExecution = property("dateOfNextExecution");
     public static final Property defaultValue = property("defaultValue");
