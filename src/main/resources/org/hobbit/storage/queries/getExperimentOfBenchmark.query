@@ -7,57 +7,46 @@ CONSTRUCT {
     ?e ?experimentProp  ?experimentObj .
     %BENCHMARK_URI% ?benchmarkProp ?benchmarkObject .
     ?system ?systemProp ?systemObject .
-    ?resultProp a hobbit:KPI .
     ?resultProp ?resultPropProp ?resultPropObject .
-    ?parameterProp a ?parameterType .
     ?parameterProp ?parameterPropProp ?parameterPropObject .
 }
 WHERE {
 GRAPH %GRAPH_URI% {
     {SELECT ?e ?experimentProp ?experimentObj
     WHERE {
-        {
-        SELECT ?e
+        {SELECT ?e
         WHERE {
-            ?e hobbit:involvesBenchmark %BENCHMARK_URI% .
+            {SELECT ?e WHERE { ?e hobbit:involvesBenchmark %BENCHMARK_URI% . }}
             ?e a hobbit:Experiment .
         }}
-        OPTIONAL { ?e ?experimentProp ?experimentObj . }
+        ?e ?experimentProp ?experimentObj .
+    }} UNION
+    {SELECT ?system ?systemProp ?systemObject
+    WHERE {
+        {SELECT ?system WHERE { ?e hobbit:involvesSystemInstance ?system . }}
+        ?system ?systemProp ?systemObject .
+    }} UNION
+    {SELECT ?benchmarkProp ?benchmarkObject WHERE { %BENCHMARK_URI% ?benchmarkProp ?benchmarkObject . }} UNION
+    {SELECT ?parameterProp ?parameterPropProp ?parameterPropObject
+    WHERE {
+        {
+            SELECT ?parameterProp
+            WHERE {
+                {SELECT ?parameterProp WHERE { %BENCHMARK_URI% hobbit:hasParameter ?parameterProp . }}
+                ?parameterProp a ?parameterType .
+                filter(?parameterType in (hobbit:Parameter, hobbit:ConfigurableParameter, hobbit:FeatureParameter))
+            }
+        }
+        ?parameterProp ?parameterPropProp ?parameterPropObject .
+    }} UNION
+    {SELECT ?resultProp ?resultPropProp ?resultPropObject
+    WHERE {
+        {SELECT ?resultProp
+            WHERE {
+                {SELECT ?resultProp WHERE { %BENCHMARK_URI% hobbit:measuresKPI ?resultProp . }}
+                ?resultProp a hobbit:KPI .
+            }
+        }
+        ?resultProp ?resultPropProp ?resultPropObject .
     }}
-
-    {
-        ?e hobbit:involvesSystemInstance ?system .
-        OPTIONAL { ?system ?systemProp ?systemObject . }
-    }
-    UNION
-    {
-        OPTIONAL { %BENCHMARK_URI% ?benchmarkProp ?benchmarkObject . }
-    }
-    UNION
-    {
-        SELECT ?parameterProp ?parameterType ?parameterPropProp ?parameterPropObject WHERE {
-            {
-                SELECT ?parameterProp
-                WHERE {
-                    %BENCHMARK_URI% hobbit:hasParameter ?parameterProp .
-                }
-            }
-            ?parameterProp a ?parameterType .
-            filter(?parameterType in (hobbit:Parameter, hobbit:ConfigurableParameter, hobbit:FeatureParameter))
-            OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
-        }
-    }
-    UNION
-    {
-        SELECT ?resultProp ?resultPropProp ?resultPropObject WHERE {
-            {
-                SELECT ?resultProp
-                WHERE {
-                    %BENCHMARK_URI% hobbit:measuresKPI ?resultProp .
-                    ?resultProp a hobbit:KPI .
-                }
-            }
-            OPTIONAL { ?resultProp ?resultPropProp ?resultPropObject . }
-        }
-    }
 }}
