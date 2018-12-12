@@ -21,10 +21,12 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
  * Representation of the MEX core vocabulary as Java objects.
+ * @deprecated Use org.apache.jena.sparql.vocabulary.DOAP instead.
  *
  * @author Denis Kuchelev
  *
  */
+@Deprecated
 public class DOAP {
 
     protected static final String uri = "http://usefulinc.com/ns/doap#";
