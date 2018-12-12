@@ -16,6 +16,7 @@
  */
 package org.hobbit.storage.queries;
 
+import java.util.stream.Collectors;
 import java.io.InputStream;
 import java.util.Set;
 
@@ -109,12 +110,14 @@ public abstract class AbstractQueryTest {
 
         StringBuilder builder = new StringBuilder();
         if (unexpectedStatements.size() != 0) {
-            builder.append("The result contains the unexpected statements " + unexpectedStatements.toString()
-                    + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString + "\n");
+            builder.append("The result contains the unexpected statements:\n\n"
+                    + unexpectedStatements.stream().map(Object::toString).collect(Collectors.joining("\n"))
+                    + "\n\nExpected model:\n\n" + expectedModelString + "\nResult model:\n\n" + resultModelString + "\n");
         }
         if (missingStatements.size() != 0) {
-            builder.append("The result does not contain the expected statements " + missingStatements.toString()
-                    + ". expected model:\n" + expectedModelString + "\nresult model:\n" + resultModelString + "\n");
+            builder.append("The result does not contain the expected statements:\n\n"
+                    + missingStatements.stream().map(Object::toString).collect(Collectors.joining("\n"))
+                    + "\n\nExpected model:\n\n" + expectedModelString + "\n\nResult model:\n\n" + resultModelString + "\n");
         }
 
         Assert.assertTrue(builder.toString(), missingStatements.size() == 0 && unexpectedStatements.size() == 0);
