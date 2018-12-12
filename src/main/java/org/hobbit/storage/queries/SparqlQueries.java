@@ -35,6 +35,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
+import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -254,7 +255,10 @@ public class SparqlQueries {
             builder.append('"');
             builder.append(new XSDDateTime(newValue).toString());
             builder.append('"');
-            builder.append("^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+            builder.append("^^");
+            builder.append('<');
+            builder.append(XSD.dateTime.getURI());
+            builder.append('>');
             xsdValue = builder.toString();
         }
 
