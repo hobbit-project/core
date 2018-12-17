@@ -2,3 +2,6 @@ language: java
 script: make test
 services:
   - docker
+cache:
+  directories:
+    - $HOME/.m2
