@@ -48,6 +48,9 @@ public class HOBBIT {
     }
 
     // Resources sorted alphabetically
+    public static final Resource AnalysisAlgorithm = resource("AnalysisAlgorithm");
+    public static final Resource AnalysisResult = resource("AnalysisResult");
+    public static final Resource AnalysisResultset = resource("AnalysisResultset");
     public static final Resource API = resource("API");
     public static final Resource AscendingOrder = resource("AscendingOrder");
     public static final Resource Benchmark = resource("Benchmark");
@@ -63,10 +66,12 @@ public class HOBBIT {
     public static final Resource KPI = resource("KPI");
     public static final Resource KPISeq = resource("KPISeq");
     public static final Resource Parameter = resource("Parameter");
+    public static final Resource PearsonAlgorithm = resource("PearsonAlgorithm");
     public static final Resource System = resource("System");
     public static final Resource SystemInstance = resource("SystemInstance");
 
     // Properties sorted alphabetically
+    public static final Property algorithm = property("algorithm");
     public static final Property comprises = property("comprises");
     public static final Property closed = property("closed");
     public static final Property dateOfNextExecution = property("dateOfNextExecution");
@@ -90,6 +95,8 @@ public class HOBBIT {
     public static final Property implementsAPI = property("implementsAPI");
     public static final Property instanceOf = property("instanceOf");
     public static final Property involvesBenchmark = property("involvesBenchmark");
+    public static final Property involvesKPI = property("involvesKPI");
+    public static final Property involvesParameter = property("involvesParameter");
     public static final Property involvesSystemInstance = property("involvesSystemInstance");
     public static final Property isPartOf = property("isPartOf");
     public static final Property isTaskOf = property("isTaskOf");
