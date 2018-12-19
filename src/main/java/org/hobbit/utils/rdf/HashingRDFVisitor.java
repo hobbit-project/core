@@ -37,11 +37,11 @@ public class HashingRDFVisitor implements RDFVisitor {
         This implementation does not expect any blank nodes.
         @param r the blank RDF node being visited
         @param id the identifier of that node
-        @return null
+        @throws IllegalStateException
     */
     @Override
     public String visitBlank(Resource r, AnonId id) {
-        return null;
+        throw new IllegalStateException("This implementation does not expect any blank nodes.");
     }
 
     /**
