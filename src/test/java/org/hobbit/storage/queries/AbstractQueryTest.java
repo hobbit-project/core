@@ -16,11 +16,10 @@
  */
 package org.hobbit.storage.queries;
 
-import java.util.stream.Collectors;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -66,7 +65,7 @@ public abstract class AbstractQueryTest {
      */
     private String[] queries;
 
-    public AbstractQueryTest(String storeContentResource, String expectedResultResource, String...queries) {
+    public AbstractQueryTest(String storeContentResource, String expectedResultResource, String... queries) {
         super();
         this.storeContentResource = storeContentResource;
         this.queries = queries;
@@ -112,12 +111,14 @@ public abstract class AbstractQueryTest {
         if (unexpectedStatements.size() != 0) {
             builder.append("The result contains the unexpected statements:\n\n"
                     + unexpectedStatements.stream().map(Object::toString).collect(Collectors.joining("\n"))
-                    + "\n\nExpected model:\n\n" + expectedModelString + "\nResult model:\n\n" + resultModelString + "\n");
+                    + "\n\nExpected model:\n\n" + expectedModelString + "\nResult model:\n\n" + resultModelString
+                    + "\n");
         }
         if (missingStatements.size() != 0) {
             builder.append("The result does not contain the expected statements:\n\n"
                     + missingStatements.stream().map(Object::toString).collect(Collectors.joining("\n"))
-                    + "\n\nExpected model:\n\n" + expectedModelString + "\n\nResult model:\n\n" + resultModelString + "\n");
+                    + "\n\nExpected model:\n\n" + expectedModelString + "\n\nResult model:\n\n" + resultModelString
+                    + "\n");
         }
 
         Assert.assertTrue(builder.toString(), missingStatements.size() == 0 && unexpectedStatements.size() == 0);
@@ -127,12 +128,11 @@ public abstract class AbstractQueryTest {
 
     protected static Model loadModel(String resourceName) {
         Model model = ModelFactory.createDefaultModel();
-        InputStream is = AbstractQueryTest.class.getClassLoader().getResourceAsStream(resourceName);
-        Assert.assertNotNull(is);
-        try {
+        try (InputStream is = AbstractQueryTest.class.getClassLoader().getResourceAsStream(resourceName)) {
+            Assert.assertNotNull(is);
             RDFDataMgr.read(model, is, Lang.TTL);
-        } finally {
-            IOUtils.closeQuietly(is);
+        } catch (Throwable t) {
+            throw new IllegalStateException("Got an exception while loading model from \"" + resourceName + "\".", t);
         }
         return model;
     }
