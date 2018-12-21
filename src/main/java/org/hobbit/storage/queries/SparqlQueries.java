@@ -53,6 +53,7 @@ public class SparqlQueries {
      * Placeholders which are used in the queries to mark the position of certain
      * URIs.
      */
+    private static final String ANALYSIS_RESULT_SET_PLACEHOLDER = "%ANALYSIS_RESULT_SET_URI%";
     private static final String BENCHMARK_PLACEHOLDER = "%BENCHMARK_URI%";
     private static final String CHALLENGE_PLACEHOLDER = "%CHALLENGE_URI%";
     private static final String CHALLENGE_TASK_PLACEHOLDER = "%CHALLENGE_TASK_URI%";
@@ -117,6 +118,30 @@ public class SparqlQueries {
     public static final String getAnalysisResultsOfBenchmark(String benchmarkUri, String graphUri) {
         return replacePlaceholders(GET_ANALYSIS_RESULTS_OF_BENCHMARK,
                 new String[] { BENCHMARK_PLACEHOLDER, GRAPH_PLACEHOLDER }, new String[] { benchmarkUri, graphUri });
+    }
+
+    /**
+     * A construct query for getting the analysis results of all systems for a
+     * certain benchmark.
+     */
+    private static final String DELETE_ANALYSIS_RESULTS = loadQuery(
+            "org/hobbit/storage/queries/deleteAnalysisResults.query");
+
+    /**
+     * Returns a SPARQL DELETE query for removing the analysis results set with the
+     * given URI.
+     *
+     * @param analysisResultSetUri
+     *            URI of the analysis result set which should be removed
+     * @param graphUri
+     *            URI of the graph the analysis result set is stored.
+     * @return the SPARQL DELETE query that performs the removal or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String deleteAnalysisResults(String analysisResultSetUri, String graphUri) {
+        return replacePlaceholders(DELETE_ANALYSIS_RESULTS,
+                new String[] { ANALYSIS_RESULT_SET_PLACEHOLDER, GRAPH_PLACEHOLDER },
+                new String[] { analysisResultSetUri, graphUri });
     }
 
     /**
