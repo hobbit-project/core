@@ -16,13 +16,16 @@
  */
 package org.hobbit.utils.rdf;
 
+import java.util.stream.Collectors;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
@@ -30,8 +33,11 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Constants;
+import org.hobbit.utils.rdf.HashingRDFVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +50,12 @@ import org.slf4j.LoggerFactory;
 public class RdfHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RdfHelper.class);
+
+    /**
+     * Replacement URI for the resource.
+     * Currently has no effect on actual hash computation.
+     */
+    public static String HASH_SELF_URI = "hashedRDF.v1:self";
 
     /**
      * Returns the label of the given {@link Resource} if it is present in the given
@@ -334,4 +346,30 @@ public class RdfHelper {
         }
         return subjects;
     }
+
+    /**
+     * Computes a SHA1 hash of sorted and serialized resource properties.
+     *
+     * @param resource
+     *            the resource object for which this method computes the hash.
+     * @return the computed hash.
+     */
+    public static String hashProperties(StmtIterator statements) {
+        String s = Streams.stream(statements)
+                .map(RdfHelper::serializeStatement)
+                .sorted()
+                .collect(Collectors.joining());
+
+        return DigestUtils.sha1Hex(s);
+    }
+
+    private static String serializeStatement(Statement stmt) {
+        StringBuilder s = new StringBuilder();
+        s.append(stmt.getPredicate().visitWith(HashingRDFVisitor.instance));
+        s.append(" ");
+        s.append(stmt.getObject().visitWith(HashingRDFVisitor.instance));
+        s.append("\n");
+        return s.toString();
+    }
+
 }
