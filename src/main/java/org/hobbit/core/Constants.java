@@ -113,10 +113,27 @@ public final class Constants {
 
     // =============== GRAPH CONSTANTS ===============
 
+    /**
+     * @deprecated Use org.hobbit.vocab.HobbitExperiments instead.
+     */
+    @Deprecated
     public static final String EXPERIMENT_URI_NS = "http://w3id.org/hobbit/experiments#";
+    /**
+     * @deprecated Use org.hobbit.vocab.HobbitExperiments instead.
+     */
+    @Deprecated
     public static final String NEW_EXPERIMENT_URI = EXPERIMENT_URI_NS + "New";
+    /**
+     * @deprecated Use org.hobbit.vocab.HobbitChallenges instead.
+     */
+    @Deprecated
     public static final String CHALLENGE_URI_NS = "http://w3id.org/hobbit/challenges#";
+    /**
+     * @deprecated Use org.hobbit.vocab.HobbitHardware instead.
+     */
+    @Deprecated
     public static final String HARDWARE_URI_NS = "http://w3id.org/hobbit/hardware#";
+
     public static final String PUBLIC_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PublicResults";
     public static final String PRIVATE_RESULT_GRAPH_URI = "http://hobbit.org/graphs/PrivateResults";
     public static final String CHALLENGE_DEFINITION_GRAPH_URI = "http://hobbit.org/graphs/ChallengeDefinitions";

@@ -16,20 +16,18 @@
  */
 package org.hobbit.vocab;
 
-import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
- * Representation of the MEX core vocabulary as Java objects.
- * @deprecated Use org.apache.jena.sparql.vocabulary.DOAP instead.
+ * HOBBIT challenges vocabulary.
  *
  * @author Denis Kuchelev
  *
  */
-@Deprecated
-public class DOAP {
+public class HobbitChallenges {
 
-    protected static final String uri = "http://usefulinc.com/ns/doap#";
+    protected static final String uri = "http://w3id.org/hobbit/challenges#";
 
     /**
      * returns the URI for this schema
@@ -40,11 +38,28 @@ public class DOAP {
         return uri;
     }
 
-    protected static final Property property(String local) {
-        return ResourceFactory.createProperty(uri, local);
+    protected static final Resource resource(String local) {
+        return ResourceFactory.createResource(uri + local);
     }
 
-    // Properties sorted alphabetically
-    public static final Property os = property("os");
+    /**
+     * returns the challenge resource given its ID
+     *
+     * @param challengeId the challenge ID
+     * @return the challenge resource
+     */
+    public static Resource getChallenge(String challengeId) {
+        return resource(challengeId);
+    }
+
+    /**
+     * returns the URI of a challenge resource given its ID
+     *
+     * @param experimentId the challenge ID
+     * @return the URI of challenge
+     */
+    public static String getChallengeURI(String challengeId) {
+        return uri + challengeId;
+    }
 
 }

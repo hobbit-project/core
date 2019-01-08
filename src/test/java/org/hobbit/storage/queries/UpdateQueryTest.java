@@ -210,6 +210,12 @@ public class UpdateQueryTest extends AbstractQueryTest {
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/cleanUpChallengeExample2.ttl",
                 "org/hobbit/storage/queries/cleanUpChallengeExample2.ttl", FIRST_GRAPH_NAME,
                 SparqlQueries.cleanUpChallengeGraphQueries(FIRST_GRAPH_NAME) });
+
+        // Delete analysis result set
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getAnalysisResultsOfBenchmark.ttl",
+                "org/hobbit/storage/queries/deletedAnalysisResultsOfBenchmark.ttl", FIRST_GRAPH_NAME,
+                new String[] { SparqlQueries.deleteAnalysisResults("http://example.org/AnalysisResultset1",
+                        FIRST_GRAPH_NAME) } });
         return testConfigs;
     }
 

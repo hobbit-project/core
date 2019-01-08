@@ -135,6 +135,8 @@ public class ExampleGraphValidityTest {
         try {
             is = new FileInputStream(modelFile);
             RDFDataMgr.read(model, is, Lang.TTL);
+        } catch (Throwable t) {
+            throw new IllegalStateException("Got an exception while loading model from \"" + modelFile + "\".", t);
         } finally {
             IOUtils.closeQuietly(is);
         }

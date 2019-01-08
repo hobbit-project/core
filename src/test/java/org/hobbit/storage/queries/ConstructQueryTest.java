@@ -26,7 +26,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
-import org.hobbit.core.Constants;
+import org.hobbit.vocab.HobbitExperiments;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -118,15 +118,15 @@ public class ConstructQueryTest extends AbstractQueryTest {
 
         // Construct experiment from challenge task
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
-                SparqlQueries.getCreateExperimentFromTaskQuery(Constants.NEW_EXPERIMENT_URI,
+                SparqlQueries.getCreateExperimentFromTaskQuery(HobbitExperiments.New.getURI(),
                         "http://example.org/MyChallengeTask1", "http://example.org/SystemA", null),
                 "org/hobbit/storage/queries/createExpFromTaskSystemA.ttl" });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
-                SparqlQueries.getCreateExperimentFromTaskQuery(Constants.NEW_EXPERIMENT_URI,
+                SparqlQueries.getCreateExperimentFromTaskQuery(HobbitExperiments.New.getURI(),
                         "http://example.org/MyChallengeTask1", "http://example.org/SystemC", null),
                 null });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
-                SparqlQueries.getCreateExperimentFromTaskQuery(Constants.NEW_EXPERIMENT_URI,
+                SparqlQueries.getCreateExperimentFromTaskQuery(HobbitExperiments.New.getURI(),
                         "http://example.org/MyChallengeTask2", "http://example.org/SystemC", null),
                 "org/hobbit/storage/queries/createExpFromTaskSystemC.ttl" });
 
@@ -209,6 +209,24 @@ public class ConstructQueryTest extends AbstractQueryTest {
                 "org/hobbit/storage/queries/getRepeatableChallengeInfoResult.ttl" });
         testConfigs.add(new Object[] { "org/hobbit/storage/queries/exampleChallengeConfig.ttl",
                 SparqlQueries.getRepeatableChallengeInfoQuery(null, FIRST_GRAPH_NAME), null });
+
+
+        // Construct analysis result graph for benchmark
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getAnalysisResultsOfBenchmark.ttl",
+                SparqlQueries.getAnalysisResultsOfBenchmark(
+                        "http://w3id.org/bench#lance",
+                        FIRST_GRAPH_NAME),
+                "org/hobbit/storage/queries/getAnalysisResultsOfBenchmarkResult.ttl" });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getAnalysisResultsOfBenchmark.ttl",
+                SparqlQueries.getAnalysisResultsOfBenchmark(
+                        "http://w3id.org/bench#lance",
+                        SECOND_GRAPH_NAME),
+                null });
+        testConfigs.add(new Object[] { "org/hobbit/storage/queries/getAnalysisResultsOfBenchmark.ttl",
+                SparqlQueries.getAnalysisResultsOfBenchmark(
+                        "http://w3id.org/bench#lance",
+                        null),
+                "org/hobbit/storage/queries/getAnalysisResultsOfBenchmarkResult.ttl" });
 
         return testConfigs;
     }
