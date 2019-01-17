@@ -32,6 +32,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -86,7 +87,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
         environmentVariables.set(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
                 "{ \"@id\" : \"http://w3id.org/hobbit/experiments#New\", \"@type\" : \"http://w3id.org/hobbit/vocab#Experiment\" }");
-        environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + sessionId);
+        environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
         // Needed for the generators
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
