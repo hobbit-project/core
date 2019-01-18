@@ -98,6 +98,8 @@ public final class Commands {
     
     public static final byte REQUEST_SYSTEM_RESOURCES_USAGE = 18;
 
+    public static final byte EXECUTE_ASYNC_COMMAND = 19;
+
     private static final ImmutableMap<Byte, String> ID_TO_COMMAND_NAME_MAP = generateMap();
 
     private static ImmutableMap<Byte, String> generateMap() {
