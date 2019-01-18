@@ -27,6 +27,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.data.ExecuteCommandData;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -60,11 +61,13 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * sent via the command queue and for which an answer is expected.
      */
     private String responseQueueName = null;
+    //private String responseQueueName2 = null;
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
      */
     private QueueingConsumer responseConsumer = null;
+    //private QueueingConsumer responseConsumer2 = null;
     /**
      * Factory for generating queues with which the commands are sent and
      * received. It is separated from the data connections since otherwise the
@@ -306,6 +309,16 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         }
     }
 
+//    private void initResponseQueue2() throws IOException {
+//        if (responseQueueName2 == null) {
+//            responseQueueName2 = cmdChannel.queueDeclare().getQueue();
+//        }
+//        if (responseConsumer2 == null) {
+//            responseConsumer2 = new QueueingConsumer(cmdChannel);
+//            cmdChannel.basicConsume(responseQueueName2, responseConsumer2);
+//        }
+//    }
+
     /**
      * @return the cmdResponseTimeout
      */
@@ -318,6 +331,34 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     public void setCmdResponseTimeout(long cmdResponseTimeout) {
         this.cmdResponseTimeout = cmdResponseTimeout;
+    }
+
+    /**
+     * This executes command against running container.
+     * This functionality must be enabled by platform administrator
+     *
+     * @param containerId
+     *            the name of the container instance that should be stopped
+     */
+    protected boolean execAsyncCommand(String containerId, String[] command) {
+        try {
+            initResponseQueue();
+            byte data[] = RabbitMQUtils.writeString(
+                gson.toJson(new ExecuteCommandData(containerId, command)));
+            BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
+            sendToCmdQueue(Commands.EXECUTE_ASYNC_COMMAND, data, props);
+            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(cmdResponseTimeout*2);
+            Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
+            if (delivery.getBody().length > 0){
+                if(RabbitMQUtils.readString(delivery.getBody()).equals("Succeeded"))
+                    return true;
+            }
+
+
+        } catch (Exception e) {
+            LOGGER.error("Got exception while trying to execute command for the container of the \"" + containerId+ "\" image.", e);
+        }
+        return false;
     }
 
     @Override

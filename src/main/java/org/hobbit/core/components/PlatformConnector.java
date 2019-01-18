@@ -58,4 +58,6 @@ public interface PlatformConnector {
     public RabbitQueueFactory getFactoryForIncomingDataQueues();
     public RabbitQueueFactory getFactoryForOutgoingCmdQueues();
     public RabbitQueueFactory getFactoryForIncomingCmdQueues();
+
+    public boolean execAsyncCommand(String containerId, String[] command);
 }

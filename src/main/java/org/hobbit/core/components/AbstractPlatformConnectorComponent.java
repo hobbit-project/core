@@ -79,6 +79,12 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
     }
 
     @Override
+    public boolean execAsyncCommand(String containerId, String[] command) {
+        return super.execAsyncCommand(containerId, command);
+    }
+
+
+    @Override
     public RabbitQueueFactory getFactoryForIncomingCmdQueues() {
         return cmdQueueFactory;
     }
