@@ -285,7 +285,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for {} Data Generators to be ready.", taskGenContainerIds.size());
+        LOGGER.debug("Waiting for {} Task Generators to be ready.", taskGenContainerIds.size());
         try {
             taskGenReadyMutex.acquire(taskGenContainerIds.size());
         } catch (InterruptedException e) {
