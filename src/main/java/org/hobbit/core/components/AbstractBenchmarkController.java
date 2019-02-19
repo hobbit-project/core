@@ -294,13 +294,15 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for Evaluation Storage to be ready.");
-        try {
-            evalStoreReadyMutex.acquire();
-        } catch (InterruptedException e) {
-            String errorMsg = "Interrupted while waiting for the evaluation storage to be ready.";
-            LOGGER.error(errorMsg);
-            throw new IllegalStateException(errorMsg, e);
+        if (evalStoreContainerId != null) {
+            LOGGER.debug("Waiting for Evaluation Storage to be ready.");
+            try {
+                evalStoreReadyMutex.acquire();
+            } catch (InterruptedException e) {
+                String errorMsg = "Interrupted while waiting for the evaluation storage to be ready.";
+                LOGGER.error(errorMsg);
+                throw new IllegalStateException(errorMsg, e);
+            }
         }
     }
 
@@ -400,13 +402,15 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for the evaluation storage to finish.");
-        try {
-            evalStoreTerminatedMutex.acquire();
-        } catch (InterruptedException e) {
-            String errorMsg = "Interrupted while waiting for the evaluation storage to terminate.";
-            LOGGER.error(errorMsg);
-            throw new IllegalStateException(errorMsg, e);
+        if (evalStoreContainerId != null) {
+            LOGGER.debug("Waiting for the evaluation storage to finish.");
+            try {
+                evalStoreTerminatedMutex.acquire();
+            } catch (InterruptedException e) {
+                String errorMsg = "Interrupted while waiting for the evaluation storage to terminate.";
+                LOGGER.error(errorMsg);
+                throw new IllegalStateException(errorMsg, e);
+            }
         }
     }
 
