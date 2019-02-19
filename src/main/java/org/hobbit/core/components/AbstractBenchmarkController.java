@@ -211,9 +211,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         String containerId;
         String variables[] = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2)
                 : new String[2];
+        // NOTE: Count only includes generators created within this method call.
         variables[variables.length - 2] = Constants.GENERATOR_COUNT_KEY + "=" + numberOfGenerators;
         for (int i = 0; i < numberOfGenerators; ++i) {
-            variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + i;
+            variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + generatorIds.size();
             containerId = createContainer(generatorImageName, variables);
             if (containerId != null) {
                 generatorIds.add(containerId);
