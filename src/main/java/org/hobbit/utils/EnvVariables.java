@@ -595,6 +595,176 @@ public class EnvVariables {
 
     /**
      * Returns the value of the environmental variable with the given name as
+     * {@code long} or throws an {@link IllegalStateException} if the variable can
+     * not be found or an error occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @return the variable value
+     * @throws IllegalStateException
+     *             if the variable can not be found or an error occurs.
+     */
+    public static long getLong(String name) throws IllegalStateException {
+        return getLongValue(name, 0, null, true, false);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
+     * {@code long} or the default value if the variable can not be found or an error
+     * occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param defaultValue
+     *            the default value which will be returned if the variable can not
+     *            be found or if an error occurs.
+     * @return the variable value or the default value if an error occurred and a
+     *         default value is available.
+     */
+    public static long getLong(String name, long defaultValue) {
+        return getLongValue(name, defaultValue, null, false, true);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
+     * {@code long} or the default value if the variable can not be found or an error
+     * occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param defaultValueFactory
+     *            A factory method which can be used to generate a default value
+     *            which will be returned if the variable can not be found or if an
+     *            error occurs.
+     * @return the variable value or the default value if an error occurred and a
+     *         default value is available.
+     */
+    public static long getLong(String name, Supplier<Long> defaultValueFactory) {
+        return getLongValue(name, defaultValueFactory, null, false);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
+     * {@code long} or throws an {@link IllegalStateException} if the variable can
+     * not be found or an error occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param logger
+     *            the {@link Logger} which will be used to log errors if they occur.
+     * @return the variable value
+     * @throws IllegalStateException
+     *             if the variable can not be found or an error occurs.
+     */
+    public static long getLong(String name, Logger logger) throws IllegalStateException {
+        return getLongValue(name, 0, logger, true, false);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
+     * {@code long} or the default value if the variable can not be found or an error
+     * occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param defaultValue
+     *            the default value which will be returned if the variable can not
+     *            be found or if an error occurs.
+     * @param logger
+     *            the {@link Logger} which will be used to log errors if they occur.
+     * @return the variable value or the default value if an error occurred and a
+     *         default value is available.
+     */
+    public static long getLong(String name, long defaultValue, Logger logger) {
+        return getLongValue(name, defaultValue, logger, false, true);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
+     * {@code long} or the default value if the variable can not be found or an error
+     * occurs.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param defaultValueFactory
+     *            A factory method which can be used to generate a default value
+     *            which will be returned if the variable can not be found or if an
+     *            error occurs.
+     * @param logger
+     *            the {@link Logger} which will be used to log errors if they occur.
+     * @return the variable value or the default value if an error occurred and a
+     *         default value is available.
+     */
+    public static long getLong(String name, Supplier<Long> defaultValueFactory, Logger logger) {
+        return getLongValue(name, defaultValueFactory, logger, false);
+    }
+
+    /**
+     * Internal method defining the default value factory function before calling
+     * {@link #getLongValue(String, Supplier, Logger, boolean)}.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param conversion
+     *            the function which is used to convert the {@link String} of the
+     *            variable value into the expected value type. It is assumed that
+     *            this function will throw an exception if an error occurs.
+     * @param defaultValue
+     *            the default value which will be returned if the variable can not
+     *            be found or if an error occurs.
+     * @param logger
+     *            the {@link Logger} which will be used to log errors if they occur.
+     * @param exceptionWhenFailing
+     *            flag indicating whether an exception should be thrown if an error
+     *            occurs.
+     * @param hasDefaultValue
+     *            flag indicating whether a default value has been provided.
+     * @return the variable value converted to the expected value or the default
+     *         value if an error occurred and a default value is available.
+     * @throws IllegalStateException
+     *             if exceptionWhenFailing is set to {@code true} and one of the
+     *             following two errors occurs: 1) the variable is not available or
+     *             2) the conversion function throws an exception.
+     */
+    protected static long getLongValue(String name, long defaultValue, Logger logger, boolean exceptionWhenFailing,
+            boolean hasDefaultValue) throws IllegalStateException {
+        return getVariableValue(name, Long::parseLong, hasDefaultValue ? (() -> defaultValue) : null, logger,
+                exceptionWhenFailing);
+    }
+
+    /**
+     * Internal method defining the conversion function before calling
+     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * 
+     * @param name
+     *            name of the environmental variable which should be accessed
+     * @param conversion
+     *            the function which is used to convert the {@link String} of the
+     *            variable value into the expected value type. It is assumed that
+     *            this function will throw an exception if an error occurs.
+     * @param defaultValueFactory
+     *            A factory method which can be used to generate a default value
+     *            which will be returned if the variable can not be found or if an
+     *            error occurs.
+     * @param logger
+     *            the {@link Logger} which will be used to log errors if they occur.
+     * @param exceptionWhenFailing
+     *            flag indicating whether an exception should be thrown if an error
+     *            occurs.
+     * @return the variable value converted to the expected value or the default
+     *         value if an error occurred and a default value is available.
+     * @throws IllegalStateException
+     *             if exceptionWhenFailing is set to {@code true} and one of the
+     *             following two errors occurs: 1) the variable is not available or
+     *             2) the conversion function throws an exception.
+     */
+    protected static long getLongValue(String name, Supplier<Long> defaultValueFactory, Logger logger,
+            boolean exceptionWhenFailing) throws IllegalStateException {
+        return getLongValue(name, defaultValueFactory, logger, exceptionWhenFailing);
+    }
+
+    /**
+     * Returns the value of the environmental variable with the given name as
      * {@code boolean} or throws an {@link IllegalStateException} if the variable
      * can not be found or an error occurs.
      * 
