@@ -211,9 +211,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         String containerId;
         String variables[] = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2)
                 : new String[2];
+        // NOTE: Count only includes generators created within this method call.
         variables[variables.length - 2] = Constants.GENERATOR_COUNT_KEY + "=" + numberOfGenerators;
         for (int i = 0; i < numberOfGenerators; ++i) {
-            variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + i;
+            variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + generatorIds.size();
             containerId = createContainer(generatorImageName, variables);
             if (containerId != null) {
                 generatorIds.add(containerId);
@@ -285,7 +286,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for {} Data Generators to be ready.", taskGenContainerIds.size());
+        LOGGER.debug("Waiting for {} Task Generators to be ready.", taskGenContainerIds.size());
         try {
             taskGenReadyMutex.acquire(taskGenContainerIds.size());
         } catch (InterruptedException e) {
@@ -293,13 +294,15 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for Evaluation Storage to be ready.");
-        try {
-            evalStoreReadyMutex.acquire();
-        } catch (InterruptedException e) {
-            String errorMsg = "Interrupted while waiting for the evaluation storage to be ready.";
-            LOGGER.error(errorMsg);
-            throw new IllegalStateException(errorMsg, e);
+        if (evalStoreContainerId != null) {
+            LOGGER.debug("Waiting for Evaluation Storage to be ready.");
+            try {
+                evalStoreReadyMutex.acquire();
+            } catch (InterruptedException e) {
+                String errorMsg = "Interrupted while waiting for the evaluation storage to be ready.";
+                LOGGER.error(errorMsg);
+                throw new IllegalStateException(errorMsg, e);
+            }
         }
     }
 
@@ -399,13 +402,15 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg, e);
         }
-        LOGGER.debug("Waiting for the evaluation storage to finish.");
-        try {
-            evalStoreTerminatedMutex.acquire();
-        } catch (InterruptedException e) {
-            String errorMsg = "Interrupted while waiting for the evaluation storage to terminate.";
-            LOGGER.error(errorMsg);
-            throw new IllegalStateException(errorMsg, e);
+        if (evalStoreContainerId != null) {
+            LOGGER.debug("Waiting for the evaluation storage to finish.");
+            try {
+                evalStoreTerminatedMutex.acquire();
+            } catch (InterruptedException e) {
+                String errorMsg = "Interrupted while waiting for the evaluation storage to terminate.";
+                LOGGER.error(errorMsg);
+                throw new IllegalStateException(errorMsg, e);
+            }
         }
     }
 
