@@ -16,6 +16,7 @@
  */
 package org.hobbit.core.components;
 
+import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -253,9 +254,19 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
-            envVariables = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2) : new String[2];
-            envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
+            if (envVariables == null) {
+                envVariables = new String[0];
+            }
+
+            // Only add RabbitMQ host env if there isn't any.
+            if (Stream.of(envVariables).noneMatch(kv -> kv.startsWith(Constants.RABBIT_MQ_HOST_NAME_KEY + "="))) {
+                envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+                envVariables[envVariables.length - 1] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
+            }
+
+            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
             envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
+
             initResponseQueue();
             byte data[] = RabbitMQUtils.writeString(
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
