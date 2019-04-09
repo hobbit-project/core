@@ -260,11 +260,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
             // Only add RabbitMQ host env if there isn't any.
             if (Stream.of(envVariables).noneMatch(kv -> kv.startsWith(Constants.RABBIT_MQ_HOST_NAME_KEY + "="))) {
-                envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+                envVariables = Arrays.copyOf(envVariables, envVariables.length + 2);
                 envVariables[envVariables.length - 1] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
+            } else {
+                envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
             }
 
-            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
             envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
 
             initResponseQueue();
