@@ -227,6 +227,31 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     }
 
     /**
+     * This method extends (if needed) the array of environment variables
+     * for the container with HOBBIT specific variables.
+     *
+     * @param envVariables
+     *            user-provided array of environment variables
+     * @return the extended array of environment variables
+     */
+    protected String[] extendContainerEnvVariables(String[] envVariables) {
+        if (envVariables == null) {
+            envVariables = new String[0];
+        }
+
+        // Only add RabbitMQ host env if there isn't any.
+        if (Stream.of(envVariables).noneMatch(kv -> kv.startsWith(Constants.RABBIT_MQ_HOST_NAME_KEY + "="))) {
+            envVariables = Arrays.copyOf(envVariables, envVariables.length + 2);
+            envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
+        } else {
+            envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
+        }
+
+        envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
+        return envVariables;
+    }
+
+    /**
      * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
      * create and start an instance of the given image using the given
      * environment variables.
@@ -254,19 +279,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
-            if (envVariables == null) {
-                envVariables = new String[0];
-            }
-
-            // Only add RabbitMQ host env if there isn't any.
-            if (Stream.of(envVariables).noneMatch(kv -> kv.startsWith(Constants.RABBIT_MQ_HOST_NAME_KEY + "="))) {
-                envVariables = Arrays.copyOf(envVariables, envVariables.length + 2);
-                envVariables[envVariables.length - 1] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
-            } else {
-                envVariables = Arrays.copyOf(envVariables, envVariables.length + 1);
-            }
-
-            envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
+            envVariables = extendContainerEnvVariables(envVariables);
 
             initResponseQueue();
             byte data[] = RabbitMQUtils.writeString(
