@@ -16,12 +16,12 @@
  */
 package org.hobbit.core.components;
 
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
@@ -37,6 +37,7 @@ import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -44,7 +45,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.QueueingConsumer;
 
 public abstract class AbstractCommandReceivingComponent extends AbstractComponent implements CommandReceivingComponent {
 
@@ -56,16 +56,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Name of this Docker container.
      */
     private String containerName;
-    /**
-     * Name of the queue that is used to receive responses for messages that are
-     * sent via the command queue and for which an answer is expected.
-     */
-    private String responseQueueName = null;
-    /**
-     * Consumer of the queue that is used to receive responses for messages that
-     * are sent via the command queue and for which an answer is expected.
-     */
-    private QueueingConsumer responseConsumer = null;
     /**
      * Factory for generating queues with which the commands are sent and
      * received. It is separated from the data connections since otherwise the
@@ -279,18 +269,37 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
+            return createContainerAsync(imageName, containerType, envVariables).get();
+        } catch (Exception e) {
+            LOGGER.error("Got exception while trying to request the creation of an instance of the \"" + imageName
+                    + "\" image.", e);
+        }
+        return null;
+    }
+
+    protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables) {
+        try {
+            SettableFuture<String> containerFuture = SettableFuture.create();
+
             envVariables = extendContainerEnvVariables(envVariables);
 
-            initResponseQueue();
+            String responseQueueName = cmdChannel.queueDeclare().getQueue();
+
+            DefaultConsumer responseConsumer = new DefaultConsumer(cmdChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                        byte[] body) throws IOException {
+                    containerFuture.set(RabbitMQUtils.readString(body));
+                    // TODO: stop consuming and delete the queue?
+                }
+            };
+            cmdChannel.basicConsume(responseQueueName, responseConsumer);
+
             byte data[] = RabbitMQUtils.writeString(
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
-            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(cmdResponseTimeout);
-            Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
-            if (delivery.getBody().length > 0) {
-                return RabbitMQUtils.readString(delivery.getBody());
-            }
+            return containerFuture;
         } catch (Exception e) {
             LOGGER.error("Got exception while trying to request the creation of an instance of the \"" + imageName
                     + "\" image.", e);
@@ -311,23 +320,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             sendToCmdQueue(Commands.DOCKER_CONTAINER_STOP, data);
         } catch (IOException e) {
             LOGGER.error("Got exception while trying to stop the container with the id\"" + containerName + "\".", e);
-        }
-    }
-
-    /**
-     * Internal method for initializing the {@link #responseQueueName} and the
-     * {@link #responseConsumer} if they haven't been initialized before.
-     *
-     * @throws IOException
-     *             if a communication problem occurs
-     */
-    private void initResponseQueue() throws IOException {
-        if (responseQueueName == null) {
-            responseQueueName = cmdChannel.queueDeclare().getQueue();
-        }
-        if (responseConsumer == null) {
-            responseConsumer = new QueueingConsumer(cmdChannel);
-            cmdChannel.basicConsume(responseQueueName, responseConsumer);
         }
     }
 
