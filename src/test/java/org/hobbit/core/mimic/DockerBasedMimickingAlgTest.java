@@ -5,21 +5,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.Semaphore;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
-import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.AbstractComponent;
 import org.hobbit.core.components.AbstractPlatformConnectorComponent;
+import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -32,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.MessageProperties;
 
 /**
@@ -107,36 +103,16 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
         return temp;
     }
 
-    protected static class DummyPlatformController extends AbstractCommandReceivingComponent {
+    protected static class DummyPlatformController extends AbstractDummyPlatformController {
 
         public DummyComponentExecutor mimickingExecutor;
         public Thread mimickingThread;
         public Random random = new Random();
-        private boolean readyFlag = false;
         private Gson gson = new Gson();
-
-        private Semaphore terminationMutex = new Semaphore(0);
 
         public DummyPlatformController(String sessionId) {
             super();
             addCommandHeaderId(sessionId);
-        }
-
-        protected void handleCmd(byte bytes[], String replyTo) {
-            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            int idLength = buffer.getInt();
-            byte sessionIdBytes[] = new byte[idLength];
-            buffer.get(sessionIdBytes);
-            String sessionId = new String(sessionIdBytes, Charsets.UTF_8);
-            byte command = buffer.get();
-            byte remainingData[];
-            if (buffer.remaining() > 0) {
-                remainingData = new byte[buffer.remaining()];
-                buffer.get(remainingData);
-            } else {
-                remainingData = new byte[0];
-            }
-            receiveCommand(command, remainingData, sessionId, replyTo);
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, String replyTo) {
@@ -181,46 +157,6 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                     LOGGER.error("Exception while trying to respond to a container creation command.", e);
                 }
             }
-        }
-
-        public void waitForControllerBeingReady() throws InterruptedException {
-            while (!readyFlag) {
-                Thread.sleep(500);
-            }
-        }
-
-        public void sendToCmdQueue(String address, byte command, byte data[], BasicProperties props)
-                throws IOException {
-            byte sessionIdBytes[] = RabbitMQUtils.writeString(address);
-            // + 5 because 4 bytes for the session ID length and 1 byte for the
-            // command
-            int dataLength = sessionIdBytes.length + 5;
-            boolean attachData = (data != null) && (data.length > 0);
-            if (attachData) {
-                dataLength += data.length;
-            }
-            ByteBuffer buffer = ByteBuffer.allocate(dataLength);
-            buffer.putInt(sessionIdBytes.length);
-            buffer.put(sessionIdBytes);
-            buffer.put(command);
-            if (attachData) {
-                buffer.put(data);
-            }
-            cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
-        }
-
-        @Override
-        public void receiveCommand(byte command, byte[] data) {
-        }
-
-        @Override
-        public void run() throws Exception {
-            readyFlag = true;
-            terminationMutex.acquire();
-        }
-
-        public void terminate() {
-            terminationMutex.release();
         }
     }
 
