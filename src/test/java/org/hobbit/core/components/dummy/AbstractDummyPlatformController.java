@@ -19,6 +19,8 @@ package org.hobbit.core.components.dummy;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import java.io.IOException;
+
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import org.apache.commons.io.Charsets;
 import java.nio.ByteBuffer;
@@ -31,6 +33,14 @@ import org.junit.Ignore;
 public abstract class AbstractDummyPlatformController extends AbstractCommandReceivingComponent {
     private boolean readyFlag = false;
     private Semaphore terminationMutex = new Semaphore(0);
+
+    public AbstractDummyPlatformController() {
+        super();
+    }
+
+    public AbstractDummyPlatformController(boolean execCommandsInParallel) {
+        super(execCommandsInParallel);
+    }
 
     @Override
     public void run() throws Exception {
@@ -45,7 +55,7 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
     }
 
     @Override
-    protected void handleCmd(byte bytes[], String replyTo) {
+    protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int idLength = buffer.getInt();
         byte sessionIdBytes[] = new byte[idLength];
@@ -59,7 +69,7 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
         } else {
             remainingData = new byte[0];
         }
-        receiveCommand(command, remainingData, sessionId, replyTo);
+        receiveCommand(command, remainingData, sessionId, props);
     }
 
     public void sendToCmdQueue(String address, byte command, byte data[], BasicProperties props)
@@ -86,7 +96,7 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
     public void receiveCommand(byte command, byte[] data) {
     }
 
-    public abstract void receiveCommand(byte command, byte[] data, String sessionId, String replyTo);
+    public abstract void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props);
 
     public void terminate() {
         terminationMutex.release();

@@ -16,13 +16,20 @@
  */
 package org.hobbit.core.components;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -37,6 +44,7 @@ import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -44,7 +52,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.QueueingConsumer;
 
 public abstract class AbstractCommandReceivingComponent extends AbstractComponent implements CommandReceivingComponent {
 
@@ -62,10 +69,15 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private String responseQueueName = null;
     /**
+     * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
+     * to that RPC call.
+     */
+    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new HashMap<>());
+    /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
      */
-    private QueueingConsumer responseConsumer = null;
+    private Consumer responseConsumer = null;
     /**
      * Factory for generating queues with which the commands are sent and
      * received. It is separated from the data connections since otherwise the
@@ -88,11 +100,27 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Threadsafe JSON parser.
      */
-    private Gson gson = new Gson();
+    protected Gson gson = new Gson();
     /**
      * Time the component waits for a response of the platform controller.
      */
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
+
+    private ExecutorService cmdThreadPool;
+
+    public AbstractCommandReceivingComponent() {
+        this(false);
+    }
+
+    public AbstractCommandReceivingComponent(boolean execCommandsInParallel) {
+        if (execCommandsInParallel) {
+            LOGGER.info("This component will handle received commands in multiple threads.");
+            cmdThreadPool = Executors.newCachedThreadPool();
+        } else {
+            LOGGER.info("This component will handle received commands in a single thread.");
+            cmdThreadPool = Executors.newSingleThreadExecutor();
+        }
+    }
 
     @Override
     public void init() throws Exception {
@@ -109,11 +137,16 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
-                try {
-                    handleCmd(body, properties.getReplyTo());
-                } catch (Exception e) {
-                    LOGGER.error("Exception while trying to handle incoming command.", e);
-                }
+                cmdThreadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            handleCmd(body, properties);
+                        } catch (Exception e) {
+                            LOGGER.error("Exception while trying to handle incoming command.", e);
+                        }
+                    }
+                });
             }
         };
         cmdChannel.basicConsume(queueName, true, consumer);
@@ -194,6 +227,28 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         acceptedCmdHeaderIds.add(sessionId);
     }
 
+    /**
+     * This method is called if a message is received
+     * from the command queue.
+     *
+     * @param bytes
+     *            data from the RabbitMQ message
+     * @param props
+     *            properties of the RabbitMQ message
+     */
+    protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
+        handleCmd(bytes, props.getReplyTo());
+    }
+
+    /**
+     * This method is called if a message is received
+     * from the command queue.
+     *
+     * @param bytes
+     *            data from the RabbitMQ message
+     * @param replyTo
+     *            name of the queue in which response is expected
+     */
     protected void handleCmd(byte bytes[], String replyTo) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
@@ -279,18 +334,60 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
+            return createContainerAsync(imageName, containerType, envVariables).get();
+        } catch (ExecutionException | InterruptedException e) {
+            LOGGER.error("Failed to get a result of asynchronous container creation request.", e);
+        }
+        return null;
+    }
+
+    /**
+     * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
+     * create and start an instance of the given image using the given
+     * environment variables.
+     *
+     * <p>
+     * Note that the containerType parameter should have one of the following
+     * values.
+     * <ul>
+     * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
+     * of a benchmark.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_DATABASE} if this container is part
+     * of a benchmark but should be located on a storage node.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
+     * a benchmarked system.</li>
+     * </ul>
+     *
+     * @param imageName
+     *            the name of the image of the docker container
+     * @param containerType
+     *            the type of the container
+     * @param envVariables
+     *            environment variables that should be added to the created
+     *            container
+     * @return the Future object with the name of the container instance or null if an error occurred
+     */
+    protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables) {
+        try {
             envVariables = extendContainerEnvVariables(envVariables);
 
             initResponseQueue();
+            String correlationId = UUID.randomUUID().toString();
+            SettableFuture<String> containerFuture = SettableFuture.create();
+
+            synchronized (responseFutures) {
+                responseFutures.put(correlationId, containerFuture);
+            }
+
             byte data[] = RabbitMQUtils.writeString(
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
-            BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
+            BasicProperties.Builder propsBuilder = new BasicProperties.Builder();
+            propsBuilder.deliveryMode(2);
+            propsBuilder.replyTo(responseQueueName);
+            propsBuilder.correlationId(correlationId);
+            BasicProperties props = propsBuilder.build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
-            QueueingConsumer.Delivery delivery = responseConsumer.nextDelivery(cmdResponseTimeout);
-            Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
-            if (delivery.getBody().length > 0) {
-                return RabbitMQUtils.readString(delivery.getBody());
-            }
+            return containerFuture;
         } catch (Exception e) {
             LOGGER.error("Got exception while trying to request the creation of an instance of the \"" + imageName
                     + "\" image.", e);
@@ -326,7 +423,23 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             responseQueueName = cmdChannel.queueDeclare().getQueue();
         }
         if (responseConsumer == null) {
-            responseConsumer = new QueueingConsumer(cmdChannel);
+            responseConsumer = new DefaultConsumer(cmdChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                        byte[] body) throws IOException {
+                    String key = properties.getCorrelationId();
+                    synchronized (responseFutures) {
+                        SettableFuture<String> future = responseFutures.remove(key);
+                        if (future != null) {
+                            String value = RabbitMQUtils.readString(body);
+                            future.set(value);
+                        } else {
+                            LOGGER.error("Received a message with unknown correlationId: {}", key);
+                        }
+                    }
+                }
+            };
+
             cmdChannel.basicConsume(responseQueueName, responseConsumer);
         }
     }
@@ -354,6 +467,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         }
         IOUtils.closeQuietly(cmdQueueFactory);
+        if (cmdThreadPool != null) {
+            cmdThreadPool.shutdown();
+        }
         super.close();
     }
 
