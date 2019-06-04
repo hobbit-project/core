@@ -16,6 +16,8 @@
  */
 package org.hobbit.core.components;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import java.io.IOException;
@@ -84,6 +86,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
+    private ExecutorService cmdThreadPool;
+
     @Override
     public void init() throws Exception {
         super.init();
@@ -95,15 +99,22 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
 
+        cmdThreadPool = Executors.newCachedThreadPool();
+
         Consumer consumer = new DefaultConsumer(cmdChannel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
-                try {
-                    handleCmd(body, properties.getReplyTo());
-                } catch (Exception e) {
-                    LOGGER.error("Exception while trying to handle incoming command.", e);
-                }
+                cmdThreadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            handleCmd(body, properties.getReplyTo());
+                        } catch (Exception e) {
+                            LOGGER.error("Exception while trying to handle incoming command.", e);
+                        }
+                    }
+                });
             }
         };
         cmdChannel.basicConsume(queueName, true, consumer);

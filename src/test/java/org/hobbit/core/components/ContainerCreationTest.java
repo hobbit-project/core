@@ -26,6 +26,8 @@ import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -33,6 +35,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.Stopwatch;
 import static org.junit.Assert.*;
 
 
@@ -47,6 +51,9 @@ public class ContainerCreationTest {
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private AbstractCommandReceivingComponent component;
+
+    @Rule
+    public Stopwatch stopwatch = new Stopwatch() {};
 
     @Before
     public void setUp() throws Exception {
@@ -75,6 +82,8 @@ public class ContainerCreationTest {
         String containerId2 = component.createContainer("hello-world", null, null);
         assertEquals("ID of synchronously created container", "1", containerId1);
         assertEquals("ID of synchronously created container", "2", containerId2);
+        assertTrue("Spent at least linearly scaled delay while creating containers",
+                stopwatch.runtime(TimeUnit.MILLISECONDS) > CONTAINER_CREATION_DELAY * 2);
     }
 
     @Test(timeout = (long)(CONTAINER_CREATION_DELAY * 1.5))
@@ -101,18 +110,13 @@ public class ContainerCreationTest {
             if (command == Commands.DOCKER_CONTAINER_START) {
                 final String containerId = Integer.toString(nextContainerId++);
 
-                new Thread() {
-                    public void run() {
-                        try {
-                            Thread.sleep(CONTAINER_CREATION_DELAY);
-                            cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
-                                    RabbitMQUtils.writeString(containerId));
-                        } catch (IOException | InterruptedException e) {
-                            LOGGER.error("Exception in receiveCommand", e);
-                        }
-                    }
-                }.start();
-
+                try {
+                    Thread.sleep(CONTAINER_CREATION_DELAY);
+                    cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+                            RabbitMQUtils.writeString(containerId));
+                } catch (IOException | InterruptedException e) {
+                    LOGGER.error("Exception in receiveCommand", e);
+                }
             }
         }
     }
