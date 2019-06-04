@@ -18,6 +18,8 @@ package org.hobbit.core.components;
 
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import java.util.Random;
+
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import java.io.IOException;
@@ -90,12 +92,16 @@ public class ContainerCreationTest {
     public void testAsync() throws Exception {
         Future<String> container1 = component.createContainerAsync("hello-world", null, null);
         Future<String> container2 = component.createContainerAsync("hello-world", null, null);
+        Future<String> container3 = component.createContainerAsync("hello-world", null, null);
         assertFalse("Asynchronously creating a container should take some time", container1.isDone());
         assertFalse("Asynchronously creating a container should take some time", container2.isDone());
+        // (Third container is created without any delays.)
         String containerId1 = container1.get();
         String containerId2 = container2.get();
+        String containerId3 = container3.get();
         assertEquals("ID of asynchronously created container", "1", containerId1);
         assertEquals("ID of asynchronously created container", "2", containerId2);
+        assertEquals("ID of asynchronously created container", "3", containerId3);
     }
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
@@ -106,13 +112,21 @@ public class ContainerCreationTest {
             addCommandHeaderId(sessionId);
         }
 
-        public void receiveCommand(byte command, byte[] data, String sessionId, String replyTo) {
+        public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             if (command == Commands.DOCKER_CONTAINER_START) {
                 final String containerId = Integer.toString(nextContainerId++);
 
                 try {
-                    Thread.sleep(CONTAINER_CREATION_DELAY);
-                    cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+                    if (containerId.equals("1") || containerId.equals("2")) {
+                        Thread.sleep(CONTAINER_CREATION_DELAY);
+                    }
+
+                    AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+                    propsBuilder.deliveryMode(2);
+                    propsBuilder.correlationId(props.getCorrelationId());
+                    AMQP.BasicProperties replyProps = propsBuilder.build();
+
+                    cmdChannel.basicPublish("", props.getReplyTo(), replyProps,
                             RabbitMQUtils.writeString(containerId));
                 } catch (IOException | InterruptedException e) {
                     LOGGER.error("Exception in receiveCommand", e);

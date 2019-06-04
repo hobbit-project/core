@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 
 /**
@@ -115,7 +116,12 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
             addCommandHeaderId(sessionId);
         }
 
-        public void receiveCommand(byte command, byte[] data, String sessionId, String replyTo) {
+        public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+            String replyTo = null;
+            if (props != null) {
+                replyTo = props.getReplyTo();
+            }
+
             LOGGER.info("received command: session={}, command={}, data={}", sessionId, Commands.toString(command),
                     data != null ? RabbitMQUtils.readString(data) : "null");
             if (command == Commands.DOCKER_CONTAINER_START) {
@@ -148,7 +154,13 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                         };
                         mimickingThread = new Thread(mimickingExecutor);
                         mimickingThread.start();
-                        cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+
+                        AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+                        propsBuilder.deliveryMode(2);
+                        propsBuilder.correlationId(props.getCorrelationId());
+                        AMQP.BasicProperties replyProps = propsBuilder.build();
+
+                        cmdChannel.basicPublish("", replyTo, replyProps,
                                 RabbitMQUtils.writeString(containerId));
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");

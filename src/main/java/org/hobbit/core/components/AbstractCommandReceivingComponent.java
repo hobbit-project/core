@@ -17,14 +17,18 @@
 package org.hobbit.core.components;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -58,6 +62,21 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Name of this Docker container.
      */
     private String containerName;
+    /**
+     * Name of the queue that is used to receive responses for messages that are
+     * sent via the command queue and for which an answer is expected.
+     */
+    private String responseQueueName = null;
+    /**
+     * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
+     * to that RPC call.
+     */
+    private Map<String, SettableFuture<String>> responseFutures = null;
+    /**
+     * Consumer of the queue that is used to receive responses for messages that
+     * are sent via the command queue and for which an answer is expected.
+     */
+    private Consumer responseConsumer = null;
     /**
      * Factory for generating queues with which the commands are sent and
      * received. It is separated from the data connections since otherwise the
@@ -109,7 +128,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     @Override
                     public void run() {
                         try {
-                            handleCmd(body, properties.getReplyTo());
+                            handleCmd(body, properties);
                         } catch (Exception e) {
                             LOGGER.error("Exception while trying to handle incoming command.", e);
                         }
@@ -195,6 +214,11 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         acceptedCmdHeaderIds.add(sessionId);
     }
 
+    protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
+        handleCmd(bytes, props.getReplyTo());
+    }
+
+    @Deprecated
     protected void handleCmd(byte bytes[], String replyTo) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
@@ -281,34 +305,57 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
         try {
             return createContainerAsync(imageName, containerType, envVariables).get();
-        } catch (Exception e) {
-            LOGGER.error("Got exception while trying to request the creation of an instance of the \"" + imageName
-                    + "\" image.", e);
+        } catch (ExecutionException | InterruptedException e) {
+            LOGGER.error("Failed to get a result of asynchronous container creation request.", e);
         }
         return null;
     }
 
+    /**
+     * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
+     * create and start an instance of the given image using the given
+     * environment variables.
+     *
+     * <p>
+     * Note that the containerType parameter should have one of the following
+     * values.
+     * <ul>
+     * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
+     * of a benchmark.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_DATABASE} if this container is part
+     * of a benchmark but should be located on a storage node.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
+     * a benchmarked system.</li>
+     * </ul>
+     *
+     * @param imageName
+     *            the name of the image of the docker container
+     * @param containerType
+     *            the type of the container
+     * @param envVariables
+     *            environment variables that should be added to the created
+     *            container
+     * @return the Future object with the name of the container instance or null if an error occurred
+     */
     protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables) {
         try {
-            SettableFuture<String> containerFuture = SettableFuture.create();
-
             envVariables = extendContainerEnvVariables(envVariables);
 
-            String responseQueueName = cmdChannel.queueDeclare().getQueue();
+            initResponseQueue();
+            String correlationId = UUID.randomUUID().toString();
+            SettableFuture<String> containerFuture = SettableFuture.create();
 
-            DefaultConsumer responseConsumer = new DefaultConsumer(cmdChannel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                        byte[] body) throws IOException {
-                    containerFuture.set(RabbitMQUtils.readString(body));
-                    // TODO: stop consuming and delete the queue?
-                }
-            };
-            cmdChannel.basicConsume(responseQueueName, responseConsumer);
+            synchronized (responseFutures) {
+                responseFutures.put(correlationId, containerFuture);
+            }
 
             byte data[] = RabbitMQUtils.writeString(
                     gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
-            BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
+            BasicProperties.Builder propsBuilder = new BasicProperties.Builder();
+            propsBuilder.deliveryMode(2);
+            propsBuilder.replyTo(responseQueueName);
+            propsBuilder.correlationId(correlationId);
+            BasicProperties props = propsBuilder.build();
             sendToCmdQueue(Commands.DOCKER_CONTAINER_START, data, props);
             return containerFuture;
         } catch (Exception e) {
@@ -331,6 +378,42 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             sendToCmdQueue(Commands.DOCKER_CONTAINER_STOP, data);
         } catch (IOException e) {
             LOGGER.error("Got exception while trying to stop the container with the id\"" + containerName + "\".", e);
+        }
+    }
+
+    /**
+     * Internal method for initializing the {@link #responseQueueName} and the
+     * {@link #responseConsumer} if they haven't been initialized before.
+     *
+     * @throws IOException
+     *             if a communication problem occurs
+     */
+    private void initResponseQueue() throws IOException {
+        if (responseQueueName == null) {
+            responseQueueName = cmdChannel.queueDeclare().getQueue();
+        }
+        if (responseFutures == null) {
+            responseFutures = new HashMap<>();
+        }
+        if (responseConsumer == null) {
+            responseConsumer = new DefaultConsumer(cmdChannel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                        byte[] body) throws IOException {
+                    String key = properties.getCorrelationId();
+                    synchronized (responseFutures) {
+                        SettableFuture<String> future = responseFutures.remove(key);
+                        if (future != null) {
+                            String value = RabbitMQUtils.readString(body);
+                            future.set(value);
+                        } else {
+                            LOGGER.error("Received a message with unknown correlationId: {}", key);
+                        }
+                    }
+                }
+            };
+
+            cmdChannel.basicConsume(responseQueueName, responseConsumer);
         }
     }
 
