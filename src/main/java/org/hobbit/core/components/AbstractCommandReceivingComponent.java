@@ -335,8 +335,40 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @return the name of the container instance or null if an error occurred
      */
     protected String createContainer(String imageName, String containerType, String[] envVariables) {
+        return createContainer(imageName, containerType, envVariables, null);
+    }
+
+    /**
+     * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
+     * create and start an instance of the given image using the given
+     * environment variables.
+     *
+     * <p>
+     * Note that the containerType parameter should have one of the following
+     * values.
+     * <ul>
+     * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
+     * of a benchmark.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_DATABASE} if this container is part
+     * of a benchmark but should be located on a storage node.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
+     * a benchmarked system.</li>
+     * </ul>
+     *
+     * @param imageName
+     *            the name of the image of the docker container
+     * @param containerType
+     *            the type of the container
+     * @param envVariables
+     *            environment variables that should be added to the created
+     *            container
+     * @param netAliases
+     *            network aliases that should be added to the created container
+     * @return the name of the container instance or null if an error occurred
+     */
+    protected String createContainer(String imageName, String containerType, String[] envVariables, String[] netAliases) {
         try {
-            return createContainerAsync(imageName, containerType, envVariables).get();
+            return createContainerAsync(imageName, containerType, envVariables, netAliases).get();
         } catch (ExecutionException | InterruptedException e) {
             LOGGER.error("Failed to get a result of asynchronous container creation request.", e);
         }
@@ -367,9 +399,11 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param envVariables
      *            environment variables that should be added to the created
      *            container
+     * @param netAliases
+     *            network aliases that should be added to the created container
      * @return the Future object with the name of the container instance or null if an error occurred
      */
-    protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables) {
+    protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables, String[] netAliases) {
         try {
             envVariables = extendContainerEnvVariables(envVariables);
 
@@ -382,7 +416,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
 
             byte data[] = RabbitMQUtils.writeString(
-                    gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables)));
+                    gson.toJson(new StartCommandData(imageName, containerType, containerName, envVariables, netAliases)));
             BasicProperties.Builder propsBuilder = new BasicProperties.Builder();
             propsBuilder.deliveryMode(2);
             propsBuilder.replyTo(responseQueueName);
