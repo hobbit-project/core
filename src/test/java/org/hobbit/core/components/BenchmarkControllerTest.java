@@ -41,6 +41,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 
 @RunWith(Parameterized.class)
@@ -210,7 +211,12 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             this.sessionId = sessionId;
         }
 
-        public void receiveCommand(byte command, byte[] data, String sessionId, String replyTo) {
+        public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+            String replyTo = null;
+            if (props != null) {
+                replyTo = props.getReplyTo();
+            }
+
             LOGGER.info("received command: session={}, command={}, data={}", sessionId, Commands.toString(command),
                     data != null ? RabbitMQUtils.readString(data) : "null");
             if (command == Commands.BENCHMARK_READY_SIGNAL) {
@@ -258,7 +264,13 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         Thread t = new Thread(dataGenExecutor);
                         dataGenThreads.add(t);
                         t.start();
-                        cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+
+                        AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+                        propsBuilder.deliveryMode(2);
+                        propsBuilder.correlationId(props.getCorrelationId());
+                        AMQP.BasicProperties replyProps = propsBuilder.build();
+
+                        cmdChannel.basicPublish("", replyTo, replyProps,
                                 RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
                         // Create task generators that are waiting for a random
