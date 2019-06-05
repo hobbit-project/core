@@ -233,6 +233,11 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                     String startCommandJson = RabbitMQUtils.readString(data);
                     final String containerId = Integer.toString(random.nextInt());
 
+                    AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+                    propsBuilder.deliveryMode(2);
+                    propsBuilder.correlationId(props.getCorrelationId());
+                    AMQP.BasicProperties replyProps = propsBuilder.build();
+
                     if (startCommandJson.contains(DATA_GEN_IMAGE)) {
                         // Create data generators that are waiting for a random
                         // amount of time and terminate after that
@@ -264,11 +269,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         Thread t = new Thread(dataGenExecutor);
                         dataGenThreads.add(t);
                         t.start();
-
-                        AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
-                        propsBuilder.deliveryMode(2);
-                        propsBuilder.correlationId(props.getCorrelationId());
-                        AMQP.BasicProperties replyProps = propsBuilder.build();
 
                         cmdChannel.basicPublish("", replyTo, replyProps,
                                 RabbitMQUtils.writeString(containerId));
@@ -308,10 +308,11 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         Thread t = new Thread(taskGenExecutor);
                         taskGenThreads.add(t);
                         t.start();
-                        cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+
+                        cmdChannel.basicPublish("", replyTo, replyProps,
                                 RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(EVAL_IMAGE)) {
-                        cmdChannel.basicPublish("", replyTo, MessageProperties.PERSISTENT_BASIC,
+                        cmdChannel.basicPublish("", replyTo, replyProps,
                                 RabbitMQUtils.writeString(containerId));
                         sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
                     } else {
