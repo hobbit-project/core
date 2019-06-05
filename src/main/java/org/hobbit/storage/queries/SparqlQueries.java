@@ -98,6 +98,29 @@ public class SparqlQueries {
     }
 
     /**
+     * A construct query for getting the licensing data of the specified dataset.
+     */
+    private static final String GET_LICENSE_OF_DATASET = loadQuery(
+            "org/hobbit/storage/queries/getLicenseOfDataset.query");
+
+    /**
+     * Returns a SPARQL CONSTRUCT query for getting the analysis results of all
+     * systems for a certain benchmark.
+     *
+     * @param benchmarkUri
+     *            URI of the benchmark
+     * @param graphUri
+     *            URI of the graph the experiment is stored. <code>null</code> works
+     *            like a wildcard.
+     * @return the SPARQL CONSTRUCT query that performs the retrieving or
+     *         <code>null</code> if the query hasn't been loaded correctly
+     */
+    public static final String getLicenseOfDataset(String graphUri) {
+        return replacePlaceholders(GET_LICENSE_OF_DATASET,
+                new String[] { GRAPH_PLACEHOLDER }, new String[] { graphUri });
+    }
+
+    /**
      * A construct query for getting the analysis results of all systems for a
      * certain benchmark.
      */
