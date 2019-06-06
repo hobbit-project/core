@@ -114,7 +114,10 @@ public class ContainerCreationTest {
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             if (command == Commands.DOCKER_CONTAINER_START) {
-                final String containerId = Integer.toString(nextContainerId++);
+                String containerId;
+                synchronized (this) {
+                    containerId = Integer.toString(nextContainerId++);
+                }
 
                 try {
                     if (containerId.equals("1") || containerId.equals("2")) {
