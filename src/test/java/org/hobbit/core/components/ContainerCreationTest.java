@@ -99,9 +99,7 @@ public class ContainerCreationTest {
         String containerId1 = container1.get();
         String containerId2 = container2.get();
         String containerId3 = container3.get();
-        assertEquals("ID of asynchronously created container", "1", containerId1);
-        assertEquals("ID of asynchronously created container", "2", containerId2);
-        assertEquals("ID of asynchronously created container", "3", containerId3);
+        assertEquals("IDs of asynchronously created containers", "1;2;3", containerId1 + ";" + containerId2 + ";" + containerId3);
     }
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
