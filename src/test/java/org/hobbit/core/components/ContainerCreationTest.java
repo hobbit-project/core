@@ -25,10 +25,12 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import java.io.IOException;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
+import org.hobbit.core.data.StartCommandData;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
 import org.hobbit.core.Constants;
@@ -80,8 +82,8 @@ public class ContainerCreationTest {
 
     @Test(timeout = (long)(CONTAINER_CREATION_DELAY * 2.5))
     public void testSync() throws Exception {
-        String containerId1 = component.createContainer("hello-world", null, null);
-        String containerId2 = component.createContainer("hello-world", null, null);
+        String containerId1 = component.createContainer("hello-world", null, new String[]{"ID=1", "DELAY="+CONTAINER_CREATION_DELAY});
+        String containerId2 = component.createContainer("hello-world", null, new String[]{"ID=2", "DELAY="+CONTAINER_CREATION_DELAY});
         assertEquals("ID of synchronously created container", "1", containerId1);
         assertEquals("ID of synchronously created container", "2", containerId2);
         assertTrue("Spent at least linearly scaled delay while creating containers",
@@ -90,9 +92,9 @@ public class ContainerCreationTest {
 
     @Test(timeout = (long)(CONTAINER_CREATION_DELAY * 1.5))
     public void testAsync() throws Exception {
-        Future<String> container1 = component.createContainerAsync("hello-world", null, null);
-        Future<String> container2 = component.createContainerAsync("hello-world", null, null);
-        Future<String> container3 = component.createContainerAsync("hello-world", null, null);
+        Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1", "DELAY="+CONTAINER_CREATION_DELAY});
+        Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2", "DELAY="+CONTAINER_CREATION_DELAY});
+        Future<String> container3 = component.createContainerAsync("hello-world", null, new String[]{"ID=3", "DELAY=0"});
         assertFalse("Asynchronously creating a container should take some time", container1.isDone());
         assertFalse("Asynchronously creating a container should take some time", container2.isDone());
         // (Third container is created without any delays.)
@@ -112,15 +114,13 @@ public class ContainerCreationTest {
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             if (command == Commands.DOCKER_CONTAINER_START) {
-                String containerId;
-                synchronized (this) {
-                    containerId = Integer.toString(nextContainerId++);
-                }
+                String[] envVars = gson.fromJson(RabbitMQUtils.readString(data), StartCommandData.class).getEnvironmentVariables();
+                String containerId = Stream.of(envVars).filter(kv -> kv.startsWith("ID=")).findAny().get().split("=", 2)[1];
+                long delay = Long.parseLong(Stream.of(envVars).filter(kv -> kv.startsWith("DELAY=")).findAny().get().split("=", 2)[1]);
+                LOGGER.info("Creating container {} with delay {}...", containerId, delay);
 
                 try {
-                    if (containerId.equals("1") || containerId.equals("2")) {
-                        Thread.sleep(CONTAINER_CREATION_DELAY);
-                    }
+                    Thread.sleep(delay);
 
                     AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
                     propsBuilder.deliveryMode(2);

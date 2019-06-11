@@ -99,7 +99,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Threadsafe JSON parser.
      */
-    private Gson gson = new Gson();
+    protected Gson gson = new Gson();
     /**
      * Time the component waits for a response of the platform controller.
      */
