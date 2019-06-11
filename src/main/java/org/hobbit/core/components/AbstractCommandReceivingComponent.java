@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -72,7 +74,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
      * to that RPC call.
      */
-    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new LinkedHashMap<>());
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
@@ -428,13 +430,28 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                         byte[] body) throws IOException {
                     String key = properties.getCorrelationId();
+
                     synchronized (responseFutures) {
-                        SettableFuture<String> future = responseFutures.remove(key);
+                        SettableFuture<String> future = null;
+                        if (key != null) {
+                            future = responseFutures.remove(key);
+                            if (future == null) {
+                                LOGGER.error("Received a message with correlationId ({}) not in map ({})", key, responseFutures.keySet());
+                            }
+                        } else {
+                            Iterator<SettableFuture<String>> iter = responseFutures.values().iterator();
+                            if (iter.hasNext()) {
+                                LOGGER.error("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library. Correlating with the eldest request as a workaround...");
+                                future = iter.next();
+                                iter.remove();
+                            } else {
+                                LOGGER.error("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library. There are no pending requests.");
+                            }
+                        }
+
                         if (future != null) {
                             String value = RabbitMQUtils.readString(body);
                             future.set(value);
-                        } else {
-                            LOGGER.error("Received a message with unknown correlationId: {}", key);
                         }
                     }
                 }
