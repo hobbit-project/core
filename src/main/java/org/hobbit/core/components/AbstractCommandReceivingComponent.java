@@ -71,7 +71,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
      * to that RPC call.
      */
-    private Map<String, SettableFuture<String>> responseFutures = null;
+    private Map<String, SettableFuture<String>> responseFutures = new HashMap<>();
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
@@ -408,9 +408,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     private void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
             responseQueueName = cmdChannel.queueDeclare().getQueue();
-        }
-        if (responseFutures == null) {
-            responseFutures = new HashMap<>();
         }
         if (responseConsumer == null) {
             responseConsumer = new DefaultConsumer(cmdChannel) {
