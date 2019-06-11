@@ -214,11 +214,28 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         acceptedCmdHeaderIds.add(sessionId);
     }
 
+    /**
+     * This method is called if a message is received
+     * from the command queue.
+     *
+     * @param bytes
+     *            data from the RabbitMQ message
+     * @param props
+     *            properties of the RabbitMQ message
+     */
     protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
         handleCmd(bytes, props.getReplyTo());
     }
 
-    @Deprecated
+    /**
+     * This method is called if a message is received
+     * from the command queue.
+     *
+     * @param bytes
+     *            data from the RabbitMQ message
+     * @param replyTo
+     *            name of the queue in which response is expected
+     */
     protected void handleCmd(byte bytes[], String replyTo) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
