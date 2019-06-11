@@ -106,7 +106,7 @@ public class ContainerCreationTest {
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
         public DummyPlatformController(String sessionId) {
-            super();
+            super(true);
             addCommandHeaderId(sessionId);
         }
 

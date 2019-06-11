@@ -107,6 +107,20 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     private ExecutorService cmdThreadPool;
 
+    public AbstractCommandReceivingComponent() {
+        this(false);
+    }
+
+    public AbstractCommandReceivingComponent(boolean execCommandsInParallel) {
+        if (execCommandsInParallel) {
+            LOGGER.info("This component will handle received commands in multiple threads.");
+            cmdThreadPool = Executors.newCachedThreadPool();
+        } else {
+            LOGGER.info("This component will handle received commands in a single thread.");
+            cmdThreadPool = Executors.newSingleThreadExecutor();
+        }
+    }
+
     @Override
     public void init() throws Exception {
         super.init();
@@ -117,8 +131,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
-
-        cmdThreadPool = Executors.newCachedThreadPool();
 
         Consumer consumer = new DefaultConsumer(cmdChannel) {
             @Override

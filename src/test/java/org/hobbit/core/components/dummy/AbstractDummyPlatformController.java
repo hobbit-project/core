@@ -34,6 +34,14 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
     private boolean readyFlag = false;
     private Semaphore terminationMutex = new Semaphore(0);
 
+    public AbstractDummyPlatformController() {
+        super();
+    }
+
+    public AbstractDummyPlatformController(boolean execCommandsInParallel) {
+        super(execCommandsInParallel);
+    }
+
     @Override
     public void run() throws Exception {
         readyFlag = true;
