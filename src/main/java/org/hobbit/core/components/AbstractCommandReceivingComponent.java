@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,7 +72,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
      * to that RPC call.
      */
-    private Map<String, SettableFuture<String>> responseFutures = new HashMap<>();
+    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new HashMap<>());
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
