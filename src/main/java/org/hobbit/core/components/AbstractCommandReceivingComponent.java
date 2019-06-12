@@ -484,7 +484,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         }
         IOUtils.closeQuietly(cmdQueueFactory);
-        cmdThreadPool.shutdown();
+        if (cmdThreadPool != null) {
+            cmdThreadPool.shutdown();
+        }
         super.close();
     }
 
