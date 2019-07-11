@@ -503,13 +503,14 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                                 LOGGER.error("Received a message with correlationId ({}) not in map ({})", key, responseFutures.keySet());
                             }
                         } else {
+                            LOGGER.warn("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library.");
                             Iterator<SettableFuture<String>> iter = responseFutures.values().iterator();
                             if (iter.hasNext()) {
-                                LOGGER.error("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library. Correlating with the eldest request as a workaround...");
+                                LOGGER.info("Correlating with the eldest request as a workaround.");
                                 future = iter.next();
                                 iter.remove();
                             } else {
-                                LOGGER.error("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library. There are no pending requests.");
+                                LOGGER.error("There are no pending requests.");
                             }
                         }
 
