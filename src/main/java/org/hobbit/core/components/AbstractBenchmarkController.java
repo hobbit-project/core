@@ -214,6 +214,8 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         // NOTE: Count only includes generators created within this method call.
         variables[variables.length - 2] = Constants.GENERATOR_COUNT_KEY + "=" + numberOfGenerators;
         for (int i = 0; i < numberOfGenerators; ++i) {
+            // At the start generatorIds is empty, and new generators are added to it immediately.
+            // Current size of that set is used to make IDs for new generators.
             variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + generatorIds.size();
             containerId = createContainer(generatorImageName, variables);
             if (containerId != null) {
