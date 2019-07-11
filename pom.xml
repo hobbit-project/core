@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hobbit</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.17</version>
+    <version>1.0.18</version>
 
     <!-- LICENSE -->
     <licenses>
@@ -37,7 +37,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <slf4j.version>1.7.15</slf4j.version>
-        <junit.version>4.11</junit.version>
+        <junit.version>4.12</junit.version>
     </properties>
     <!-- TODO Add license -->
 

@@ -19,7 +19,7 @@ public class AES {
     private static final Logger LOGGER = LoggerFactory.getLogger(AES.class);
 
     private SecretKey secretKey = null;
-    private static String cipherAlgorithm = "AES/ECB/PKCS5PADDING";
+    protected static final String CIPHER_ALGORITHM = "AES/ECB/PKCS5PADDING";
 
     public AES(String password, String salt) {
         this.secretKey = AESKeyGenerator.generate(password, salt);
@@ -79,7 +79,7 @@ public class AES {
     private Cipher getCipherInstance() throws AESException {
         Cipher cipher = null;
         try {
-            cipher = Cipher.getInstance(this.cipherAlgorithm);
+            cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             LOGGER.error("Error initializing AES encryption. AES algorithm not found.", e);
             throw new AESException();

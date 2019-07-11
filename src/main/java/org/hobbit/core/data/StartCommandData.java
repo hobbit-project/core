@@ -25,12 +25,14 @@ public class StartCommandData {
      */
     public String parent;
     public String[] environmentVariables;
+    public String[] networkAliases;
 
-    public StartCommandData(String image, String type, String parent, String[] environmentVariables) {
+    public StartCommandData(String image, String type, String parent, String[] environmentVariables, String[] netAliases) {
         this.image = image;
         this.type = type;
         this.parent = parent;
         this.environmentVariables = environmentVariables;
+        this.networkAliases = netAliases;
     }
 
     public String getImage() {
@@ -63,6 +65,14 @@ public class StartCommandData {
 
     public void setEnvironmentVariables(String[] environmentVariables) {
         this.environmentVariables = environmentVariables;
+    }
+
+    public String[] getNetworkAliases() {
+        return networkAliases;
+    }
+
+    public void setNetworkAliases(String[] networkAliases) {
+        this.networkAliases = networkAliases;
     }
 
     @Override

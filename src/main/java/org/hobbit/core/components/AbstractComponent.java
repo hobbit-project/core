@@ -92,14 +92,15 @@ public abstract class AbstractComponent implements Component {
 
     protected Connection createConnection() throws Exception {
         Connection connection = null;
+        Exception exception = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
             try {
                 connection = connectionFactory.newConnection();
             } catch (Exception e) {
                 if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
                     long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
-                    LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
-                            e);
+                    LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.");
+                    exception = e;
                     try {
                         Thread.sleep(waitingTime);
                     } catch (Exception e2) {
@@ -111,8 +112,8 @@ public abstract class AbstractComponent implements Component {
         if (connection == null) {
             String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
                     + " retries.";
-            LOGGER.error(msg);
-            throw new Exception(msg);
+            LOGGER.error(msg, exception);
+            throw new Exception(msg, exception);
         }
         return connection;
     }
