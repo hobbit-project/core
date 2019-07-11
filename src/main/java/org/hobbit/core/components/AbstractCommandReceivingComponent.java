@@ -399,6 +399,36 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param envVariables
      *            environment variables that should be added to the created
      *            container
+     * @return the Future object with the name of the container instance or null if an error occurred
+     */
+    protected Future<String> createContainerAsync(String imageName, String containerType, String[] envVariables) {
+        return createContainerAsync(imageName, containerType, envVariables, null);
+    }
+
+    /**
+     * This method sends a {@link Commands#DOCKER_CONTAINER_START} command to
+     * create and start an instance of the given image using the given
+     * environment variables.
+     *
+     * <p>
+     * Note that the containerType parameter should have one of the following
+     * values.
+     * <ul>
+     * <li>{@link Constants#CONTAINER_TYPE_BENCHMARK} if this container is part
+     * of a benchmark.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_DATABASE} if this container is part
+     * of a benchmark but should be located on a storage node.</li>
+     * <li>{@link Constants#CONTAINER_TYPE_SYSTEM} if this container is part of
+     * a benchmarked system.</li>
+     * </ul>
+     *
+     * @param imageName
+     *            the name of the image of the docker container
+     * @param containerType
+     *            the type of the container
+     * @param envVariables
+     *            environment variables that should be added to the created
+     *            container
      * @param netAliases
      *            network aliases that should be added to the created container
      * @return the Future object with the name of the container instance or null if an error occurred
