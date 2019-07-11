@@ -81,8 +81,8 @@ public class ContainerCreationNoCorrelationTest {
 
     @Test(timeout = 1000)
     public void test() throws Exception {
-        Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1"});
-        Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2"});
+        Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1"}, null);
+        Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2"}, null);
         String containerId1 = container1.get();
         String containerId2 = container2.get();
         assertEquals("IDs of asynchronously created containers", "1;2", containerId1 + ";" + containerId2);

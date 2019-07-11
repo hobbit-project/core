@@ -92,9 +92,9 @@ public class ContainerCreationTest {
 
     @Test(timeout = (long)(CONTAINER_CREATION_DELAY * 1.5))
     public void testAsync() throws Exception {
-        Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1", "DELAY="+CONTAINER_CREATION_DELAY});
-        Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2", "DELAY="+CONTAINER_CREATION_DELAY});
-        Future<String> container3 = component.createContainerAsync("hello-world", null, new String[]{"ID=3", "DELAY=0"});
+        Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1", "DELAY="+CONTAINER_CREATION_DELAY}, null);
+        Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2", "DELAY="+CONTAINER_CREATION_DELAY}, null);
+        Future<String> container3 = component.createContainerAsync("hello-world", null, new String[]{"ID=3", "DELAY=0"}, null);
         assertFalse("Asynchronously creating a container should take some time", container1.isDone());
         assertFalse("Asynchronously creating a container should take some time", container2.isDone());
         // (Third container is created without any delays.)
