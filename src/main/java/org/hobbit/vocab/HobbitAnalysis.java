@@ -24,6 +24,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.StatementImpl;
 import org.apache.jena.rdf.model.impl.StmtIteratorImpl;
+import org.hobbit.utils.rdf.HashingRDFProperties;
 import org.hobbit.utils.rdf.RdfHelper;
 
 /**
@@ -59,7 +60,7 @@ public class HobbitAnalysis {
     public static Resource getResultset(Resource benchmark, Resource systemInstance) {
         Model dummyModel = ModelFactory.createDefaultModel();
         Resource dummyRes = dummyModel.createResource(RdfHelper.HASH_SELF_URI);
-        String hash = RdfHelper.hashProperties(new StmtIteratorImpl(Stream.of(
+        String hash = HashingRDFProperties.hashProperties(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(dummyRes, HOBBIT.involvesBenchmark, benchmark),
             (Statement) new StatementImpl(dummyRes, HOBBIT.involvesSystemInstance, systemInstance)
         ).iterator()));

@@ -347,29 +347,6 @@ public class RdfHelper {
         return subjects;
     }
 
-    /**
-     * Computes a SHA1 hash of sorted and serialized resource properties.
-     *
-     * @param resource
-     *            the resource object for which this method computes the hash.
-     * @return the computed hash.
-     */
-    public static String hashProperties(StmtIterator statements) {
-        String s = Streams.stream(statements)
-                .map(RdfHelper::serializeStatement)
-                .sorted()
-                .collect(Collectors.joining());
-
-        return DigestUtils.sha1Hex(s);
-    }
-
-    private static String serializeStatement(Statement stmt) {
-        StringBuilder s = new StringBuilder();
-        s.append(stmt.getPredicate().visitWith(HashingRDFVisitor.instance));
-        s.append(" ");
-        s.append(stmt.getObject().visitWith(HashingRDFVisitor.instance));
-        s.append("\n");
-        return s.toString();
-    }
+    
 
 }
