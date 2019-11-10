@@ -147,6 +147,7 @@ public class RdfHelper {
         }
         return values;
     }
+    
 
     /**
      * Returns the object as {@link Calendar} of the first triple that has the given
@@ -241,6 +242,36 @@ public class RdfHelper {
             }
         }
         return null;
+    }
+    /**
+     * Returns the objects as integer of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     * 
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as integer or 0 if such
+     *         a triple couldn't be found	
+     */
+    public static int getINTValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getInt();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured: ", e);
+            }
+        }
+        return 0;
     }
 
     /**

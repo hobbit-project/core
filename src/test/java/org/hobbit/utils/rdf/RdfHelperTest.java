@@ -117,6 +117,49 @@ public class RdfHelperTest {
     }
 
     @Test
+    public void testGetIntValue() {
+        Model model = ModelFactory.createDefaultModel();
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property1"),
+                "1");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2"),
+                "4");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
+                "2");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
+                "3");
+
+        // literal object matches
+        Assert.assertEquals(1, RdfHelper.getINTValue(model, model.getResource("http://example.org/example1"),
+                model.getProperty("http://example.org/property1")));
+        // resource object matches
+        Assert.assertEquals(4, RdfHelper.getINTValue(model,
+                model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
+        // more than one triple matches
+        Assert.assertTrue((new HashSet<Integer>(Arrays.asList(2, 3))).contains(RdfHelper.getINTValue(model,
+                model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"))));
+
+        // resource wildcard
+        Assert.assertTrue((new HashSet<Integer>(Arrays.asList(2, 3)))
+                .contains(RdfHelper.getINTValue(model, null, model.getProperty("http://example.org/property3"))));
+        // property wildcard
+        Assert.assertTrue((new HashSet<Integer>(Arrays.asList(1, 4, 2, 3)))
+                .contains(RdfHelper.getINTValue(model, model.getResource("http://example.org/example1"), null)));
+
+        // resource and property exist but there is no matching triple
+        Assert.assertEquals(0,RdfHelper.getINTValue(model, model.getResource("http://example.org/example2"),
+                model.getProperty("http://example.org/property1")));
+        // resource does not exist
+        Assert.assertEquals(0,RdfHelper.getINTValue(model, model.getResource("http://example.org/example3"),
+                model.getProperty("http://example.org/property1")));
+        // property does not exist
+        Assert.assertEquals(0, RdfHelper.getINTValue(model, model.getResource("http://example.org/example1"),
+                model.getProperty("http://example.org/property4")));
+        // model is null
+        Assert.assertEquals(0, RdfHelper.getINTValue(null, model.getResource("http://example.org/example1"),
+                model.getProperty("http://example.org/property1")));
+    }
+    
+    @Test
     public void testGetDateValue() {
         String modelString = "<http://example.org/MyChallenge> a <http://w3id.org/hobbit/vocab#Challenge>;"
                 + "<http://www.w3.org/1999/02/22-rdf-syntax-ns#label> \"My example Challenge\"@en;"
