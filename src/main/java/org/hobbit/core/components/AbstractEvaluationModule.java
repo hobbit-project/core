@@ -19,6 +19,8 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -27,6 +29,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.CustomConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
@@ -34,7 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Delivery;
+import com.rabbitmq.client.Envelope;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -50,7 +56,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Consumer used to receive the responses from the evaluation storage.
      */
-    protected QueueingConsumer consumer;
+    protected CustomConsumer consumer;
     /**
      * Queue to the evaluation storage.
      */
@@ -63,6 +69,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * The URI of the experiment.
      */
     protected String experimentUri;
+    
 
     public AbstractEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -80,7 +87,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
 
-        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
+        consumer = new CustomConsumer(evalStore2EvalModuleQueue.channel);
         evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
     }
 
@@ -113,33 +120,39 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
         while (true) {
             // request next response pair
+        	Delivery delivery=null;
             props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
             evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-            // parse the response
-            buffer = ByteBuffer.wrap(delivery.getBody());
-            // if the response is empty
-            if (buffer.remaining() == 0) {
-                LOGGER.error("Got a completely empty response from the evaluation storage.");
-                return;
+            delivery = consumer.deliveryQueue.poll(300,TimeUnit.MILLISECONDS);
+            //if(!deliveryQueue.isEmpty()) {
+            	 
+            	 // parse the response
+                 buffer = ByteBuffer.wrap(delivery.getBody());
+                 // if the response is empty
+                 if (buffer.remaining() == 0) {
+                     LOGGER.error("Got a completely empty response from the evaluation storage.");
+                     return;
+                 }
+                 requestBody[0] = buffer.get();
+
+                 // if the response is empty
+                 if (buffer.remaining() == 0) {
+                     return;
+                 }
+                 byte[] data = RabbitMQUtils.readByteArray(buffer);
+                 taskSentTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
+                 expectedData = RabbitMQUtils.readByteArray(buffer);
+
+                 data = RabbitMQUtils.readByteArray(buffer);
+                 responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
+                 receivedData = RabbitMQUtils.readByteArray(buffer);
+
+                 evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+
             }
-            requestBody[0] = buffer.get();
-
-            // if the response is empty
-            if (buffer.remaining() == 0) {
-                return;
-            }
-            byte[] data = RabbitMQUtils.readByteArray(buffer);
-            taskSentTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            expectedData = RabbitMQUtils.readByteArray(buffer);
-
-            data = RabbitMQUtils.readByteArray(buffer);
-            responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            receivedData = RabbitMQUtils.readByteArray(buffer);
-
-            evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-        }
-    }
+            
+                   }
+    //}
 
     /**
      * Evaluates the given response pair.
