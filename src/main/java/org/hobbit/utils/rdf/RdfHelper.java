@@ -258,7 +258,7 @@ public class RdfHelper {
      * @return object of the triple as integer or 0 if such
      *         a triple couldn't be found	
      */
-    public static int getINTValue(Model model, Resource subject, Property predicate) {
+    public static int getIntValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
             return 0;
         }
@@ -273,6 +273,37 @@ public class RdfHelper {
         }
         return 0;
     }
+
+    /**
+     * Returns the objects as Boolean of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Boolean or false
+     *         if such a triple couldn't be found.
+     */
+    public static boolean getBooleanValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return false;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getBoolean();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured. Returning false.", e);
+            }
+        }
+        return false;
+
+    }
+
 
     /**
      * Returns the first triple literal that has the given subject and predicate and
