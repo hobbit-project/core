@@ -37,7 +37,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Constants;
-import org.hobbit.utils.rdf.HashingRDFVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -349,6 +348,97 @@ public class RdfHelper {
             }
         }
         return false;
+
+    }
+
+    /**
+     * Returns the objects as Float of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Float or 0F
+     *         if such a triple couldn't be found.
+     */
+    public static Float getFloatValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0F;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getFloat();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured. Returning 0F.", e);
+            }
+        }
+        return 0F;
+
+    }
+
+
+    /**
+     * Returns the objects as Double of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Double or 0D
+     *         if such a triple couldn't be found.
+     */
+    public static Double getDoubleValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0D;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getDouble();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured. Returning 0D.", e);
+            }
+        }
+        return 0D;
+
+    }
+
+    /**
+     * Returns the objects as Character of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Character or 0
+     *         if such a triple couldn't be found.
+     */
+    public static char getCharValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getChar();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured. Returning 0.", e);
+            }
+        }
+        return 0;
 
     }
 
