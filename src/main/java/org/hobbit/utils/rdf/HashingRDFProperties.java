@@ -7,12 +7,16 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 
+
+/**
+ * A class for computing a SHA1 hash of
+ * sorted and serialized resource properties.
+ *
+ */
 public class HashingRDFProperties {
-	/**
-     * Computes a SHA1 hash of sorted and serialized resource properties.
-     *
-     * @param resource
-     *            the resource object for which this method computes the hash.
+
+    /**
+     * @param statements
      * @return the computed hash.
      */
     public static String hashProperties(StmtIterator statements) {
