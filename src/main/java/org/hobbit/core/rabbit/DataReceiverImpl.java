@@ -11,8 +11,8 @@ import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+import com.rabbitmq.client.Delivery;
+
 
 /**
  * Implementation of the {@link DataReceiver} interface.
@@ -61,7 +61,7 @@ public class DataReceiverImpl implements DataReceiver {
             throws IOException {
         this.queue = queue;
         this.dataHandler = handler;
-        QueueingConsumer consumer = new QueueingConsumer(queue.channel);
+        CustomConsumer consumer = new CustomConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
         executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
@@ -143,7 +143,7 @@ public class DataReceiverImpl implements DataReceiver {
      * @return a Runnable instance that will handle incoming messages as soon as it
      *         will be executed
      */
-    protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
+    protected TerminatableRunnable buildMsgReceivingTask(CustomConsumer consumer) {
         return new MsgReceivingTask(consumer);
     }
 
@@ -161,11 +161,11 @@ public class DataReceiverImpl implements DataReceiver {
 
     protected class MsgReceivingTask implements TerminatableRunnable {
 
-        private QueueingConsumer consumer;
+        private CustomConsumer consumer;
         private boolean runFlag = true;
         private boolean terminatedFlag = false;
 
-        public MsgReceivingTask(QueueingConsumer consumer) {
+        public MsgReceivingTask(CustomConsumer consumer) {
             this.consumer = consumer;
         }
 
@@ -176,7 +176,7 @@ public class DataReceiverImpl implements DataReceiver {
             Delivery delivery = null;
             while (runFlag || (queue.messageCount() > 0) || (delivery != null)) {
                 try {
-                    delivery = consumer.nextDelivery(3000);
+                    delivery = consumer.getDeliveryQueue().poll(3000, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     LOGGER.error("Exception while waiting for delivery.", e);
                     increaseErrorCount();

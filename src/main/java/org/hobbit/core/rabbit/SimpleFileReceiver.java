@@ -36,8 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.ShutdownSignalException;
 
 /**
@@ -56,21 +55,21 @@ public class SimpleFileReceiver {
     }
 
     public static SimpleFileReceiver create(RabbitQueue queue) throws IOException {
-        QueueingConsumer consumer = new QueueingConsumer(queue.channel);
+        CustomConsumer consumer = new CustomConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(20);
         return new SimpleFileReceiver(queue, consumer);
     }
 
     protected RabbitQueue queue;
-    protected QueueingConsumer consumer;
+    protected CustomConsumer consumer;
     protected Map<String, FileReceiveState> fileStates = new HashMap<>();
     protected boolean terminated = false;
     protected int errorCount = 0;
     protected ExecutorService executor = Executors.newCachedThreadPool();
     protected long waitingForMsgTimeout = DEFAULT_TIMEOUT;
 
-    protected SimpleFileReceiver(RabbitQueue queue, QueueingConsumer consumer) {
+    protected SimpleFileReceiver(RabbitQueue queue, CustomConsumer consumer) {
         this.queue = queue;
         this.consumer = consumer;
     }
@@ -91,7 +90,7 @@ public class SimpleFileReceiver {
             // while the receiver should not terminate, the last delivery was
             // not empty or there are still deliveries in the (servers) queue
             while ((!terminated) || (delivery != null) || (queue.channel.messageCount(queue.name) > 0)) {
-                delivery = consumer.nextDelivery(waitingForMsgTimeout);
+                delivery = consumer.getDeliveryQueue().poll(waitingForMsgTimeout, TimeUnit.MILLISECONDS);
                 if (delivery != null) {
                     executor.execute(new MessageProcessing(this, outputDirectory, delivery.getBody()));
                 }

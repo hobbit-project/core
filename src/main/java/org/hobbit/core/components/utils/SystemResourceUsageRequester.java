@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.Charsets;
 import org.hobbit.core.Commands;
@@ -11,6 +12,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.PlatformConnector;
 import org.hobbit.core.data.usage.ResourceUsageInformation;
+import org.hobbit.core.rabbit.CustomConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.Delivery;
 
 public class SystemResourceUsageRequester implements Closeable {
 
@@ -32,10 +34,7 @@ public class SystemResourceUsageRequester implements Closeable {
             // if (responseQueueName == null) {
             responseQueueName = incomingChannel.queueDeclare().getQueue();
             // }
-            QueueingConsumer responseConsumer = new QueueingConsumer(cmdChannel);
-            incomingChannel.basicConsume(responseQueueName, responseConsumer);
-            return new SystemResourceUsageRequester(cmdChannel, incomingChannel, responseQueueName, responseConsumer,
-                    sessionId);
+            return new SystemResourceUsageRequester(cmdChannel, incomingChannel, responseQueueName, sessionId);
         } catch (Exception e) {
             LOGGER.error("Exception while creating SystemResourceUsageRequester. Returning null.", e);
         }
@@ -51,7 +50,7 @@ public class SystemResourceUsageRequester implements Closeable {
      * Consumer of the queue that is used to receive responses for messages that are
      * sent via the command queue and for which an answer is expected.
      */
-    private QueueingConsumer responseConsumer = null;
+    private CustomConsumer responseConsumer = null;
     /**
      * Channel that is used for the command queue but not owned by this class (i.e.,
      * it won't be closed).
@@ -65,7 +64,9 @@ public class SystemResourceUsageRequester implements Closeable {
     protected Gson gson = new Gson();
 
     protected SystemResourceUsageRequester(Channel cmdChannel, Channel incomingChannel, String responseQueueName,
-            QueueingConsumer responseConsumer, String sessionId) {
+            String sessionId) throws IOException {
+    	CustomConsumer responseConsumer = new CustomConsumer(cmdChannel);
+    	incomingChannel.basicConsume(responseQueueName, responseConsumer);
         this.cmdChannel = cmdChannel;
         this.incomingChannel = incomingChannel;
         this.responseQueueName = responseQueueName;
@@ -77,8 +78,8 @@ public class SystemResourceUsageRequester implements Closeable {
         try {
             BasicProperties props = new BasicProperties.Builder().deliveryMode(2).replyTo(responseQueueName).build();
             sendToCmdQueue(Commands.REQUEST_SYSTEM_RESOURCES_USAGE, null, props);
-            QueueingConsumer.Delivery delivery = responseConsumer
-                    .nextDelivery(AbstractCommandReceivingComponent.DEFAULT_CMD_RESPONSE_TIMEOUT);
+            Delivery delivery = responseConsumer.getDeliveryQueue().poll(AbstractCommandReceivingComponent.DEFAULT_CMD_RESPONSE_TIMEOUT, 
+            		TimeUnit.MILLISECONDS);
             Objects.requireNonNull(delivery, "Didn't got a response for a create container message.");
             if (delivery.getBody().length > 0) {
                 return gson.fromJson(RabbitMQUtils.readString(delivery.getBody()), ResourceUsageInformation.class);
