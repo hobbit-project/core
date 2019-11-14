@@ -273,6 +273,54 @@ public class RdfHelper {
         }
         return 0;
     }
+    
+    public static short getShortValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getShort() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured: ", e);
+            }
+        }
+        return 0;
+    }
+    
+    public static long getLongValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getLong() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured: ", e);
+            }
+        }
+        return 0;
+    }
+    
+    public static byte getByteValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return 0;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getByte() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occured: ", e);
+            }
+        }
+        return 0;
+    }
 
     /**
      * Returns the first triple literal that has the given subject and predicate and
