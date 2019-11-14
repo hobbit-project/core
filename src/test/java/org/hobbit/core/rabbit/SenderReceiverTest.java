@@ -23,9 +23,8 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
 
 @RunWith(Parameterized.class)
 public class SenderReceiverTest {
@@ -214,11 +213,11 @@ public class SenderReceiverTest {
 
         @SuppressWarnings("unused")
         private void receiveMsgsSequentielly(RabbitQueue queue) throws Exception {
-            QueueingConsumer consumer = new QueueingConsumer(queue.channel);
+            CustomConsumer consumer = new CustomConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
             Delivery delivery = null;
             while ((terminationMutex.availablePermits() == 0) || (queue.messageCount() > 0) || (delivery != null)) {
-                delivery = consumer.nextDelivery(3000);
+                delivery = consumer.getDeliveryQueue().poll(3000, TimeUnit.MILLISECONDS);
                 if (delivery != null) {
                     processMsg(RabbitMQUtils.readString(delivery.getBody()));
                 }
@@ -227,11 +226,11 @@ public class SenderReceiverTest {
 
         @SuppressWarnings("unused")
         private void receiveMsgsInParallel(RabbitQueue queue, ExecutorService executor) throws Exception {
-            QueueingConsumer consumer = new QueueingConsumer(queue.channel);
+        	CustomConsumer consumer = new CustomConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
             Delivery delivery = null;
             while ((terminationMutex.availablePermits() == 0) || (queue.messageCount() > 0) || (delivery != null)) {
-                delivery = consumer.nextDelivery(3000);
+                delivery = consumer.getDeliveryQueue().poll(3000, TimeUnit.MILLISECONDS);
                 if (delivery != null) {
                     executor.submit(new MsgProcessingTask(delivery));
                 }
