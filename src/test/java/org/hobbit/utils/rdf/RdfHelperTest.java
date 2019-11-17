@@ -132,8 +132,7 @@ public class RdfHelperTest {
         Assert.assertEquals(1, RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
         // resource object matches
-
-        Assert.assertEquals(4, RdfHelper.getIntValue(model,
+        Assert.assertEquals(32768, RdfHelper.getIntValue(model,
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
         // more than one triple matches
         Assert.assertTrue((new HashSet<Integer>(Arrays.asList(2, 3))).contains(RdfHelper.getIntValue(model,
@@ -144,7 +143,7 @@ public class RdfHelperTest {
                 .contains(RdfHelper.getIntValue(model, null, model.getProperty("http://example.org/property3"))));
         // property wildcard
 
-        Assert.assertTrue((new HashSet<Integer>(Arrays.asList(1, 4, 2, 3)))
+        Assert.assertTrue((new HashSet<Integer>(Arrays.asList(1, 32768, 2, 3)))
                 .contains(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"), null)));
 
 
