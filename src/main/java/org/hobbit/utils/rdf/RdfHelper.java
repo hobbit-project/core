@@ -267,12 +267,27 @@ public class RdfHelper {
                 return literal.getInt();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return 0;
     }
-    
+
+    /**
+     * Returns the objects as short of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as short or 0 if such
+     *         a triple couldn't be found
+     */
     public static short getShortValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
             return 0;
@@ -283,12 +298,27 @@ public class RdfHelper {
                 return literal.getShort() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return 0;
     }
-    
+
+    /**
+     * Returns the objects as long of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as long or 0 if such
+     *         a triple couldn't be found
+     */
     public static long getLongValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
             return 0;
@@ -299,12 +329,27 @@ public class RdfHelper {
                 return literal.getLong() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return 0;
     }
-    
+
+    /**
+     * Returns the objects as byte of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as byte or 0 if such
+     *         a triple couldn't be found
+     */
     public static byte getByteValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
             return 0;
@@ -344,7 +389,8 @@ public class RdfHelper {
                 return literal.getBoolean();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning false.", e);
+                //change the sentinel value to something more invalid
+                LOGGER.debug("Exception occurred. Returning false.", e);
             }
         }
         return false;
@@ -364,9 +410,9 @@ public class RdfHelper {
      * @return object of the triple as a Float or 0F
      *         if such a triple couldn't be found.
      */
-    public static Float getFloatValue(Model model, Resource subject, Property predicate) {
+    public static float getFloatValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
-            return 0F;
+            return Float.NaN;
         }
         Literal literal = getLiteral(model, subject, predicate);
         if (literal != null) {
@@ -374,10 +420,10 @@ public class RdfHelper {
                 return literal.getFloat();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0F.", e);
+                LOGGER.debug("Exception occurred. Returning NaN.", e);
             }
         }
-        return 0F;
+        return Float.NaN;
 
     }
 
@@ -395,9 +441,9 @@ public class RdfHelper {
      * @return object of the triple as a Double or 0D
      *         if such a triple couldn't be found.
      */
-    public static Double getDoubleValue(Model model, Resource subject, Property predicate) {
+    public static double getDoubleValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
-            return 0D;
+            return Double.NaN;
         }
         Literal literal = getLiteral(model, subject, predicate);
         if (literal != null) {
@@ -405,10 +451,10 @@ public class RdfHelper {
                 return literal.getDouble();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0D.", e);
+                LOGGER.debug("Exception occurred. Returning NaN.", e);
             }
         }
-        return 0D;
+        return Double.NaN;
 
     }
 
@@ -435,7 +481,7 @@ public class RdfHelper {
                 return literal.getChar();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0.", e);
+                LOGGER.debug("Exception occurred. Returning 0.", e);
             }
         }
         return 0;
