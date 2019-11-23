@@ -174,7 +174,7 @@ public class RdfHelperTest {
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property1"),
                 "1");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2"),
-                "32768");
+                "32767");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
                 "2");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
@@ -186,7 +186,7 @@ public class RdfHelperTest {
         Assert.assertEquals(1, RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
         // resource object matches Checking Short corner value
-        Assert.assertNotEquals(32768, RdfHelper.getShortValue(model,
+        Assert.assertEquals(32767, RdfHelper.getShortValue(model,
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
 
         // resource and property exist but there is no matching triple
@@ -250,7 +250,7 @@ public class RdfHelperTest {
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property1"),
                 "1");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2"),
-                "128");
+                "127");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
                 "2");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
@@ -262,7 +262,7 @@ public class RdfHelperTest {
         Assert.assertEquals(1, RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
         // resource object matches Checking Byte corner value
-        Assert.assertNotEquals(128, RdfHelper.getByteValue(model,
+        Assert.assertEquals(127, RdfHelper.getByteValue(model,
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
 
         // resource and property exist but there is no matching triple
