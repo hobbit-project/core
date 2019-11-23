@@ -8,20 +8,32 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.Envelope;
 
-public class CustomConsumer extends DefaultConsumer {
+/**
+ * This class extends the {@link DefaultConsumer} class 
+ * with blocking semantics. The class provides a linked blocking queue
+ * of {@link Delivery} class to fetch the next delivery message.
+ * 
+ * @author Altaf & Sourabh
+ *
+ */
+public class QueueingConsumer extends DefaultConsumer {
     
     private LinkedBlockingQueue<Delivery> deliveryQueue;
     
     
-    public CustomConsumer(Channel channel) {
+    public QueueingConsumer(Channel channel) {
     	this(channel, new LinkedBlockingQueue<Delivery>());
     }
     
-    public CustomConsumer(Channel channel, LinkedBlockingQueue<Delivery> deliveryQueue) {
+    public QueueingConsumer(Channel channel, LinkedBlockingQueue<Delivery> deliveryQueue) {
         super(channel);
         this.deliveryQueue = deliveryQueue;
     }
-    @Override
+    
+   /**
+    * Adds the delivery object to linked blocking queue for every receive
+    */
+   @Override
    public void handleDelivery(String consumerTag,
                               Envelope envelope,
                               AMQP.BasicProperties properties,

@@ -12,7 +12,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.PlatformConnector;
 import org.hobbit.core.data.usage.ResourceUsageInformation;
-import org.hobbit.core.rabbit.CustomConsumer;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +26,12 @@ public class SystemResourceUsageRequester implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemResourceUsageRequester.class);
 
+    /**
+     * Consumer of the queue that is used to receive responses for messages that are
+     * sent via the command queue and for which an answer is expected.
+     */
+    private QueueingConsumer responseConsumer = null;
+    
     public static SystemResourceUsageRequester create(PlatformConnector connector, String sessionId) {
         try {
             Channel cmdChannel = connector.getFactoryForOutgoingCmdQueues().createChannel();
@@ -34,7 +40,9 @@ public class SystemResourceUsageRequester implements Closeable {
             // if (responseQueueName == null) {
             responseQueueName = incomingChannel.queueDeclare().getQueue();
             // }
-            return new SystemResourceUsageRequester(cmdChannel, incomingChannel, responseQueueName, sessionId);
+            QueueingConsumer responseConsumer = new QueueingConsumer(cmdChannel);
+        	incomingChannel.basicConsume(responseQueueName, responseConsumer);
+            return new SystemResourceUsageRequester(cmdChannel, incomingChannel, responseQueueName, responseConsumer, sessionId);
         } catch (Exception e) {
             LOGGER.error("Exception while creating SystemResourceUsageRequester. Returning null.", e);
         }
@@ -46,11 +54,7 @@ public class SystemResourceUsageRequester implements Closeable {
      * sent via the command queue and for which an answer is expected.
      */
     private String responseQueueName = null;
-    /**
-     * Consumer of the queue that is used to receive responses for messages that are
-     * sent via the command queue and for which an answer is expected.
-     */
-    private CustomConsumer responseConsumer = null;
+    
     /**
      * Channel that is used for the command queue but not owned by this class (i.e.,
      * it won't be closed).
@@ -64,9 +68,8 @@ public class SystemResourceUsageRequester implements Closeable {
     protected Gson gson = new Gson();
 
     protected SystemResourceUsageRequester(Channel cmdChannel, Channel incomingChannel, String responseQueueName,
-            String sessionId) throws IOException {
-    	CustomConsumer responseConsumer = new CustomConsumer(cmdChannel);
-    	incomingChannel.basicConsume(responseQueueName, responseConsumer);
+    		QueueingConsumer responseConsumer, String sessionId) {
+    	
         this.cmdChannel = cmdChannel;
         this.incomingChannel = incomingChannel;
         this.responseQueueName = responseQueueName;

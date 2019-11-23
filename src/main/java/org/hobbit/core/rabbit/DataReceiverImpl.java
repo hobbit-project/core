@@ -61,7 +61,7 @@ public class DataReceiverImpl implements DataReceiver {
             throws IOException {
         this.queue = queue;
         this.dataHandler = handler;
-        CustomConsumer consumer = new CustomConsumer(queue.channel);
+        QueueingConsumer consumer = new QueueingConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(maxParallelProcessedMsgs);
         executor = Executors.newFixedThreadPool(maxParallelProcessedMsgs);
@@ -143,7 +143,7 @@ public class DataReceiverImpl implements DataReceiver {
      * @return a Runnable instance that will handle incoming messages as soon as it
      *         will be executed
      */
-    protected TerminatableRunnable buildMsgReceivingTask(CustomConsumer consumer) {
+    protected TerminatableRunnable buildMsgReceivingTask(QueueingConsumer consumer) {
         return new MsgReceivingTask(consumer);
     }
 
@@ -161,11 +161,11 @@ public class DataReceiverImpl implements DataReceiver {
 
     protected class MsgReceivingTask implements TerminatableRunnable {
 
-        private CustomConsumer consumer;
+        private QueueingConsumer consumer;
         private boolean runFlag = true;
         private boolean terminatedFlag = false;
 
-        public MsgReceivingTask(CustomConsumer consumer) {
+        public MsgReceivingTask(QueueingConsumer consumer) {
             this.consumer = consumer;
         }
 

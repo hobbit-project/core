@@ -50,26 +50,28 @@ public class SimpleFileReceiver {
 
     protected static final long DEFAULT_TIMEOUT = 1000;
 
+    protected QueueingConsumer consumer;
+    
     public static SimpleFileReceiver create(RabbitQueueFactory factory, String queueName) throws IOException {
         return create(factory.createDefaultRabbitQueue(queueName));
     }
 
     public static SimpleFileReceiver create(RabbitQueue queue) throws IOException {
-        CustomConsumer consumer = new CustomConsumer(queue.channel);
+        QueueingConsumer consumer = new QueueingConsumer(queue.channel);
         queue.channel.basicConsume(queue.name, true, consumer);
         queue.channel.basicQos(20);
         return new SimpleFileReceiver(queue, consumer);
     }
 
     protected RabbitQueue queue;
-    protected CustomConsumer consumer;
+    
     protected Map<String, FileReceiveState> fileStates = new HashMap<>();
     protected boolean terminated = false;
     protected int errorCount = 0;
     protected ExecutorService executor = Executors.newCachedThreadPool();
     protected long waitingForMsgTimeout = DEFAULT_TIMEOUT;
 
-    protected SimpleFileReceiver(RabbitQueue queue, CustomConsumer consumer) {
+    protected SimpleFileReceiver(RabbitQueue queue, QueueingConsumer consumer) {
         this.queue = queue;
         this.consumer = consumer;
     }
