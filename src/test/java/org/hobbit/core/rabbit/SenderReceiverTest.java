@@ -213,7 +213,7 @@ public class SenderReceiverTest {
 
         @SuppressWarnings("unused")
         private void receiveMsgsSequentielly(RabbitQueue queue) throws Exception {
-            CustomConsumer consumer = new CustomConsumer(queue.channel);
+        	QueueingConsumer consumer = new QueueingConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
             Delivery delivery = null;
             while ((terminationMutex.availablePermits() == 0) || (queue.messageCount() > 0) || (delivery != null)) {
@@ -226,7 +226,7 @@ public class SenderReceiverTest {
 
         @SuppressWarnings("unused")
         private void receiveMsgsInParallel(RabbitQueue queue, ExecutorService executor) throws Exception {
-        	CustomConsumer consumer = new CustomConsumer(queue.channel);
+        	QueueingConsumer consumer = new QueueingConsumer(queue.channel);
             queue.channel.basicConsume(queue.name, true, consumer);
             Delivery delivery = null;
             while ((terminationMutex.availablePermits() == 0) || (queue.messageCount() > 0) || (delivery != null)) {

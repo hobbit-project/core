@@ -22,7 +22,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.rabbit.CustomConsumer;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
@@ -88,8 +88,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     protected DataSender sender2System;
     protected DataSender sender2EvalStore;
     protected DataReceiver dataGenReceiver;
-
-    protected CustomConsumer consumer;
+    @Deprecated
+    protected QueueingConsumer consumer;
     protected boolean runFlag;
 
     /**

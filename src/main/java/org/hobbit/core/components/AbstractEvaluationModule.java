@@ -28,7 +28,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
-import org.hobbit.core.rabbit.CustomConsumer;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
@@ -52,7 +52,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Consumer used to receive the responses from the evaluation storage.
      */
-    protected CustomConsumer consumer;
+    protected QueueingConsumer consumer;
     /**
      * Queue to the evaluation storage.
      */
@@ -65,6 +65,10 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * The URI of the experiment.
      */
     protected String experimentUri;
+    /**
+     * Timeout parameter for delivery queue message poll.
+     */
+    private static final int QUEUEPOLLTIMEOUT=600000; 
 
     public AbstractEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -82,7 +86,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
 
-        consumer = new CustomConsumer(evalStore2EvalModuleQueue.channel);
+        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
         evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
     }
 
@@ -117,9 +121,15 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             // request next response pair
             props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
             evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            Delivery delivery = consumer.getDeliveryQueue().poll(300, TimeUnit.MILLISECONDS);
+            //Wait for delivery message
+            Delivery delivery = consumer.getDeliveryQueue().poll(QUEUEPOLLTIMEOUT, TimeUnit.MILLISECONDS);
             // parse the response
-            buffer = ByteBuffer.wrap(delivery.getBody());
+            try
+            {
+            	buffer = ByteBuffer.wrap(delivery.getBody());
+            
+            
+            
             // if the response is empty
             if (buffer.remaining() == 0) {
                 LOGGER.error("Got a completely empty response from the evaluation storage.");
@@ -139,7 +149,13 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
             receivedData = RabbitMQUtils.readByteArray(buffer);
 
+
             evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+            }catch(NullPointerException e) 
+            
+            {
+            	LOGGER.error("No Message Received after waiting for ten minutes");
+            }
         }
     }
 
