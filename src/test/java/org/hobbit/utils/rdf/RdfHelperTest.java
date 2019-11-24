@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class RdfHelperTest {
+
     @Test
     public void testGetLabel() {
         Model model = ModelFactory.createDefaultModel();
@@ -243,7 +244,6 @@ public class RdfHelperTest {
         // model is null
         Assert.assertNull(RdfHelper.getLongValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
-
         // object is resource instead of Long
         Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
@@ -283,9 +283,8 @@ public class RdfHelperTest {
         // model is null
         Assert.assertNull(RdfHelper.getByteValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
-
         // object is resource instead of Byte
-        Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
 
     }
@@ -536,7 +535,7 @@ public class RdfHelperTest {
         Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
         // object is resource instead of Double
-        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property5")));
       
 
@@ -588,7 +587,7 @@ public class RdfHelperTest {
         Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
         // object is resource instead of Character
-        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property5")));
 
         // literal object matches
