@@ -31,9 +31,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class RdfHelperTest {
-
-    private static final double DELTA = 1e-15;
-
     @Test
     public void testGetLabel() {
         Model model = ModelFactory.createDefaultModel();
@@ -194,16 +191,16 @@ public class RdfHelperTest {
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
 
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object)RdfHelper.getShortValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example2"),
                 model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object)RdfHelper.getShortValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example3"),
                 model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property4")));
         // model is null
-        Assert.assertNull((Object) RdfHelper.getShortValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getShortValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
         // object is resource instead of Short
