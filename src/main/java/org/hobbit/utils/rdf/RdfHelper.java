@@ -267,11 +267,12 @@ public class RdfHelper {
                 return literal.getInt();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return null;
     }
+
     /**
      * Returns the objects as Short of all triples that have the given subject and
      * predicate and that can be found in the given model.
@@ -288,6 +289,7 @@ public class RdfHelper {
      *         a triple couldn't be found	
      */
     public static Short getShortValue(Model model, Resource subject, Property predicate) {
+
         if (model == null) {
             return null;
         }
@@ -297,7 +299,7 @@ public class RdfHelper {
                 return literal.getShort() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return null;
@@ -327,11 +329,12 @@ public class RdfHelper {
                 return literal.getLong() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred: ", e);
             }
         }
         return null;
     }
+
     /**
      * Returns the objects as Byte of all triples that have the given subject and
      * predicate and that can be found in the given model.
@@ -416,10 +419,11 @@ public class RdfHelper {
                 return literal.getFloat();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0F.", e);
+                LOGGER.debug("Exception occurred. Returning NaN.", e);
             }
         }
         return null;
+
 
     }
 
@@ -440,6 +444,7 @@ public class RdfHelper {
     public static Double getDoubleValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
             return null;
+
         }
         Literal literal = getLiteral(model, subject, predicate);
         if (literal != null) {
@@ -447,7 +452,7 @@ public class RdfHelper {
                 return literal.getDouble();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0D.", e);
+                LOGGER.debug("Exception occurred. Returning NaN.", e);
             }
         }
         return null;
@@ -477,7 +482,7 @@ public class RdfHelper {
                 return literal.getChar();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured. Returning 0.", e);
+                LOGGER.debug("Exception occurred. Returning 0.", e);
             }
         }
         return null;

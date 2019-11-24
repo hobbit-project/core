@@ -13,15 +13,15 @@ import org.apache.jena.rdf.model.StmtIterator;
  * sorted and serialized resource properties.
  *
  */
-public class HashingRDFProperties {
+public class TripleHashCalculator {
 
     /**
      * @param statements
      * @return the computed hash.
      */
-    public static String hashProperties(StmtIterator statements) {
+    public static String calculateHash(StmtIterator statements) {
         String s = Streams.stream(statements)
-                .map(HashingRDFProperties::serializeStatement)
+                .map(TripleHashCalculator::serializeStatement)
                 .sorted()
                 .collect(Collectors.joining());
 
