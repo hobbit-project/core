@@ -152,19 +152,19 @@ public class RdfHelperTest {
 
 
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object) RdfHelper.getIntValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example2"),
                 model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object) RdfHelper.getIntValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example3"),
                 model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property4")));
         // model is null
-        Assert.assertNull((Object) RdfHelper.getIntValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getIntValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
-        // object is resource instead of int
+        // object is resource instead of Integer
         Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4")));
 
     }
@@ -206,7 +206,7 @@ public class RdfHelperTest {
         Assert.assertNull((Object) RdfHelper.getShortValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
-        // object is resource instead of short
+        // object is resource instead of Short
         Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4")));
 
 
@@ -235,19 +235,19 @@ public class RdfHelperTest {
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
 
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object)RdfHelper.getLongValue(model, model.getResource("http://example.org/example2"),
-                model.getProperty("http://example.org/property1")));
+        Assert.assertNull((RdfHelper.getLongValue(model, model.getResource("http://example.org/example2"),
+                model.getProperty("http://example.org/property1"))));
         // resource does not exist
-        Assert.assertNull((Object)RdfHelper.getLongValue(model, model.getResource("http://example.org/example3"),
-                model.getProperty("http://example.org/property1")));
+        Assert.assertNull((RdfHelper.getLongValue(model, model.getResource("http://example.org/example3"),
+                model.getProperty("http://example.org/property1"))));
         // property does not exist
-        Assert.assertNull((Object)RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property4")));
         // model is null
-        Assert.assertNull((Object)RdfHelper.getLongValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getLongValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
-        // object is resource instead of long
+        // object is resource instead of Long
         Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
 
@@ -275,19 +275,19 @@ public class RdfHelperTest {
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
 
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object)RdfHelper.getByteValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example2"),
                 model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object)RdfHelper.getByteValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example3"),
                 model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property4")));
         // model is null
-        Assert.assertNull((Object) RdfHelper.getByteValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getByteValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
-        // object is resource instead of byte
+        // object is resource instead of Byte
         Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
 
@@ -415,6 +415,8 @@ public class RdfHelperTest {
             "true");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             "false");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("http://example.org/example1"));
        
 
         // model is null
@@ -429,6 +431,9 @@ public class RdfHelperTest {
         // property does not exist
         Assert.assertNull(RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
+        // object is resource instead of Boolean
+        Assert.assertNull(RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property5")));
         
         // literal object matches
         Assert.assertEquals(true, RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
@@ -463,20 +468,25 @@ public class RdfHelperTest {
             "456.34578f");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             "94.454f");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("http://example.org/example1"));
         
 
         // model is null
-        Assert.assertNull((Object) RdfHelper.getFloatValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getFloatValue(null, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property1")));
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object) RdfHelper.getFloatValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example2"),
             model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object) RdfHelper.getFloatValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example3"),
             model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
+        // object is resource instead of Float
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property5")));
        
 
         // literal object matches
@@ -511,21 +521,26 @@ public class RdfHelperTest {
             "674.34657634589E101");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             "830.454589E101");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("http://example.org/example1"));
         
 
         // model is null
 
-        Assert.assertNull((Object) RdfHelper.getDoubleValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getDoubleValue(null, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property1")));
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object) RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example2"),
             model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object) RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example3"),
             model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
+        // object is resource instead of Double
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property5")));
       
 
         // literal object matches
@@ -560,19 +575,24 @@ public class RdfHelperTest {
             "8");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             "o");
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("http://example.org/example1"));
 
         // model is null
-        Assert.assertNull((Object) RdfHelper.getCharValue(null, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getCharValue(null, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property1")));
         // resource and property exist but there is no matching triple
-        Assert.assertNull((Object) RdfHelper.getCharValue(model, model.getResource("http://example.org/example2"),
+        Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example2"),
             model.getProperty("http://example.org/property1")));
         // resource does not exist
-        Assert.assertNull((Object) RdfHelper.getCharValue(model, model.getResource("http://example.org/example3"),
+        Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example3"),
             model.getProperty("http://example.org/property1")));
         // property does not exist
-        Assert.assertNull((Object) RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
+        Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property0")));
+        // object is resource instead of Character
+        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property5")));
 
         // literal object matches
         Assert.assertEquals('2',(Object) RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
