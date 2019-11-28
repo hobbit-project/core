@@ -20,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -124,8 +123,12 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             //Wait for delivery message
             Delivery delivery = consumer.getDeliveryQueue().poll(QUEUEPOLLTIMEOUT, TimeUnit.MILLISECONDS);
             // parse the response
-            try
+            if (delivery == null)
             {
+            	LOGGER.error("No Message Received after waiting for ten minutes");
+            	return;
+            }
+
             	buffer = ByteBuffer.wrap(delivery.getBody());
             
             
@@ -151,11 +154,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
 
             evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-            }catch(NullPointerException e) 
             
-            {
-            	LOGGER.error("No Message Received after waiting for ten minutes");
-            }
         }
     }
 
