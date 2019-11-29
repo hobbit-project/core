@@ -73,8 +73,8 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         super.init();
 
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
-
+        experimentUri = configVar.get(String.class,Constants.HOBBIT_EXPERIMENT_URI_KEY);
+        
         evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
         evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()

@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
@@ -68,12 +69,13 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     @Test(timeout = 60000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
+    	configVar = new PropertiesConfiguration();
+    	configVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+    	configVar.addProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
 
         // Create the eval store and add some data
-        InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore();
+        InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore(configVar);
         Random rand = new Random();
 
         String taskId;

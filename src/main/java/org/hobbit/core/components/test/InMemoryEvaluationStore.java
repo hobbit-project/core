@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
@@ -33,6 +34,14 @@ import org.hobbit.core.data.ResultPair;
  *
  */
 public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
+	
+	/**
+     * Constructor to assign configuration object.
+     */
+	
+	public InMemoryEvaluationStore(Configuration c) {
+		this.configVar=c;
+	}
 
     /**
      * Map containing a mapping from task Ids to result pairs.
