@@ -121,7 +121,6 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
 
 
         init();
-        System.out.println("Hello 1");
         Thread[] dataGenThreads = new Thread[numberOfDataGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfDataGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
@@ -136,7 +135,6 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
             dataGenThreads[i] = new Thread(dataGenExecutors[i]);
             dataGenThreads[i].start();
         }
-        System.out.println("Hello 2");
         Thread[] taskGenThreads = new Thread[numberOfTaskGenerators];
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfTaskGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
