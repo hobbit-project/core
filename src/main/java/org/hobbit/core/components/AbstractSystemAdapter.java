@@ -113,8 +113,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         super.init();
 
         // Get the benchmark parameter model
-        systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
-                () -> ModelFactory.createDefaultModel(), LOGGER);
+        systemParamModel = configVar.get(Model.class,Constants.SYSTEM_PARAMETERS_MODEL_KEY,
+                ModelFactory.createDefaultModel());
 
         dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
@@ -198,7 +198,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * Starts termination of the main thread of this system adapter. If a cause is
      * given, it will be thrown causing an abortion from the main thread instead of
      * a normal termination.
-     * 
+     *
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
      *            component should terminate in a normal way.

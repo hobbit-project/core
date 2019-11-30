@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -32,6 +33,15 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
     private final List<String> receivedResponses = Collections.synchronizedList(new ArrayList<String>());
     private final List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
 
+    public DummyEvalStoreReceiver(Configuration c)
+    {
+        this.configVar = c;
+    }
+
+    public DummyEvalStoreReceiver()
+    {
+
+    }
     @Override
     public void receiveResponseData(String taskId, long timestamp, byte[] data) {
         // StringBuilder builder = new StringBuilder();
