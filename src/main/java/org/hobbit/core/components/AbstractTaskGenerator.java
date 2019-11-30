@@ -19,6 +19,7 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -116,13 +117,18 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
-    @Override
+    public AbstractTaskGenerator(Configuration configVar) {
+    	this();
+        this.configVar=configVar;
+	}
+
+	@Override
     public void init() throws Exception {
         super.init();
 
-        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
+        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY);
         nextTaskId = generatorId;
-        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
+        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();

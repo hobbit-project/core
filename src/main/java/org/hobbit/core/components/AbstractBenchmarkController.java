@@ -147,9 +147,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
         // Get the benchmark parameter model
-        benchmarkParamModel = EnvVariables.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
+        benchmarkParamModel = RabbitMQUtils.readModel(configVar.getString(Constants.BENCHMARK_PARAMETERS_MODEL_KEY));
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+        experimentUri = configVar.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY);
     }
 
     @Override
