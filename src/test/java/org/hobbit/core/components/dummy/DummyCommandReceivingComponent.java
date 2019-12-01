@@ -16,6 +16,7 @@
  */
 package org.hobbit.core.components.dummy;
 
+import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 
 import org.junit.Ignore;
@@ -28,5 +29,13 @@ public class DummyCommandReceivingComponent extends AbstractCommandReceivingComp
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
+    }
+
+    public DummyCommandReceivingComponent(){
+
+    }
+
+    public DummyCommandReceivingComponent(Configuration c){
+        this.configVar = c;
     }
 }

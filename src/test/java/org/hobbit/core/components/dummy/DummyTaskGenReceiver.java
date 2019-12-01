@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Ignore;
@@ -28,6 +29,14 @@ import org.junit.Ignore;
 public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
     private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
+
+    public DummyTaskGenReceiver(){
+
+    }
+
+    public DummyTaskGenReceiver(Configuration c){
+        this.configVar = c;
+    }
 
     @Override
     protected void generateTask(byte[] data) throws Exception {

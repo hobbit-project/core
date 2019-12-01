@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.junit.Ignore;
@@ -29,6 +30,12 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
 
     private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
     private final List<String> receivedTasks = Collections.synchronizedList(new ArrayList<String>());
+
+    public DummySystemReceiver(Configuration c) {
+        this.configVar = c;
+    }
+
+    public DummySystemReceiver(){}
 
     @Override
     public void receiveGeneratedData(byte[] data) {

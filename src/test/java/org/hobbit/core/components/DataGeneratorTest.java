@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -91,15 +92,22 @@ public class DataGeneratorTest extends AbstractDataGenerator {
 
     @Test(timeout=30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+//        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+//        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
+//        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+//        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+
+        configVar = new PropertiesConfiguration();
+        configVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
+        configVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
+        configVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+
 
         init();
 
-        DummySystemReceiver system = new DummySystemReceiver();
-        DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
+        DummySystemReceiver system = new DummySystemReceiver(configVar);
+        DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system, configVar);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
@@ -107,7 +115,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         Thread[] taskGenThreads = new Thread[numberOfGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            taskGens[i] = new DummyTaskGenReceiver();
+            taskGens[i] = new DummyTaskGenReceiver(configVar);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGens[i]);
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();

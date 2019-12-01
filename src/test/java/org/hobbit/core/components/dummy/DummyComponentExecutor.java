@@ -16,6 +16,7 @@
  */
 package org.hobbit.core.components.dummy;
 
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.components.Component;
 import org.junit.Ignore;
@@ -29,9 +30,15 @@ public class DummyComponentExecutor implements Runnable {
 
     protected Component component;
     protected boolean success;
+    protected Configuration configVar;
 
     public DummyComponentExecutor(Component component) {
         this.component = component;
+    }
+
+    public DummyComponentExecutor(Component component, Configuration c){
+        this(component);
+        this.configVar = c;
     }
 
     @Override
@@ -55,6 +62,10 @@ public class DummyComponentExecutor implements Runnable {
      */
     public Component getComponent() {
         return component;
+    }
+
+    public Configuration getConfigVar(){
+        return configVar;
     }
 
     /**
