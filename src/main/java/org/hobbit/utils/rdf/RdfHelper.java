@@ -267,7 +267,7 @@ public class RdfHelper {
                 return literal.getInt();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -299,7 +299,7 @@ public class RdfHelper {
                 return literal.getShort() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -329,7 +329,7 @@ public class RdfHelper {
                 return literal.getLong() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -360,7 +360,7 @@ public class RdfHelper {
                 return literal.getByte() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -389,7 +389,7 @@ public class RdfHelper {
                 return literal.getBoolean();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured.", e);
+                LOGGER.debug("Exception occurred. Returning null", e);
             }
         }
         return null;
@@ -419,7 +419,7 @@ public class RdfHelper {
                 return literal.getFloat();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning NaN.", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -452,7 +452,7 @@ public class RdfHelper {
                 return literal.getDouble();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning NaN.", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
@@ -482,7 +482,7 @@ public class RdfHelper {
                 return literal.getChar();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning 0.", e);
+                LOGGER.debug("Exception occurred. Returning null.", e);
             }
         }
         return null;
