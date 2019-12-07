@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
+import org.hobbit.utils.ConfigurationVariables;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,14 +74,14 @@ public abstract class AbstractComponent implements Component {
     /**
      * Configuration reference for configuration object.
      */
-    protected Configuration configVar;
+    protected ConfigurationVariables configVar;
 
     @Override
     public void init() throws Exception {
-        hobbitSessionId = configVar.get(String.class,Constants.HOBBIT_SESSION_ID_KEY,
+        hobbitSessionId = configVar.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        rabbitMQHostName = configVar.get(String.class,Constants.RABBIT_MQ_HOST_NAME_KEY);
+        rabbitMQHostName = configVar.getString(Constants.RABBIT_MQ_HOST_NAME_KEY,LOGGER);
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
             String[] splitted = rabbitMQHostName.split(":");

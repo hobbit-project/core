@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -36,6 +37,7 @@ import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -63,17 +65,18 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    private int numberOfMessages = 30000;
+    private int numberOfMessages = 300;
     private Set<String> receivedResults = Collections.synchronizedSet(new HashSet<>());
     private Semaphore evalStoreReady = new Semaphore(0);
 
     @Test(timeout = 60000)
     public void test() throws Exception {
-    	configVar = new PropertiesConfiguration();
-    	configVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-    	configVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-    	configVar.addProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
-
+    	
+    	Configuration configurationVar = new PropertiesConfiguration();
+    	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+    	configurationVar.addProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
+    	configVar = new ConfigurationVariables(configurationVar); 
         // Create the eval store and add some data
         InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore(configVar);
         Random rand = new Random();

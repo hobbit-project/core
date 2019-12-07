@@ -21,10 +21,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
+import org.hobbit.utils.ConfigurationVariables;
 
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for
@@ -39,7 +39,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
      * Constructor to assign configuration object.
      */
 	
-	public InMemoryEvaluationStore(Configuration c) {
+	public InMemoryEvaluationStore(ConfigurationVariables c) {
 		this.configVar=c;
 	}
 

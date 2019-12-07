@@ -153,7 +153,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         };
         cmdChannel.basicConsume(queueName, true, consumer);
 
-        containerName = configVar.get(String.class,Constants.CONTAINER_NAME_KEY, containerName);
+        containerName = configVar.getString(Constants.CONTAINER_NAME_KEY, containerName);
         if (containerName == null) {
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }
