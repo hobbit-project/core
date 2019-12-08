@@ -42,7 +42,6 @@ import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +59,6 @@ import org.slf4j.LoggerFactory;
 public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
-
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
     private int numberOfMessages = 300;

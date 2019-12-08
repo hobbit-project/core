@@ -33,7 +33,6 @@ import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +123,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void init() throws Exception {
         super.init();
 
-        String queueName = EnvVariables.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        String queueName = configVar.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
@@ -139,9 +138,9 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = EnvVariables.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        queueName = configVar.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
-        final boolean receiveTimeStamp = EnvVariables.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
+        final boolean receiveTimeStamp = configVar.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
                 LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
@@ -167,7 +166,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        queueName = configVar.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(queueName));
