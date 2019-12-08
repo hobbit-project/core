@@ -19,13 +19,12 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
-import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
-import org.hobbit.utils.EnvVariables;
+import org.hobbit.utils.ConfigurationVariables;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
@@ -39,7 +38,7 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
     
-    public AbstractDataGenerator(Configuration configuration) {
+    public AbstractDataGenerator(ConfigurationVariables configuration) {
         this();
         this.configVar=configuration;
     }

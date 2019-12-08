@@ -32,6 +32,7 @@ import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -67,8 +68,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         return testConfigs;
     }
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private int numberOfDataGenerators;
     private int numberOfTaskGenerators;
@@ -83,15 +82,17 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     @Test
     public void test() throws Exception {
-    	configVar = new PropertiesConfiguration();
-    	configVar.setProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-    	configVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
-    	configVar.setProperty(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
+    	Configuration configurationVar = new PropertiesConfiguration();
+    	configurationVar.setProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
+    	configurationVar.setProperty(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
                 "{ \"@id\" : \"http://w3id.org/hobbit/experiments#New\", \"@type\" : \"http://w3id.org/hobbit/vocab#Experiment\" }");
-    	configVar.setProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
+    	configurationVar.setProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
         // Needed for the generators
-    	configVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
-    	configVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
+    	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
+    	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
+    	configVar = new ConfigurationVariables(configurationVar); 
+    	
 
         final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configVar);
         try {
@@ -213,7 +214,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             super();
             this.sessionId = sessionId;
         }
-        public DummyPlatformController(String sessionId,Configuration configVar) {
+        public DummyPlatformController(String sessionId,ConfigurationVariables configVar) {
             this(sessionId);
             this.configVar=configVar;
         }

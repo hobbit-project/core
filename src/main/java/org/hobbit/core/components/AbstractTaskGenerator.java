@@ -19,7 +19,6 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
-import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
@@ -29,7 +28,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
+import org.hobbit.utils.ConfigurationVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +116,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
-    public AbstractTaskGenerator(Configuration configVar) {
+    public AbstractTaskGenerator(ConfigurationVariables configVar) {
     	this();
         this.configVar=configVar;
 	}
