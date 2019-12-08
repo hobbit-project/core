@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -31,6 +33,7 @@ import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystem;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,8 +80,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         return testConfigs;
     }
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private List<String> sentTasks = Collections.synchronizedList(new ArrayList<String>());
     private List<String> expectedResponses = Collections.synchronizedList(new ArrayList<String>());
@@ -95,22 +96,25 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 600000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        Configuration configurationVar = new PropertiesConfiguration();
+
+        configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
+        configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
+        configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
         // Set the acknowledgement flag to true (read by the evaluation storage)
-        environmentVariables.set(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
+        configurationVar.addProperty(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
 
+        configVar = new ConfigurationVariables(configurationVar);
         init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages);
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configVar);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -122,12 +126,12 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             dataGenThreads[i].start();
         }
 
-        DummySystem system = new DummySystem();
+        DummySystem system = new DummySystem(configVar);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configVar);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();
