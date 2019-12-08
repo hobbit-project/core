@@ -79,46 +79,46 @@ public class RdfHelperTest {
     public void testGetStringValue() {
         Model model = ModelFactory.createDefaultModel();
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property1"),
-                "value 1");
+            "value 1");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2"),
-                model.getResource("http://example.org/example2"));
+            model.getResource("http://example.org/example2"));
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
-                "A");
+            "A");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
-                "B");
+            "B");
 
 
 
         // literal object matches
         Assert.assertEquals("value 1", RdfHelper.getStringValue(model, model.getResource("http://example.org/example1"),
-                model.getProperty("http://example.org/property1")));
+            model.getProperty("http://example.org/property1")));
         // resource object matches
         Assert.assertEquals("http://example.org/example2", RdfHelper.getStringValue(model,
-                model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
+            model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property2")));
         // more than one triple matches
         Assert.assertTrue((new HashSet<String>(Arrays.asList("A", "B"))).contains(RdfHelper.getStringValue(model,
-                model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"))));
+            model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"))));
 
 
         // resource wildcard
         Assert.assertTrue((new HashSet<String>(Arrays.asList("A", "B")))
-                .contains(RdfHelper.getStringValue(model, null, model.getProperty("http://example.org/property3"))));
+            .contains(RdfHelper.getStringValue(model, null, model.getProperty("http://example.org/property3"))));
         // property wildcard
         Assert.assertTrue((new HashSet<String>(Arrays.asList("value 1", "http://example.org/example2", "A", "B")))
-                .contains(RdfHelper.getStringValue(model, model.getResource("http://example.org/example1"), null)));
+            .contains(RdfHelper.getStringValue(model, model.getResource("http://example.org/example1"), null)));
 
         // resource and property exist but there is no matching triple
         Assert.assertNull(RdfHelper.getStringValue(model, model.getResource("http://example.org/example2"),
-                model.getProperty("http://example.org/property1")));
+            model.getProperty("http://example.org/property1")));
         // resource does not exist
         Assert.assertNull(RdfHelper.getStringValue(model, model.getResource("http://example.org/example3"),
-                model.getProperty("http://example.org/property1")));
+            model.getProperty("http://example.org/property1")));
         // property does not exist
         Assert.assertNull(RdfHelper.getStringValue(model, model.getResource("http://example.org/example1"),
-                model.getProperty("http://example.org/property4")));
+            model.getProperty("http://example.org/property4")));
         // model is null
         Assert.assertNull(RdfHelper.getStringValue(null, model.getResource("http://example.org/example1"),
-                model.getProperty("http://example.org/property1")));
+            model.getProperty("http://example.org/property1")));
     }
 
     @Test
@@ -136,6 +136,9 @@ public class RdfHelperTest {
             "a");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("not an int value"));
+
 
         // literal object matches
         Assert.assertEquals(1, (int) RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"),
@@ -146,9 +149,6 @@ public class RdfHelperTest {
         // more than one triple matches
         Assert.assertTrue((new HashSet<Integer>(Arrays.asList(2, 3))).contains(RdfHelper.getIntValue(model,
                 model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"))));
-        // literal object is not integer
-        Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
 
         // resource wildcard
         Assert.assertTrue((new HashSet<Integer>(Arrays.asList(2, 3)))
@@ -175,6 +175,9 @@ public class RdfHelperTest {
         // object is resource instead of Integer
         Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4")));
 
+        //object is a literal of a different data type instead of an Integer
+        Assert.assertNull(RdfHelper.getIntValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5")));
+
     }
 
 
@@ -191,8 +194,11 @@ public class RdfHelperTest {
                 "3");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
             "a");
+
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("32769"));
 
 
         // literal object matches
@@ -215,13 +221,10 @@ public class RdfHelperTest {
         Assert.assertNull(RdfHelper.getShortValue(null, model.getResource("http://example.org/example1"),
                 model.getProperty("http://example.org/property1")));
 
-        // literal object is not short
-        Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
-
         // object is resource instead of Short
         Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4")));
-
+        //object is a literal of a different data type instead of short
+        Assert.assertNull(RdfHelper.getShortValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5")));
 
     }
 
@@ -240,6 +243,8 @@ public class RdfHelperTest {
             "a");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("not a long value"));
 
 
         // literal object matches
@@ -264,10 +269,9 @@ public class RdfHelperTest {
         // object is resource instead of Long
         Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
+        //object is a literal of a different data type instead of long
+        Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5")));
 
-        // literal object is not long
-        Assert.assertNull(RdfHelper.getLongValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
 
     }
 
@@ -282,10 +286,10 @@ public class RdfHelperTest {
                 "2");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property3"),
                 "3");
-        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
-            "a");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property4"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
+            model.getResource("not a byte value"));
 
         // literal object matches
         Assert.assertEquals(1, (byte) RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
@@ -309,9 +313,8 @@ public class RdfHelperTest {
         // object is resource instead of Byte
         Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property4")));
-        // literal object is not byte
-        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
+        //object is a literal of a different data type instead of byte
+        Assert.assertNull(RdfHelper.getByteValue(model, model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5")));
 
     }
 
@@ -459,6 +462,7 @@ public class RdfHelperTest {
         Assert.assertNull(RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property5")));
 
+
         // literal object matches
         Assert.assertEquals(true, RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property1")));
@@ -475,9 +479,6 @@ public class RdfHelperTest {
         // property wildcard
         Assert.assertTrue((new HashSet<Boolean>(Arrays.asList(true, false, false, true)))
             .contains(RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"), null)));
-        // literal object is not Boolean
-        Assert.assertNull(RdfHelper.getBooleanValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
 
 
     }
@@ -534,9 +535,7 @@ public class RdfHelperTest {
         // property wildcard
         Assert.assertTrue((new HashSet<>(Arrays.asList(7.435f, 70.7976f, 31.87f, 456.34578f, 94.454f)))
             .contains(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"), null)));
-        // literal object is not float
-        Assert.assertNull(RdfHelper.getFloatValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
+
 
     }
 
@@ -557,6 +556,9 @@ public class RdfHelperTest {
             "a");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property6"),
+            model.getResource("false"));
+
 
 
         // model is null
@@ -574,6 +576,9 @@ public class RdfHelperTest {
         // object is resource instead of Double
         Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property5")));
+        //object is a literal of a different data type instead of double
+        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property6")));
 
 
         // literal object matches
@@ -592,9 +597,7 @@ public class RdfHelperTest {
         // property wildcard
         Assert.assertTrue((new HashSet<>(Arrays.asList(123.43555, 1.7976931348623157E308, 56.87643872658737565987395875, 674.34657634589E101, 830.454589E101)))
             .contains(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"), null)));
-        // literal object is not double
-        Assert.assertNull(RdfHelper.getDoubleValue(model, model.getResource("http://example.org/example1"),
-            model.getProperty("http://example.org/property5")));
+
 
     }
 
@@ -613,6 +616,8 @@ public class RdfHelperTest {
             "o");
         model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property5"),
             model.getResource("http://example.org/example1"));
+        model.add(model.getResource("http://example.org/example1"), model.getProperty("http://example.org/property6"),
+            model.getResource("not a char value"));
 
         // model is null
         Assert.assertNull(RdfHelper.getCharValue(null, model.getResource("http://example.org/example1"),
@@ -629,6 +634,9 @@ public class RdfHelperTest {
         // object is resource instead of Character
         Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
             model.getProperty("http://example.org/property5")));
+        //object is a literal of a different data type instead of char
+        Assert.assertNull(RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),
+            model.getProperty("http://example.org/property6")));
 
         // literal object matches
         Assert.assertEquals('2', (char) RdfHelper.getCharValue(model, model.getResource("http://example.org/example1"),

@@ -300,6 +300,7 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Couldn't parse as Short. Returning null.", e);
+
             }
         }
         return null;
@@ -361,6 +362,7 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Couldn't parse as Byte. Returning null.", e);
+
             }
         }
         return null;
@@ -390,6 +392,7 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Couldn't parse as Boolean. Returning null.", e);
+
             }
         }
         return null;
@@ -453,6 +456,7 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Couldn't parse as Double. Returning null.", e);
+
             }
         }
         return null;
@@ -483,7 +487,6 @@ public class RdfHelper {
             } catch (Exception e) {
                 // nothing to do
                 LOGGER.debug("Exception occurred. Returning Null.", e);
-
             }
         }
         return null;
