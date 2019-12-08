@@ -27,7 +27,6 @@ import org.hobbit.core.TestConstants;
 import org.hobbit.utils.ConfigurationVariables;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -38,8 +37,7 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class ContainerEnvironmentTest {
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
+   
     private AbstractCommandReceivingComponent component;
 
     @Parameters

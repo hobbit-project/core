@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
@@ -21,16 +23,13 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.SimpleFileSender;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.MessageProperties;
 
 /**
  * This is a test that simulates the workflow of the
@@ -50,21 +49,21 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
     private static final String DATA_SIZE_KEY = "DATA_SIZE";
     private static final String OUTPUT_FILE_NAME = "output.txt";
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+    
 
     private File outputDir;
 
     @Test(timeout = 30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
-
+    	Configuration configurationVar = new PropertiesConfiguration();
+    	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
+    	configVar = new ConfigurationVariables(configurationVar);
         outputDir = generateTempDir();
         LOGGER.debug("File will be writte to {}", outputDir.getAbsolutePath());
         // start platform controller
         LOGGER.debug("Creating controller and waiting for it to be ready...");
-        DummyPlatformController platform = new DummyPlatformController(HOBBIT_SESSION_ID);
+        DummyPlatformController platform = new DummyPlatformController(HOBBIT_SESSION_ID,configVar);
         DummyComponentExecutor platformExecutor = new DummyComponentExecutor(platform);
         Thread platformThread = new Thread(platformExecutor);
         platformThread.start();
@@ -115,6 +114,11 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
             super();
             addCommandHeaderId(sessionId);
         }
+        public DummyPlatformController(String sessionId, ConfigurationVariables c) {
+            super();
+            addCommandHeaderId(sessionId);
+            configVar = c;
+        }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             String replyTo = null;
@@ -133,7 +137,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                     if (startCommand.image.equals(MIMICKING_ALGORITHM_DOCKER_IMAGE)) {
                         // Create the mimicking Algorithm
                         mimickingExecutor = new DummyComponentExecutor(
-                                new DummyMimickingAlgorithm(startCommand.environmentVariables)) {
+                                new DummyMimickingAlgorithm(startCommand.environmentVariables, configVar)) {
                             @Override
                             public void run() {
                                 super.run();
@@ -181,6 +185,11 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
         public DummyMimickingAlgorithm(String[] env) {
             super();
             this.env = env;
+        }
+        public DummyMimickingAlgorithm(String[] env, ConfigurationVariables c) {
+            super();
+            this.env = env;
+            configVar = c;
         }
 
         @Override

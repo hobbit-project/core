@@ -60,6 +60,8 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
         this.dockerImage = dockerImage;
         this.connector = connector;
     }
+    
+    
 
     @Override
     public void generateData(String outputDirectory, String[] envVariables) throws Exception {

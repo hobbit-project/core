@@ -18,13 +18,11 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 
-import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.hobbit.utils.ConfigurationVariables;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
