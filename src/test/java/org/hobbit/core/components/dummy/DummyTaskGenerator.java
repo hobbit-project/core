@@ -18,6 +18,7 @@ package org.hobbit.core.components.dummy;
 
 import org.apache.commons.configuration2.Configuration;
 import org.hobbit.core.components.AbstractTaskGenerator;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Ignore;
 
 @Ignore
@@ -28,7 +29,7 @@ public class DummyTaskGenerator extends AbstractTaskGenerator {
     public DummyTaskGenerator() {
         this(0L);
     }
-    public DummyTaskGenerator(Configuration c) {
+    public DummyTaskGenerator(ConfigurationVariables c) {
         this();
         this.configVar = c;
     }

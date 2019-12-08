@@ -30,15 +30,9 @@ public class DummyComponentExecutor implements Runnable {
 
     protected Component component;
     protected boolean success;
-    protected Configuration configVar;
 
     public DummyComponentExecutor(Component component) {
         this.component = component;
-    }
-
-    public DummyComponentExecutor(Component component, Configuration c){
-        this(component);
-        this.configVar = c;
     }
 
     @Override
@@ -62,10 +56,6 @@ public class DummyComponentExecutor implements Runnable {
      */
     public Component getComponent() {
         return component;
-    }
-
-    public Configuration getConfigVar(){
-        return configVar;
     }
 
     /**

@@ -32,7 +32,6 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,7 +112,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         super.init();
 
         // Get the benchmark parameter model
-        systemParamModel = configVar.get(Model.class,Constants.SYSTEM_PARAMETERS_MODEL_KEY,
+        systemParamModel = configVar.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
                 ModelFactory.createDefaultModel());
 
         dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)

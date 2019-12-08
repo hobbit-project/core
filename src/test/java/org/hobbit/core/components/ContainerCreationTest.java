@@ -16,6 +16,8 @@
  */
 package org.hobbit.core.components;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import java.util.Random;
 
@@ -26,6 +28,7 @@ import java.io.IOException;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.data.StartCommandData;
+import org.hobbit.utils.ConfigurationVariables;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.Future;
@@ -52,8 +55,6 @@ public class ContainerCreationTest {
     private static final String HOBBIT_SESSION_ID = "123";
     private static final long CONTAINER_CREATION_DELAY = 2000;
 
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
     private AbstractCommandReceivingComponent component;
 
     @Rule
@@ -61,16 +62,19 @@ public class ContainerCreationTest {
 
     @Before
     public void setUp() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        Configuration configurationVar = new PropertiesConfiguration();
+        configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        platformController = new DummyPlatformController(HOBBIT_SESSION_ID);
+        ConfigurationVariables configVar = new ConfigurationVariables(configurationVar);
+
+        platformController = new DummyPlatformController(HOBBIT_SESSION_ID, configVar);
         DummyComponentExecutor platformExecutor = new DummyComponentExecutor(platformController);
         Thread platformThread = new Thread(platformExecutor);
         platformThread.start();
         platformController.waitForControllerBeingReady();
 
-        component = new DummyCommandReceivingComponent();
+        component = new DummyCommandReceivingComponent(configVar);
         component.init();
     }
 
@@ -105,8 +109,9 @@ public class ContainerCreationTest {
     }
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
-        public DummyPlatformController(String sessionId) {
+        public DummyPlatformController(String sessionId, ConfigurationVariables configVar) {
             super(true);
+            this.configVar = configVar;
             addCommandHeaderId(sessionId);
         }
 
