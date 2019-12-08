@@ -146,7 +146,7 @@ public class RdfHelper {
         }
         return values;
     }
-    
+
 
     /**
      * Returns the object as {@link Calendar} of the first triple that has the given
@@ -245,7 +245,7 @@ public class RdfHelper {
     /**
      * Returns the objects as Integer of all triples that have the given subject and
      * predicate and that can be found in the given model.
-     * 
+     *
      * @param model
      * 				the model that should contain the triple
      * @param subject
@@ -255,7 +255,7 @@ public class RdfHelper {
      *            the predicate of the triple. <code>null</code> works like a
      *            wildcard.
      * @return object of the triple as Integer or null if such
-     *         a triple couldn't be found	
+     *         a triple couldn't be found
      */
     public static Integer getIntValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
@@ -267,7 +267,7 @@ public class RdfHelper {
                 return literal.getInt();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Couldn't parse as Integer. Returning null.", e);
             }
         }
         return null;
@@ -276,7 +276,7 @@ public class RdfHelper {
     /**
      * Returns the objects as Short of all triples that have the given subject and
      * predicate and that can be found in the given model.
-     * 
+     *
      * @param model
      * 				the model that should contain the triple
      * @param subject
@@ -286,7 +286,7 @@ public class RdfHelper {
      *            the predicate of the triple. <code>null</code> works like a
      *            wildcard.
      * @return object of the triple as Short or null if such
-     *         a triple couldn't be found	
+     *         a triple couldn't be found
      */
     public static Short getShortValue(Model model, Resource subject, Property predicate) {
 
@@ -299,7 +299,7 @@ public class RdfHelper {
                 return literal.getShort() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Couldn't parse as Short. Returning null.", e);
             }
         }
         return null;
@@ -307,7 +307,7 @@ public class RdfHelper {
     /**
      * Returns the objects as Long of all triples that have the given subject and
      * predicate and that can be found in the given model.
-     * 
+     *
      * @param model
      * 				the model that should contain the triple
      * @param subject
@@ -317,7 +317,7 @@ public class RdfHelper {
      *            the predicate of the triple. <code>null</code> works like a
      *            wildcard.
      * @return object of the triple as Long or null if such
-     *         a triple couldn't be found	
+     *         a triple couldn't be found
      */
     public static Long getLongValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
@@ -329,7 +329,7 @@ public class RdfHelper {
                 return literal.getLong() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred: ", e);
+                LOGGER.debug("Couldn't parse as Long. Returning null.", e);
             }
         }
         return null;
@@ -338,7 +338,7 @@ public class RdfHelper {
     /**
      * Returns the objects as Byte of all triples that have the given subject and
      * predicate and that can be found in the given model.
-     * 
+     *
      * @param model
      * 				the model that should contain the triple
      * @param subject
@@ -348,7 +348,7 @@ public class RdfHelper {
      *            the predicate of the triple. <code>null</code> works like a
      *            wildcard.
      * @return object of the triple as Byte or null if such
-     *         a triple couldn't be found	
+     *         a triple couldn't be found
      */
     public static Byte getByteValue(Model model, Resource subject, Property predicate) {
         if (model == null) {
@@ -360,7 +360,7 @@ public class RdfHelper {
                 return literal.getByte() ;
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured: ", e);
+                LOGGER.debug("Couldn't parse as Byte. Returning null.", e);
             }
         }
         return null;
@@ -389,7 +389,7 @@ public class RdfHelper {
                 return literal.getBoolean();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occured.", e);
+                LOGGER.debug("Couldn't parse as Boolean. Returning null.", e);
             }
         }
         return null;
@@ -419,7 +419,7 @@ public class RdfHelper {
                 return literal.getFloat();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning NaN.", e);
+                LOGGER.debug("Couldn't parse as Float. Returning null.", e);
             }
         }
         return null;
@@ -452,7 +452,7 @@ public class RdfHelper {
                 return literal.getDouble();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning NaN.", e);
+                LOGGER.debug("Couldn't parse as Double. Returning null.", e);
             }
         }
         return null;
@@ -482,7 +482,8 @@ public class RdfHelper {
                 return literal.getChar();
             } catch (Exception e) {
                 // nothing to do
-                LOGGER.debug("Exception occurred. Returning 0.", e);
+                LOGGER.debug("Exception occurred. Returning Null.", e);
+
             }
         }
         return null;
@@ -594,6 +595,6 @@ public class RdfHelper {
         return subjects;
     }
 
-    
+
 
 }
