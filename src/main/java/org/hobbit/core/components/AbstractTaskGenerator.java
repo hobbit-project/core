@@ -125,9 +125,9 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     public void init() throws Exception {
         super.init();
 
-        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY);
+        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY,LOGGER);
         nextTaskId = generatorId;
-        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY);
+        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY,LOGGER);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
@@ -149,12 +149,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         // Wait for the start message
         startTaskGenMutex.acquire();
         // Wait for message to terminate
+
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
         // make sure that all messages have been delivered (otherwise they might
         // be lost)
         sender2System.closeWhenFinished();
         sender2EvalStore.closeWhenFinished();
+
     }
 
     @Override

@@ -96,7 +96,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test(timeout = 600000)
+    @Test(timeout = 60000)
     public void test() throws Exception {
         Configuration configurationVar = new PropertiesConfiguration();
 
@@ -110,7 +110,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
 
         configVar = new ConfigurationVariables(configurationVar);
         init();
-
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
@@ -125,7 +124,6 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             dataGenThreads[i] = new Thread(dataGenExecutors[i]);
             dataGenThreads[i].start();
         }
-
         DummySystem system = new DummySystem(configVar);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
@@ -139,22 +137,21 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         dataGensReady.acquire(numberOfGenerators);
         systemReady.acquire();
         evalStoreReady.acquire();
-
         try {
             // start dummy
             sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
             sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
-
             run();
             sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
             sendToCmdQueue(Commands.EVAL_STORAGE_TERMINATE);
 
             for (int i = 0; i < dataGenThreads.length; ++i) {
+
                 dataGenThreads[i].join();
             }
+
             systemThread.join();
             evalStoreThread.join();
-
             for (int i = 0; i < dataGenExecutors.length; ++i) {
                 Assert.assertTrue(dataGenExecutors[i].isSuccess());
             }

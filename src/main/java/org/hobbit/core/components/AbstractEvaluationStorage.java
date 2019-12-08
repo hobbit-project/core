@@ -237,7 +237,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 });
 
-        boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
+        boolean sendAcks = configVar.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
         if (sendAcks) {
             // Create channel for acknowledgements
             ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
