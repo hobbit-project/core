@@ -1,6 +1,5 @@
 package org.hobbit.utils;
 
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -9,11 +8,11 @@ import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 
-public class ConfigurationVariables 
+public class ConfigurationVariables
 {
 
 	private Configuration configVar;
-	
+
 	public ConfigurationVariables(Configuration config)
 	{
 		this.configVar = config;
@@ -28,7 +27,7 @@ public class ConfigurationVariables
      * {@link IllegalStateException} is thrown. Else, if a defaultValueFactory is
      * available, a default value will be returned. Otherwise {@code null} is
      * returned.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -53,7 +52,7 @@ public class ConfigurationVariables
      */
     protected  <T> T getVariableValue(String name, Function<String, T> conversion,
             Supplier<T> defaultValueFactory, Logger logger, boolean exceptionWhenFailing) throws IllegalStateException {
-     
+
         String errorMsg;
         Throwable error = null;
         // If the variable is available
@@ -89,7 +88,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @return the variable value
@@ -104,7 +103,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -121,7 +120,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -141,7 +140,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param logger
@@ -158,7 +157,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -177,7 +176,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link String} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -196,7 +195,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the default value factory function before calling
      * {@link #getStringValue(String, Supplier, Logger, boolean)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -228,7 +227,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the conversion function before calling
      * {@link #getVariableValue(String, Function, Object, Logger)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -260,7 +259,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @return the variable value
@@ -275,7 +274,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -292,7 +291,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -310,7 +309,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param logger
@@ -327,7 +326,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -346,7 +345,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@link Model} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -365,7 +364,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the default value factory function before calling
      * {@link #getModelValue(String, Supplier, Logger, boolean)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -397,7 +396,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the conversion function before calling
      * {@link #getVariableValue(String, Function, Object, Logger)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -429,7 +428,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @return the variable value
@@ -444,7 +443,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -461,7 +460,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -479,7 +478,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param logger
@@ -496,7 +495,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -515,7 +514,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code int} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -534,7 +533,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the default value factory function before calling
      * {@link #getIntValue(String, Supplier, Logger, boolean)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -567,7 +566,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the conversion function before calling
      * {@link #getVariableValue(String, Function, Object, Logger)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -599,7 +598,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @return the variable value
@@ -614,7 +613,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -631,7 +630,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -649,7 +648,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or throws an {@link IllegalStateException} if the variable can
      * not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param logger
@@ -666,7 +665,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -685,7 +684,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code long} or the default value if the variable can not be found or an error
      * occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -704,7 +703,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the default value factory function before calling
      * {@link #getLongValue(String, Supplier, Logger, boolean)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -737,7 +736,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the conversion function before calling
      * {@link #getVariableValue(String, Function, Object, Logger)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -769,7 +768,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or throws an {@link IllegalStateException} if the variable
      * can not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @return the variable value
@@ -784,7 +783,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -801,7 +800,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -819,7 +818,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or throws an {@link IllegalStateException} if the variable
      * can not be found or an error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param logger
@@ -836,7 +835,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValue
@@ -855,7 +854,7 @@ public class ConfigurationVariables
      * Returns the value of the environmental variable with the given name as
      * {@code boolean} or the default value if the variable can not be found or an
      * error occurs.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param defaultValueFactory
@@ -874,7 +873,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the default value factory function before calling
      * {@link #getBooleanValue(String, Supplier, Logger, boolean)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion
@@ -906,7 +905,7 @@ public class ConfigurationVariables
     /**
      * Internal method defining the conversion function before calling
      * {@link #getVariableValue(String, Function, Object, Logger)}.
-     * 
+     *
      * @param name
      *            name of the environmental variable which should be accessed
      * @param conversion

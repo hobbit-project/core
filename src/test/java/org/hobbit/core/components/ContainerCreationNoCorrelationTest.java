@@ -92,10 +92,14 @@ public class ContainerCreationNoCorrelationTest {
     }
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
-        public DummyPlatformController(String sessionId, ConfigurationVariables configVar) {
-            super(true);
-            this.configVar = configVar;
+        public DummyPlatformController(String sessionId) {
+            super(false);
             addCommandHeaderId(sessionId);
+        }
+        public DummyPlatformController(String sessionId, ConfigurationVariables configVar) {
+            super(false);
+            addCommandHeaderId(sessionId);
+            this.configVar = configVar;
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
