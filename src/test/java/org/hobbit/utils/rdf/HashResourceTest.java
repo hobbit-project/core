@@ -16,15 +16,17 @@
  */
 package org.hobbit.utils.rdf;
 
-import org.apache.jena.rdf.model.impl.StmtIteratorImpl;
-import org.apache.jena.rdf.model.Statement;
+import static org.junit.Assert.assertEquals;
+
 import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.StatementImpl;
-import static org.junit.Assert.*;
-import org.junit.*;
+import org.apache.jena.rdf.model.impl.StmtIteratorImpl;
+import org.junit.Before;
+import org.junit.Test;
 
 public class HashResourceTest {
 
@@ -39,7 +41,7 @@ public class HashResourceTest {
     public void testHashResourceWithLiteral() {
         String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
-                m.createResource(RdfHelper.HASH_SELF_URI),
+                m.createResource(TripleHashCalculator.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
                 m.createLiteral("exampleLiteralValue"))
         ).iterator()));
@@ -52,7 +54,7 @@ public class HashResourceTest {
     public void testHashResourceWithURI() {
         String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
-                m.createResource(RdfHelper.HASH_SELF_URI),
+                m.createResource(TripleHashCalculator.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
                 m.createResource("http://example.org/ExampleResource"))
         ).iterator()));
@@ -65,11 +67,11 @@ public class HashResourceTest {
     public void testHashResourceWithSeveralProperties() {
         String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
-                m.createResource(RdfHelper.HASH_SELF_URI),
+                m.createResource(TripleHashCalculator.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
                 m.createLiteral("exampleValue2")),
             new StatementImpl(
-                m.createResource(RdfHelper.HASH_SELF_URI),
+                m.createResource(TripleHashCalculator.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
                 m.createLiteral("exampleValue1"))
         ).iterator()));

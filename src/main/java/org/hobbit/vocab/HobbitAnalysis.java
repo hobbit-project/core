@@ -17,6 +17,7 @@
 package org.hobbit.vocab;
 
 import java.util.stream.Stream;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -24,7 +25,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.StatementImpl;
 import org.apache.jena.rdf.model.impl.StmtIteratorImpl;
-import org.hobbit.utils.rdf.RdfHelper;
 import org.hobbit.utils.rdf.TripleHashCalculator;
 
 /**
@@ -59,7 +59,7 @@ public class HobbitAnalysis {
      */
     public static Resource getResultset(Resource benchmark, Resource systemInstance) {
         Model dummyModel = ModelFactory.createDefaultModel();
-        Resource dummyRes = dummyModel.createResource(RdfHelper.HASH_SELF_URI);
+        Resource dummyRes = dummyModel.createResource(TripleHashCalculator.HASH_SELF_URI);
         String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(dummyRes, HOBBIT.involvesBenchmark, benchmark),
             (Statement) new StatementImpl(dummyRes, HOBBIT.involvesSystemInstance, systemInstance)

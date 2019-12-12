@@ -16,6 +16,12 @@ import org.apache.jena.rdf.model.StmtIterator;
 public class TripleHashCalculator {
 
     /**
+     * Replacement URI for the resource.
+     * Currently has no effect on actual hash computation.
+     */
+    public static String HASH_SELF_URI = "hashedRDF.v1:self";
+
+    /**
      * @param statements
      * @return the computed hash.
      */
