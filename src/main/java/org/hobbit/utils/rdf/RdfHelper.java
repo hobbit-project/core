@@ -37,7 +37,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Constants;
-import org.hobbit.utils.rdf.HashingRDFVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +147,7 @@ public class RdfHelper {
         return values;
     }
 
+
     /**
      * Returns the object as {@link Calendar} of the first triple that has the given
      * subject and predicate and that can be found in the given model.
@@ -242,6 +242,257 @@ public class RdfHelper {
         }
         return null;
     }
+    /**
+     * Returns the objects as Integer of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as Integer or null if such
+     *         a triple couldn't be found
+     */
+    public static Integer getIntValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getInt();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Integer. Returning null.", e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the objects as Short of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as Short or null if such
+     *         a triple couldn't be found
+     */
+    public static Short getShortValue(Model model, Resource subject, Property predicate) {
+
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getShort() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Short. Returning null.", e);
+
+            }
+        }
+        return null;
+    }
+    /**
+     * Returns the objects as Long of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as Long or null if such
+     *         a triple couldn't be found
+     */
+    public static Long getLongValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getLong() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Long. Returning null.", e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the objects as Byte of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     * 				the model that should contain the triple
+     * @param subject
+     *            the subject of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @param predicate
+     *            the predicate of the triple. <code>null</code> works like a
+     *            wildcard.
+     * @return object of the triple as Byte or null if such
+     *         a triple couldn't be found
+     */
+    public static Byte getByteValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getByte() ;
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Byte. Returning null.", e);
+
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the objects as Boolean of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Boolean or null
+     *         if such a triple couldn't be found.
+     */
+    public static Boolean getBooleanValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getBoolean();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Boolean. Returning null.", e);
+
+            }
+        }
+        return null;
+
+    }
+
+    /**
+     * Returns the objects as Float of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Float or null
+     *         if such a triple couldn't be found.
+     */
+    public static Float getFloatValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getFloat();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Float. Returning null.", e);
+            }
+        }
+        return null;
+
+
+    }
+
+
+    /**
+     * Returns the objects as Double of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Double or null
+     *         if such a triple couldn't be found.
+     */
+    public static Double getDoubleValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getDouble();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Couldn't parse as Double. Returning null.", e);
+
+            }
+        }
+        return null;
+
+    }
+
+    /**
+     * Returns the objects as Character of all triples that have the given subject and
+     * predicate and that can be found in the given model.
+     *
+     * @param model
+     *              the model that should contain the triple
+     * @param subject
+     *              the subject of the triple. <code>null</code> works like a wildcard.
+     * @param predicate
+     *              the predicate of the triple. <code>null</code> works like a wildcard.
+     * @return object of the triple as a Character or null
+     *         if such a triple couldn't be found.
+     */
+    public static Character getCharValue(Model model, Resource subject, Property predicate) {
+        if (model == null) {
+            return null;
+        }
+        Literal literal = getLiteral(model, subject, predicate);
+        if (literal != null) {
+            try {
+                return literal.getChar();
+            } catch (Exception e) {
+                // nothing to do
+                LOGGER.debug("Exception occurred. Returning Null.", e);
+            }
+        }
+        return null;
+
+    }
+
 
     /**
      * Returns the first triple literal that has the given subject and predicate and
@@ -347,29 +598,6 @@ public class RdfHelper {
         return subjects;
     }
 
-    /**
-     * Computes a SHA1 hash of sorted and serialized resource properties.
-     *
-     * @param resource
-     *            the resource object for which this method computes the hash.
-     * @return the computed hash.
-     */
-    public static String hashProperties(StmtIterator statements) {
-        String s = Streams.stream(statements)
-                .map(RdfHelper::serializeStatement)
-                .sorted()
-                .collect(Collectors.joining());
 
-        return DigestUtils.sha1Hex(s);
-    }
-
-    private static String serializeStatement(Statement stmt) {
-        StringBuilder s = new StringBuilder();
-        s.append(stmt.getPredicate().visitWith(HashingRDFVisitor.instance));
-        s.append(" ");
-        s.append(stmt.getObject().visitWith(HashingRDFVisitor.instance));
-        s.append("\n");
-        return s.toString();
-    }
 
 }

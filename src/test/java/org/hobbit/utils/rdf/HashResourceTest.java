@@ -37,7 +37,7 @@ public class HashResourceTest {
 
     @Test
     public void testHashResourceWithLiteral() {
-        String hash = RdfHelper.hashProperties(new StmtIteratorImpl(Stream.of(
+        String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
                 m.createResource(RdfHelper.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
@@ -50,7 +50,7 @@ public class HashResourceTest {
 
     @Test
     public void testHashResourceWithURI() {
-        String hash = RdfHelper.hashProperties(new StmtIteratorImpl(Stream.of(
+        String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
                 m.createResource(RdfHelper.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
@@ -63,7 +63,7 @@ public class HashResourceTest {
 
     @Test
     public void testHashResourceWithSeveralProperties() {
-        String hash = RdfHelper.hashProperties(new StmtIteratorImpl(Stream.of(
+        String hash = TripleHashCalculator.calculateHash(new StmtIteratorImpl(Stream.of(
             (Statement) new StatementImpl(
                 m.createResource(RdfHelper.HASH_SELF_URI),
                 m.createProperty("http://example.org/exampleProperty"),
