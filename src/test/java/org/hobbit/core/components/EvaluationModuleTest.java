@@ -72,7 +72,8 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
     	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
     	configurationVar.addProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
-    	configVar = new ConfigurationVariables(configurationVar); 
+    	configVar = new ConfigurationVariables();
+    	configVar.addConfiguration(configurationVar);
         // Create the eval store and add some data
         InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore(configVar);
         Random rand = new Random();

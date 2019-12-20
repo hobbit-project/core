@@ -3,21 +3,15 @@ package org.hobbit.utils;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.CompositeConfiguration;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 
-public class ConfigurationVariables
+public class ConfigurationVariables extends CompositeConfiguration
 {
 
-	private Configuration configVar;
-
-	public ConfigurationVariables(Configuration config)
-	{
-		this.configVar = config;
-	}
-    /**
+	/**
      * Generic method for accessing an environmental variable which has the given
      * name and will be transformed into the return type using the given conversion
      * function. The behavior in case of an error is defined by the given default
@@ -56,9 +50,9 @@ public class ConfigurationVariables
         String errorMsg;
         Throwable error = null;
         // If the variable is available
-        if (configVar.containsKey(name)) {
+        if (this.containsKey(name)) {
             try {
-                return conversion.apply(configVar.getString(name));
+                return conversion.apply(this.getString(name));
             } catch (Throwable t) {
                 errorMsg = "Error while reading the value of the variable " + name + ". Aborting.";
                 error = t;
@@ -95,7 +89,7 @@ public class ConfigurationVariables
      * @throws IllegalStateException
      *             if the variable can not be found or an error occurs.
      */
-    public  String getString(String name) throws IllegalStateException {
+    public  String getStringProperty(String name) throws IllegalStateException {
         return getStringValue(name, null, null, true, false);
     }
 
