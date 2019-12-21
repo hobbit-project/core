@@ -66,7 +66,8 @@ public class ContainerCreationTest {
         configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        ConfigurationVariables configVar = new ConfigurationVariables(configurationVar);
+        ConfigurationVariables configVar = new ConfigurationVariables();
+        configVar.addConfiguration(configurationVar);
 
         platformController = new DummyPlatformController(HOBBIT_SESSION_ID, configVar);
         DummyComponentExecutor platformExecutor = new DummyComponentExecutor(platformController);

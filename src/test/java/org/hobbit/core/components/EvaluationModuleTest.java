@@ -61,7 +61,7 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
 
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    private int numberOfMessages = 300;
+    private int numberOfMessages = 3000;
     private Set<String> receivedResults = Collections.synchronizedSet(new HashSet<>());
     private Semaphore evalStoreReady = new Semaphore(0);
 

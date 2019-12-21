@@ -58,7 +58,8 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
     	Configuration configurationVar = new PropertiesConfiguration();
     	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
     	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
-    	configVar = new ConfigurationVariables(configurationVar);
+    	configVar = new ConfigurationVariables();
+    	configVar.addConfiguration(configurationVar);
         outputDir = generateTempDir();
         LOGGER.debug("File will be writte to {}", outputDir.getAbsolutePath());
         // start platform controller

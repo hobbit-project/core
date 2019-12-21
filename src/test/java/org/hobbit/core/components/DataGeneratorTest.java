@@ -97,8 +97,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
         configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        configVar = new ConfigurationVariables(configurationVar);
-
+        configVar = new ConfigurationVariables();
         init();
         DummySystemReceiver system = new DummySystemReceiver(configVar);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
