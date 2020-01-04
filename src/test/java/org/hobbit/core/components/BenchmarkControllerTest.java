@@ -90,7 +90,8 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         // Needed for the generators
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
-    	configVar = new ConfigurationVariables(configurationVar); 
+    	configVar = new ConfigurationVariables();
+    	configVar.addConfiguration(configurationVar);
     	
 
         final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configVar);

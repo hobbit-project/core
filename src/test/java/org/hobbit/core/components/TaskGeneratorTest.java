@@ -115,7 +115,8 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
     	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-    	configVar = new ConfigurationVariables(configurationVar); 
+    	configVar = new ConfigurationVariables(); 
+    	configVar.addConfiguration(configurationVar);
 
         init();
 
