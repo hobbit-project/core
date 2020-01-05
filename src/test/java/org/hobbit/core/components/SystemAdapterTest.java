@@ -112,7 +112,8 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        configVar = new ConfigurationVariables(configurationVar);
+        configVar = new ConfigurationVariables();
+        configVar.addConfiguration(configurationVar);
 
 
         init();

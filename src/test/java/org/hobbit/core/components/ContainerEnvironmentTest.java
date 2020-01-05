@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class ContainerEnvironmentTest {
-   
+
     private AbstractCommandReceivingComponent component;
 
     @Parameters
@@ -116,7 +116,8 @@ public class ContainerEnvironmentTest {
 
         configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        ConfigurationVariables configVar = new ConfigurationVariables(configurationVar);
+        ConfigurationVariables configVar = new ConfigurationVariables();
+        configVar.addConfiguration(configurationVar);
         component = new DummyCommandReceivingComponent(configVar);
         component.init();
     }

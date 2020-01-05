@@ -108,7 +108,8 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         // Set the acknowledgement flag to true (read by the evaluation storage)
         configurationVar.addProperty(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
 
-        configVar = new ConfigurationVariables(configurationVar);
+        configVar = new ConfigurationVariables();
+        configVar.addConfiguration(configurationVar);
         init();
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
