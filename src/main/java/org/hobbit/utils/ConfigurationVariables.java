@@ -52,7 +52,8 @@ public class ConfigurationVariables extends CompositeConfiguration
         // If the variable is available
         if (this.containsKey(name)) {
             try {
-                return conversion.apply(this.getString(name));
+                return conversion.apply( this.get(String.class, name));
+               
             } catch (Throwable t) {
                 errorMsg = "Error while reading the value of the variable " + name + ". Aborting.";
                 error = t;
@@ -89,7 +90,7 @@ public class ConfigurationVariables extends CompositeConfiguration
      * @throws IllegalStateException
      *             if the variable can not be found or an error occurs.
      */
-    public  String getStringProperty(String name) throws IllegalStateException {
+    public  String getString(String name) throws IllegalStateException {
         return getStringValue(name, null, null, true, false);
     }
 
