@@ -75,7 +75,9 @@ public abstract class AbstractComponent implements Component {
         hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        if (rabbitMQHostName == null) {
+            rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        }
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
             String[] splitted = rabbitMQHostName.split(":");
