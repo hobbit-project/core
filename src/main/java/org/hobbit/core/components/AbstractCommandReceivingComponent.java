@@ -144,6 +144,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     public void run() {
                         try {
                             handleCmd(body, properties);
+                            byte[] bytes = commonChannel.readBytes();
+                            handleCmd(bytes, "");
                         } catch (Exception e) {
                             LOGGER.error("Exception while trying to handle incoming command.", e);
                         }
@@ -215,6 +217,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if (attachData) {
             buffer.put(data);
         }
+        byte[] cmd = new byte[]{command};
+        commonChannel.writeBytes(cmd);
         cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -496,6 +500,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     String key = properties.getCorrelationId();
 
                     synchronized (responseFutures) {
+                        byte[] bytes = commonChannel.readBytes();
+                        handleCmd(bytes, "");
                         SettableFuture<String> future = null;
                         if (key != null) {
                             future = responseFutures.remove(key);
@@ -523,6 +529,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             };
 
             cmdChannel.basicConsume(responseQueueName, responseConsumer);
+
         }
     }
 

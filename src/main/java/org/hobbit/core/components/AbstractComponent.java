@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.channel.AbstractChannel;
+import org.hobbit.core.components.channel.CommonChannel;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.hobbit.utils.EnvVariables;
@@ -75,7 +76,7 @@ public abstract class AbstractComponent implements Component {
      * Abstract reference for channel abstraction
      * @return
      */
-    protected AbstractChannel abstractChannel = null;
+    protected CommonChannel commonChannel = null;
 
     public ConnectionFactory getConnectionFactory() {
         return connectionFactory;
@@ -114,11 +115,12 @@ public abstract class AbstractComponent implements Component {
         hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        abstractChannel = AbstractChannel.getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED));
+        /*abstractChannel = AbstractChannel.getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED));
         abstractChannel.createConnectionFactory(this);
         abstractChannel.setIncomingDataQueueFactory(this);
-        abstractChannel.setOutgoingDataQueueFactory(this);
-        /*rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        abstractChannel.setOutgoingDataQueueFactory(this);*/
+        commonChannel = new AbstractChannel().getChannel("false");
+        rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
             String[] splitted = rabbitMQHostName.split(":");
@@ -130,7 +132,7 @@ public abstract class AbstractComponent implements Component {
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
         incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
-        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());*/
+        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
 
 
     }
