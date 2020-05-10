@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
+import org.hobbit.core.components.channel.ChannelFactory;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenReceiver;
@@ -56,9 +57,9 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         // We use only one single data generator
         testConfigs.add(new Object[] { 1, 10000 });
         // We use two data generators
-        testConfigs.add(new Object[] { 2, 10000 });
+        //testConfigs.add(new Object[] { 2, 10000 });
         // We use ten data generators
-        testConfigs.add(new Object[] { 10, 20000 });
+        //testConfigs.add(new Object[] { 10, 20000 });
         return testConfigs;
     }
 
@@ -89,12 +90,14 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
-    @Test(timeout=30000)
+    @Test(timeout=60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"false");
+
 
         init();
 

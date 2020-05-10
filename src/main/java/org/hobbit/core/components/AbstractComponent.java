@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.AbstractChannel;
+import org.hobbit.core.components.channel.ChannelFactory;
 import org.hobbit.core.components.channel.CommonChannel;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
@@ -94,22 +94,6 @@ public abstract class AbstractComponent implements Component {
         this.rabbitMQHostName = rabbitMQHostName;
     }
 
-    public RabbitQueueFactory getOutgoingDataQueuefactory() {
-        return outgoingDataQueuefactory;
-    }
-
-    public RabbitQueueFactory getIncomingDataQueueFactory() {
-        return incomingDataQueueFactory;
-    }
-
-    public void setIncomingDataQueueFactory(RabbitQueueFactory incomingDataQueueFactory) {
-        this.incomingDataQueueFactory = incomingDataQueueFactory;
-    }
-
-    public void setOutgoingDataQueuefactory(RabbitQueueFactory outgoingDataQueuefactory) {
-        this.outgoingDataQueuefactory = outgoingDataQueuefactory;
-    }
-
     @Override
     public void init() throws Exception {
         hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
@@ -119,7 +103,7 @@ public abstract class AbstractComponent implements Component {
         abstractChannel.createConnectionFactory(this);
         abstractChannel.setIncomingDataQueueFactory(this);
         abstractChannel.setOutgoingDataQueueFactory(this);*/
-        commonChannel = new AbstractChannel().getChannel("false");
+        commonChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER));
         rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
@@ -167,8 +151,8 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(incomingDataQueueFactory);
-        IOUtils.closeQuietly(outgoingDataQueuefactory);
+        //IOUtils.closeQuietly(incomingDataQueueFactory);
+        //IOUtils.closeQuietly(outgoingDataQueuefactory);
     }
 
     public String getHobbitSessionId() {

@@ -109,8 +109,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
     private ExecutorService cmdThreadPool;
+    
+    public ExecutorService getCmdThreadPool() {
+		return cmdThreadPool;
+	}
 
-    public AbstractCommandReceivingComponent() {
+	public AbstractCommandReceivingComponent() {
         this(false);
     }
 
@@ -144,8 +148,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     public void run() {
                         try {
                             handleCmd(body, properties);
-                            byte[] bytes = commonChannel.readBytes();
-                            handleCmd(bytes, "");
+                            //byte[] bytes = commonChannel.readBytes();
+                            //handleCmd(bytes, "");
                         } catch (Exception e) {
                             LOGGER.error("Exception while trying to handle incoming command.", e);
                         }
@@ -153,7 +157,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 });
             }
         };
-        cmdChannel.basicConsume(queueName, true, consumer);
+        Object consumerCallback = commonChannel.getConsumerCallback(this);
+        commonChannel.readBytes(consumerCallback);
+        //cmdChannel.basicConsume(queueName, true, consumer);
 
         containerName = EnvVariables.getString(Constants.CONTAINER_NAME_KEY, containerName);
         if (containerName == null) {
@@ -217,8 +223,16 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if (attachData) {
             buffer.put(data);
         }
-        byte[] cmd = new byte[]{command};
-        commonChannel.writeBytes(cmd);
+        LOGGER.debug("DATA LENGTH : "+ dataLength);
+        ByteBuffer buffer1 = ByteBuffer.allocate(dataLength);
+        buffer1.putInt(sessionIdBytes.length);
+        buffer1.put(sessionIdBytes);
+        buffer1.put(command);
+        if (attachData) {
+            buffer1.put(data);
+        }
+
+        commonChannel.writeBytes(buffer1);
         cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -255,11 +269,14 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @param replyTo
      *            name of the queue in which response is expected
      */
-    protected void handleCmd(byte bytes[], String replyTo) {
+    public void handleCmd(byte bytes[], String replyTo) {
+    	LOGGER.debug("1");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
+        LOGGER.debug("2");
         if (acceptedCmdHeaderIds.contains(sessionId)) {
             byte command = buffer.get();
+            LOGGER.debug("COMMAND : "+ command);
             byte remainingData[];
             if (buffer.remaining() > 0) {
                 remainingData = new byte[buffer.remaining()];
@@ -267,7 +284,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             } else {
                 remainingData = new byte[0];
             }
+            LOGGER.debug("3");
             receiveCommand(command, remainingData);
+            LOGGER.debug("4");
         }
     }
 
@@ -500,8 +519,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     String key = properties.getCorrelationId();
 
                     synchronized (responseFutures) {
-                        byte[] bytes = commonChannel.readBytes();
-                        handleCmd(bytes, "");
+                        //byte[] bytes = commonChannel.readBytes();
+                        //handleCmd(bytes, "");
                         SettableFuture<String> future = null;
                         if (key != null) {
                             future = responseFutures.remove(key);
@@ -527,6 +546,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     }
                 }
             };
+            byte[] bytes = commonChannel.readBytes(this);
 
             cmdChannel.basicConsume(responseQueueName, responseConsumer);
 
