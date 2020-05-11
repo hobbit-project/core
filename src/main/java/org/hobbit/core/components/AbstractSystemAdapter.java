@@ -163,6 +163,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
+    	System.out.println("AbstractSystemAdapter receiveCommand");
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATION_FINISHED) {
             terminate(null);

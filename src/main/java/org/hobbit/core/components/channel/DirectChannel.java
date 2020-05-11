@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DirectChannel implements CommonChannel {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(DirectChannel.class);
 
     Pipe pipe;
@@ -28,8 +28,8 @@ public class DirectChannel implements CommonChannel {
 
 
     @Override
-    public byte[] readBytes(Object callback) {
-    	Thread t = new Thread(new ReadByteChannel(pipe, callback));
+    public byte[] readBytes(Object callback, Object classs) {
+    	Thread t = new Thread(new ReadByteChannel(pipe, callback, classs));
     	t.start();
         return null;
     }
@@ -63,20 +63,22 @@ public class DirectChannel implements CommonChannel {
             e.printStackTrace();
         }
     }
-    
+
     @Override
     public Object getConsumerCallback(AbstractCommandReceivingComponent component) {
     	return new DirectCallback() {
-			
+
 			@Override
-			public void callback(byte[] data) {
+			public void callback(byte[] data, Object classs) {
+				System.out.println(classs.getClass());
+                AbstractCommandReceivingComponent comp = (AbstractCommandReceivingComponent) classs;
 				LOGGER.debug("INSIDE CALLBACK");
-				component.getCmdThreadPool().execute(new Runnable() {
+                comp.getCmdThreadPool().execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
                         	LOGGER.debug("INSIDE CALLBACK RUN");
-                        	component.handleCmd(data, "");
+                            comp.handleCmd(data, "");
                             //byte[] bytes = commonChannel.readBytes();
                             //handleCmd(bytes, "");
                         } catch (Exception e) {
@@ -84,7 +86,7 @@ public class DirectChannel implements CommonChannel {
                         }
                     }
                 });
-				
+
 			}
 		};
     }

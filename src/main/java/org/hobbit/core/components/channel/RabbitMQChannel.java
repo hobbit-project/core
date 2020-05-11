@@ -7,7 +7,7 @@ import org.hobbit.core.components.AbstractCommandReceivingComponent;
 public class RabbitMQChannel implements CommonChannel {
 
     @Override
-    public byte[] readBytes(Object callback) {
+    public byte[] readBytes(Object callback, Object classs) {
         return new byte[0];
     }
 

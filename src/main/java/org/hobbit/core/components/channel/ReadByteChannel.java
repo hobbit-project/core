@@ -4,15 +4,18 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
 import java.nio.channels.ReadableByteChannel;
+import java.util.ArrayList;
 
 public class ReadByteChannel extends DirectChannel implements Runnable{
-	
+
 	ReadableByteChannel in;
 	DirectCallback callback;
+	static ArrayList<Object> classes = new ArrayList<>();
 
-	public ReadByteChannel(Pipe pipe, Object callback) {
+	public ReadByteChannel(Pipe pipe, Object callback, Object classs) {
 		in = pipe.source();
 		this.callback = (DirectCallback) callback;
+        classes.add(classs);
 	}
 
 	@Override
@@ -29,15 +32,18 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
                    System.out.print(buffer.get());
                 }
                 buffer.flip();
-                callback.callback(buffer.array());
-                buffer.clear();
-             } 	
-        	
+                for(Object obj:classes){
+                    callback.callback(buffer.array(), obj);
+                }
+
+                //buffer.clear();
+             }
+
             in.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-		
+
 	}
 
 }

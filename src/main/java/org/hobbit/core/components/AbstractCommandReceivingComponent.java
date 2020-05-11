@@ -158,7 +158,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         };
         Object consumerCallback = commonChannel.getConsumerCallback(this);
-        commonChannel.readBytes(consumerCallback);
+        commonChannel.readBytes(consumerCallback, this);
         //cmdChannel.basicConsume(queueName, true, consumer);
 
         containerName = EnvVariables.getString(Constants.CONTAINER_NAME_KEY, containerName);
@@ -233,7 +233,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         }
 
         commonChannel.writeBytes(buffer1);
-        cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
+        //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
     /**
@@ -270,6 +270,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            name of the queue in which response is expected
      */
     public void handleCmd(byte bytes[], String replyTo) {
+    	System.out.println();
     	LOGGER.debug("1");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
@@ -285,8 +286,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 remainingData = new byte[0];
             }
             LOGGER.debug("3");
+            System.out.println(this.getClass());
             receiveCommand(command, remainingData);
             LOGGER.debug("4");
+            System.out.println();
         }
     }
 
@@ -546,7 +549,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                     }
                 }
             };
-            byte[] bytes = commonChannel.readBytes(this);
+            //byte[] bytes = commonChannel.readBytes(this);
 
             cmdChannel.basicConsume(responseQueueName, responseConsumer);
 

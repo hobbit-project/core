@@ -157,6 +157,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
+    	System.out.println("DataGeneratorTest receiveCommand");
         if(command == Commands.TASK_GENERATOR_READY_SIGNAL) {
             taskGensReady.release();
         }

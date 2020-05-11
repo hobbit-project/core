@@ -186,6 +186,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
+    	System.out.println("AbstractTaskGenerator receiveCommand");
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
             LOGGER.info("Received signal to start.");
