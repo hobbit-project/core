@@ -10,7 +10,7 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
 
 	ReadableByteChannel in;
 	DirectCallback callback;
-	static ArrayList<Object> classes = new ArrayList<>();
+	public static ArrayList<Object> classes = new ArrayList<>();
 
 	public ReadByteChannel(Pipe pipe, Object callback, Object classs) {
 		in = pipe.source();
@@ -32,9 +32,11 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
                    System.out.print(buffer.get());
                 }
                 buffer.flip();
-                for(Object obj:classes){
-                    callback.callback(buffer.array(), obj);
-                }
+                byte[] arr = buffer.array().clone();
+                //for(Object obj:classes){
+                
+                    callback.callback(arr, classes);
+                //}
 
                 //buffer.clear();
              }

@@ -17,16 +17,24 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.channel.ChannelFactory;
+import org.hobbit.core.components.channel.CommonChannel;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.rabbit.SenderReceiverFactory;
 import org.hobbit.utils.EnvVariables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataGenerator.class);
 
     private Semaphore startDataGenMutex = new Semaphore(0);
     private int generatorId;
@@ -45,10 +53,15 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY);
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
-        sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+        sender2TaskGen = SenderReceiverFactory.getSenderImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+        		generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        		//DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                //generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME)).build();
+        /*SenderReceiverFactory.getSenderImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+        		generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME));*/
+        		
     }
 
     @Override

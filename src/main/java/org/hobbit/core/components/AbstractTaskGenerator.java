@@ -17,21 +17,27 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.channel.ChannelFactory;
+import org.hobbit.core.components.channel.CommonChannel;
+import org.hobbit.core.components.channel.DirectCallback;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.SenderReceiverFactory;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.QueueingConsumer;
 
 /**
@@ -128,14 +134,34 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
         sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
+        
 
-        dataGenReceiver = DataReceiverImpl.builder().dataHandler(new DataHandler() {
+        /*Object consumer = new DirectCallback() {
+			
+			@Override
+			public void callback(byte[] data, List<Object> classs) {
+				System.out.println("INSIDE READNYTES : "+data);
+				receiveGeneratedData(data);
+				
+			}
+		};
+		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+		channel.readBytes(consumer, this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));*/
+        Class[] parameterTypes = new Class[1];
+        parameterTypes[0] = byte[].class;
+        Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+        		this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
             public void handleData(byte[] data) {
-                receiveGeneratedData(data);
+                //receiveGeneratedData(data);
             }
         }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();*/
+        		
+        		/*SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+        		this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)); */		
     }
 
     @Override

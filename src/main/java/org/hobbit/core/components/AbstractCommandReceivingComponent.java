@@ -157,14 +157,33 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 });
             }
         };
-        Object consumerCallback = commonChannel.getConsumerCallback(this);
-        commonChannel.readBytes(consumerCallback, this);
+        Class[] parameterTypes = new Class[2];
+        parameterTypes[0] = AMQP.BasicProperties.class;
+        parameterTypes[1] = byte[].class;
+        Object consumerCallback = commonChannel.getConsumerCallback(this, "commonConsumerCallback", parameterTypes);
+        commonChannel.readBytes(consumerCallback, this, "commonChannel");
         //cmdChannel.basicConsume(queueName, true, consumer);
 
         containerName = EnvVariables.getString(Constants.CONTAINER_NAME_KEY, containerName);
         if (containerName == null) {
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }
+    }
+    
+    public void commonConsumerCallback(AMQP.BasicProperties properties, byte[] body) {
+    	System.out.println("commonConsumerCallback CALLED");
+    	cmdThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    handleCmd(body, properties);
+                    //byte[] bytes = commonChannel.readBytes();
+                    //handleCmd(bytes, "");
+                } catch (Exception e) {
+                    LOGGER.error("Exception while trying to handle incoming command.", e);
+                }
+            }
+        });
     }
 
     /**
@@ -232,7 +251,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             buffer1.put(data);
         }
 
-        commonChannel.writeBytes(buffer1);
+        commonChannel.writeBytes(buffer1, "commonChannel");
         //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -257,7 +276,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            properties of the RabbitMQ message
      */
     protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
-        handleCmd(bytes, props.getReplyTo());
+    	String replyTo = props!=null?props.getReplyTo():"";
+        handleCmd(bytes, replyTo);
     }
 
     /**
@@ -581,6 +601,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         IOUtils.closeQuietly(cmdQueueFactory);
         if (cmdThreadPool != null) {
             cmdThreadPool.shutdown();
+        }
+        if(commonChannel != null) {
+        	commonChannel.close();
         }
         super.close();
     }

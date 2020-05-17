@@ -99,11 +99,7 @@ public abstract class AbstractComponent implements Component {
         hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        /*abstractChannel = AbstractChannel.getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED));
-        abstractChannel.createConnectionFactory(this);
-        abstractChannel.setIncomingDataQueueFactory(this);
-        abstractChannel.setOutgoingDataQueueFactory(this);*/
-        commonChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER));
+        commonChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
         rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){

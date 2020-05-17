@@ -6,11 +6,13 @@ import org.hobbit.core.components.AbstractCommandReceivingComponent;
 
 public interface CommonChannel {
 
-	public byte[] readBytes(Object consumerCallback, Object classs);
+	public byte[] readBytes(Object consumerCallback, Object classs, String queue);
 
 	public void writeBytes(byte data[]);
 
-	public void writeBytes(ByteBuffer buffer);
+	public void writeBytes(ByteBuffer buffer, String queue);
 
-    public Object getConsumerCallback(AbstractCommandReceivingComponent component);
+    public Object getConsumerCallback(AbstractCommandReceivingComponent component, String method, Class[] parameterTypes);
+
+	public void close();
 }

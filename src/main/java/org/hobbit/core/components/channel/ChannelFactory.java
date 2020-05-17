@@ -4,11 +4,11 @@ import com.rabbitmq.client.DefaultConsumer;
 
 public class ChannelFactory {
 	
-    public CommonChannel getChannel(String rabbitMQEnabled) {
+    public CommonChannel getChannel(String rabbitMQEnabled, String queue) {
         if(rabbitMQEnabled.equals("true")){
             return new RabbitMQChannel();
         }
-        return new DirectChannel();
+        return new DirectChannel(queue);
     }
     
     public Object getConsumerCallback(String rabbitMQEnabled) {
