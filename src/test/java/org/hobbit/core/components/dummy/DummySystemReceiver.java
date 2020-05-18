@@ -32,6 +32,7 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
 
     @Override
     public void receiveGeneratedData(byte[] data) {
+    	System.out.println("HELLOO");
         receivedData.add(RabbitMQUtils.readString(data));
     }
 
@@ -44,6 +45,7 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
      * @return the received data
      */
     public List<String> getReceiveddata() {
+    	System.out.println("getReceiveddata : "+receivedData.size());
         return receivedData;
     }
 

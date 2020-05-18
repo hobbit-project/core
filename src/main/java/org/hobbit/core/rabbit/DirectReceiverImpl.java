@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.components.channel.ChannelFactory;
 import org.hobbit.core.components.channel.CommonChannel;
@@ -17,16 +18,8 @@ public class DirectReceiverImpl implements DataReceiver {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DirectReceiverImpl.class);
 	
-	public DirectReceiverImpl(AbstractTaskGenerator abstractTaskGenerator, String queue) {
-		Object consumer = new DirectCallback() {
-			
-			@Override
-			public void callback(byte[] data, List<Object> classs) {
-				System.out.println("INSIDE READNYTES : "+data);
-				abstractTaskGenerator.receiveGeneratedData(data);
-				
-			}
-		};
+	public DirectReceiverImpl(String queue, Object consumer) {
+		
 		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 		channel.readBytes(consumer, this, queue);
 	}

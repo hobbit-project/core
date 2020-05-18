@@ -147,11 +147,21 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 		};
 		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 		channel.readBytes(consumer, this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));*/
-        Class[] parameterTypes = new Class[1];
-        parameterTypes[0] = byte[].class;
-        Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
+     //   Class[] parameterTypes = new Class[1];
+     //   parameterTypes[0] = byte[].class;
+       
+     //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
+Object consumer = new DirectCallback() {
+			
+			@Override
+			public void callback(byte[] data, List<Object> classs) {
+				System.out.println("INSIDE READNYTES : "+data);
+				receiveGeneratedData(data);
+				
+			}
+		};
         dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
-        		this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));
+        		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), consumer);
         /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
             public void handleData(byte[] data) {

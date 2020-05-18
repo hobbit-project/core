@@ -18,6 +18,7 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.Charsets;
@@ -26,12 +27,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.channel.DirectCallback;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.rabbit.SenderReceiverFactory;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,15 +118,29 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         // Get the benchmark parameter model
         systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
                 () -> ModelFactory.createDefaultModel(), LOGGER);
+        
+Object consumer = new DirectCallback() {
+			
+			@Override
+			public void callback(byte[] data, List<Object> classs) {
+				System.out.println("INSIDE READNYTES : "+data);
+				receiveGeneratedData(data);
+				
+			}
+		};
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer);
 
-        dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
-                .dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        receiveGeneratedData(data);
-                    }
-                }).build();
+		/*
+		 * dataGenReceiver =
+		 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+		 * .queue(incomingDataQueueFactory,
+		 * generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
+		 * .dataHandler(new DataHandler() {
+		 * 
+		 * @Override public void handleData(byte[] data) { receiveGeneratedData(data); }
+		 * }).build();
+		 */
 
         taskGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
@@ -141,6 +158,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                 generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
     }
 
+   
     @Override
     public void run() throws Exception {
         sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);

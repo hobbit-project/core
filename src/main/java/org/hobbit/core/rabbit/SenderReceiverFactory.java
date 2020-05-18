@@ -3,6 +3,7 @@ package org.hobbit.core.rabbit;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.components.AbstractTaskGenerator;
 
 public class SenderReceiverFactory {
@@ -19,7 +20,7 @@ public class SenderReceiverFactory {
 		return new DirectSenderImpl(queue);
 	}
 	
-	public static DataReceiver getReceiverImpl(String rabbitEnabled, AbstractTaskGenerator abstractTaskGenerator, String queue) {
+	public static DataReceiver getReceiverImpl(String rabbitEnabled, String queue, Object consumer) {
 		if(!StringUtils.isEmpty(rabbitEnabled) && rabbitEnabled.equals("true")) {
 			try {
 				return new DataReceiverImpl.Builder().build();
@@ -28,7 +29,7 @@ public class SenderReceiverFactory {
 				e.printStackTrace();
 			}
 		}
-		return new DirectReceiverImpl(abstractTaskGenerator, queue);
+		return new DirectReceiverImpl( queue, consumer);
 		
 	}
 
