@@ -151,7 +151,15 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      //   parameterTypes[0] = byte[].class;
        
      //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
-Object consumer = new DirectCallback() {
+Object consumer= new DataHandler() {
+    @Override
+    public void handleData(byte[] data) {
+        receiveGeneratedData(data);
+    }
+};
+if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false") ) {
+	consumer= new DirectCallback() {
+
 			
 			@Override
 			public void callback(byte[] data, List<Object> classs) {
@@ -159,9 +167,11 @@ Object consumer = new DirectCallback() {
 				receiveGeneratedData(data);
 				
 			}
+	
 		};
+}
         dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
-        		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), consumer);
+        		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), consumer,maxParallelProcessedMsgs,this);
         /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
             public void handleData(byte[] data) {

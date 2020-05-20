@@ -118,18 +118,29 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         // Get the benchmark parameter model
         systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
                 () -> ModelFactory.createDefaultModel(), LOGGER);
+        Object consumer= new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	receiveGeneratedData(data);
+            }
+        };
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false") ) {
+        	consumer= new DirectCallback() {
+
+        			
+        		@Override
+    			public void callback(byte[] data, List<Object> classs) {
+    				System.out.println("INSIDE READNYTES : "+data);
+    				receiveGeneratedData(data);
+    				
+    			}
+        	
+        		};
+        }        
         
-Object consumer = new DirectCallback() {
-			
-			@Override
-			public void callback(byte[] data, List<Object> classs) {
-				System.out.println("INSIDE READNYTES : "+data);
-				receiveGeneratedData(data);
-				
-			}
-		};
+
         dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
-        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer);
+        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer, maxParallelProcessedMsgs,this);
 
 		/*
 		 * dataGenReceiver =
