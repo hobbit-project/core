@@ -25,7 +25,7 @@ import java.util.concurrent.Semaphore;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
-import org.hobbit.core.components.channel.ChannelFactory;
+import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenReceiver;

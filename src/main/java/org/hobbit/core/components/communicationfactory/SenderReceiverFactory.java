@@ -1,10 +1,17 @@
-package org.hobbit.core.rabbit;
+package org.hobbit.core.components.communicationfactory;
 
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hobbit.core.components.AbstractPlatformConnectorComponent;
 import org.hobbit.core.components.AbstractTaskGenerator;
+import org.hobbit.core.components.channel.DirectReceiverImpl;
+import org.hobbit.core.components.channel.DirectSenderImpl;
+import org.hobbit.core.data.handlers.DataReceiver;
+import org.hobbit.core.data.handlers.DataSender;
+import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.rabbit.DataReceiverImpl.Builder;
 
 public class SenderReceiverFactory {
 	

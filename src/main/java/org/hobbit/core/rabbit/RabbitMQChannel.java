@@ -1,8 +1,9 @@
-package org.hobbit.core.components.channel;
+package org.hobbit.core.rabbit;
 
 import java.nio.ByteBuffer;
 
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
+import org.hobbit.core.components.commonchannel.CommonChannel;
 
 public class RabbitMQChannel implements CommonChannel {
 

@@ -1,4 +1,4 @@
-package org.hobbit.core.components.channel;
+package org.hobbit.core.components.commonchannel;
 
 import java.nio.ByteBuffer;
 

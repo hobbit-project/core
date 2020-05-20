@@ -1,4 +1,8 @@
-package org.hobbit.core.components.channel;
+package org.hobbit.core.components.communicationfactory;
+
+import org.hobbit.core.components.channel.DirectChannel;
+import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 
 import com.rabbitmq.client.DefaultConsumer;
 

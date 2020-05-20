@@ -1,11 +1,12 @@
-package org.hobbit.core.rabbit;
+package org.hobbit.core.components.channel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.ChannelFactory;
-import org.hobbit.core.components.channel.CommonChannel;
+import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.components.communicationfactory.ChannelFactory;
+import org.hobbit.core.data.handlers.DataSender;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ public class DirectSenderImpl implements DataSender {
 	CommonChannel senderChannel;
 	String queue;
 	
-	DirectSenderImpl(String queue){
+	public DirectSenderImpl(String queue){
 		this.queue = queue;
 		senderChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), queue);
 	}

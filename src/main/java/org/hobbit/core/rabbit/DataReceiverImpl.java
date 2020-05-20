@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.data.handlers.DataHandler;
+import org.hobbit.core.data.handlers.DataReceiver;
 import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

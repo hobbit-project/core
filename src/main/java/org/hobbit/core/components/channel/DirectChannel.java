@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
+import org.hobbit.core.components.commonchannel.CommonChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +26,8 @@ public class DirectChannel implements CommonChannel {
     WritableByteChannel out;
     ReadableByteChannel in;
     List<Thread> threads = new ArrayList<>();
-    DirectChannel(){}
-    DirectChannel(String queue){
+    public DirectChannel(){}
+    public DirectChannel(String queue){
         try {
         	if(pipes.get(queue) == null) {
         		pipe= Pipe.open();

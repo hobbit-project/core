@@ -1,4 +1,4 @@
-package org.hobbit.core.rabbit;
+package org.hobbit.core.data.handlers;
 
 import java.io.Closeable;
 import java.io.IOException;

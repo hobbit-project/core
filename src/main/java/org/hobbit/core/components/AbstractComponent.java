@@ -20,8 +20,8 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.ChannelFactory;
-import org.hobbit.core.components.channel.CommonChannel;
+import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
 import org.hobbit.utils.EnvVariables;
