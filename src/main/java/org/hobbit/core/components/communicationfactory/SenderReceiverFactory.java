@@ -40,7 +40,7 @@ public class SenderReceiverFactory {
 				e.printStackTrace();
 			}
 		}
-		return new DirectReceiverImpl( queue, consumer);
+		return new DirectReceiverImpl(queue, consumer);
 		
 	}
 

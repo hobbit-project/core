@@ -18,6 +18,8 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -130,47 +132,49 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         nextTaskId = generatorId;
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
-        sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
-        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
-        
+        sender2System = SenderReceiverFactory.getSenderImpl(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), this);
+        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();*/
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        		generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
+        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
+
 
         /*Object consumer = new DirectCallback() {
-			
+
 			@Override
 			public void callback(byte[] data, List<Object> classs) {
 				System.out.println("INSIDE READNYTES : "+data);
 				receiveGeneratedData(data);
-				
+
 			}
 		};
 		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 		channel.readBytes(consumer, this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));*/
      //   Class[] parameterTypes = new Class[1];
      //   parameterTypes[0] = byte[].class;
-       
-     //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
-Object consumer= new DataHandler() {
-    @Override
-    public void handleData(byte[] data) {
-        receiveGeneratedData(data);
-    }
-};
-if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false") ) {
-	consumer= new DirectCallback() {
 
-			
-			@Override
-			public void callback(byte[] data, List<Object> classs) {
-				System.out.println("INSIDE READNYTES : "+data);
-				receiveGeneratedData(data);
-				
-			}
-	
+     //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
+		Object consumer= new DataHandler() {
+		    @Override
+		    public void handleData(byte[] data) {
+		        receiveGeneratedData(data);
+		    }
 		};
-}
-        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
+		if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+			consumer= new DirectCallback() {
+				@Override
+				public void callback(byte[] data, List<Object> classs) {
+					System.out.println("INSIDE READBYTES CALLBACK : "+RabbitMQUtils.readString(data)+"T");
+					receiveGeneratedData(data);
+				}
+			};
+		}
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
         		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), consumer,maxParallelProcessedMsgs,this);
         /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
@@ -179,9 +183,7 @@ if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false
             }
         }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
                 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();*/
-        		
-        		/*SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
-        		this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)); */		
+
     }
 
     @Override

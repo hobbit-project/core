@@ -12,7 +12,5 @@ public interface CommonChannel {
 
 	public void writeBytes(ByteBuffer buffer, String queue);
 
-    public Object getConsumerCallback(AbstractCommandReceivingComponent component, String method, Class[] parameterTypes);
-
 	public void close();
 }

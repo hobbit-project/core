@@ -23,12 +23,6 @@ public class RabbitMQChannel implements CommonChannel {
     }
 
 	@Override
-	public Object getConsumerCallback(AbstractCommandReceivingComponent component, String methodName, Class[] parameterTypes) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public void close() {
 		// TODO Auto-generated method stub
 		

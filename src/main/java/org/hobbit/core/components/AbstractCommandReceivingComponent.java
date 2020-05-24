@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +39,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.channel.DirectCallback;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -109,7 +112,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
     private ExecutorService cmdThreadPool;
-    
+
     public ExecutorService getCmdThreadPool() {
 		return cmdThreadPool;
 	}
@@ -131,15 +134,15 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     @Override
     public void init() throws Exception {
         super.init();
-        addCommandHeaderId(getHobbitSessionId());
+        /*addCommandHeaderId(getHobbitSessionId());
 
         cmdQueueFactory = new RabbitQueueFactoryImpl(createConnection());
         cmdChannel = cmdQueueFactory.getConnection().createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
-        cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
+        cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");*/
 
-        Consumer consumer = new DefaultConsumer(cmdChannel) {
+        Object consumerCallback = new DefaultConsumer(cmdChannel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
@@ -157,10 +160,30 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 });
             }
         };
-        Class[] parameterTypes = new Class[2];
-        parameterTypes[0] = AMQP.BasicProperties.class;
-        parameterTypes[1] = byte[].class;
-        Object consumerCallback = commonChannel.getConsumerCallback(this, "commonConsumerCallback", parameterTypes);
+        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	consumerCallback = new DirectCallback() {
+    			@Override
+    			public void callback(byte[] data, List<Object> cmdCallbackObjectList) {
+    				for(Object cmdCallbackObject:cmdCallbackObjectList) {
+    					if(cmdCallbackObject != null &&
+    							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
+		    				cmdThreadPool.execute(new Runnable() {
+		    					@Override
+		    					public void run() {
+		    						try {
+		    						    System.out.println("DIRECTCALLBACK : "+cmdCallbackObject.getClass());
+		    							((AbstractCommandReceivingComponent) cmdCallbackObject).
+                                            handleCmd(data, "");
+		    						} catch (Exception e) {
+		    							LOGGER.error("Exception while trying to handle incoming command.", e);
+		    						}
+		    					}
+		    				});
+    					}
+    				}
+    			}
+    		};
+        }
         commonChannel.readBytes(consumerCallback, this, "commonChannel");
         //cmdChannel.basicConsume(queueName, true, consumer);
 
@@ -169,22 +192,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }
     }
-    
-    public void commonConsumerCallback(AMQP.BasicProperties properties, byte[] body) {
-    	System.out.println("commonConsumerCallback CALLED");
-    	cmdThreadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    handleCmd(body, properties);
-                    //byte[] bytes = commonChannel.readBytes();
-                    //handleCmd(bytes, "");
-                } catch (Exception e) {
-                    LOGGER.error("Exception while trying to handle incoming command.", e);
-                }
-            }
-        });
-    }
+
 
     /**
      * Sends the given command to the command queue.
@@ -227,7 +235,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *             if a communication problem occurs
      */
     protected void sendToCmdQueue(byte command, byte data[], BasicProperties props) throws IOException {
-        byte sessionIdBytes[] = getHobbitSessionId().getBytes(Charsets.UTF_8);
+        byte sessionIdBytes[] = {};//getHobbitSessionId().getBytes(Charsets.UTF_8);
         // + 5 because 4 bytes for the session ID length and 1 byte for the
         // command
         int dataLength = sessionIdBytes.length + 5;
@@ -242,16 +250,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if (attachData) {
             buffer.put(data);
         }
-        LOGGER.debug("DATA LENGTH : "+ dataLength);
-        ByteBuffer buffer1 = ByteBuffer.allocate(dataLength);
-        buffer1.putInt(sessionIdBytes.length);
-        buffer1.put(sessionIdBytes);
-        buffer1.put(command);
-        if (attachData) {
-            buffer1.put(data);
-        }
 
-        commonChannel.writeBytes(buffer1, "commonChannel");
+        commonChannel.writeBytes(buffer, "commonChannel");
         //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -295,7 +295,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
         LOGGER.debug("2");
-        if (acceptedCmdHeaderIds.contains(sessionId)) {
+        //if (acceptedCmdHeaderIds.contains(sessionId)) {
             byte command = buffer.get();
             LOGGER.debug("COMMAND : "+ command);
             byte remainingData[];
@@ -310,7 +310,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             receiveCommand(command, remainingData);
             LOGGER.debug("4");
             System.out.println();
-        }
+        //}
     }
 
     /**
@@ -599,12 +599,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         }
         IOUtils.closeQuietly(cmdQueueFactory);
-        if (cmdThreadPool != null) {
+        /*if (cmdThreadPool != null) {
             cmdThreadPool.shutdown();
-        }
-        if(commonChannel != null) {
+        }*/
+        /*if(commonChannel != null) {
         	commonChannel.close();
-        }
+        }*/
         super.close();
     }
 

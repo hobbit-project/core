@@ -19,6 +19,8 @@ package org.hobbit.core.components;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.Charsets;
@@ -124,23 +126,24 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
             	receiveGeneratedData(data);
             }
         };
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false") ) {
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
         	consumer= new DirectCallback() {
-
-        			
         		@Override
     			public void callback(byte[] data, List<Object> classs) {
-    				System.out.println("INSIDE READNYTES : "+data);
+    				System.out.println("INSIDE READBYTES CALLBACK : "+
+                        RabbitMQUtils.readString(data)+"T");
     				receiveGeneratedData(data);
-    				
-    			}
-        	
-        		};
-        }        
-        
 
-        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), 
-        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer, maxParallelProcessedMsgs,this);
+    			}
+
+       		};
+        }
+
+
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer,
+                    maxParallelProcessedMsgs,this);
 
 		/*
 		 * dataGenReceiver =
@@ -148,12 +151,40 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 		 * .queue(incomingDataQueueFactory,
 		 * generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
 		 * .dataHandler(new DataHandler() {
-		 * 
+		 *
 		 * @Override public void handleData(byte[] data) { receiveGeneratedData(data); }
 		 * }).build();
 		 */
 
-        taskGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+        Object taskGenReceiverConsumer= new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                receiveGeneratedTask(taskId, taskData);
+            }
+        };
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	taskGenReceiverConsumer= new DirectCallback() {
+        		@Override
+    			public void callback(byte[] data, List<Object> classs) {
+        		    System.out.println("INSIDE READBYTES CALLBACK taskGenReceiverConsumer : "+
+                        RabbitMQUtils.readString(data)+"T");
+        		    ByteBuffer buffer = ByteBuffer.wrap(data);
+                    String taskId = RabbitMQUtils.readString(buffer);
+                    byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                    receiveGeneratedTask(taskId, taskData);
+
+    			}
+
+       		};
+        }
+        taskGenReceiver = SenderReceiverFactory.getReceiverImpl(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), taskGenReceiverConsumer,
+                    maxParallelProcessedMsgs,this);
+        		/*DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
                 .dataHandler(new DataHandler() {
                     @Override
@@ -163,13 +194,16 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                         byte[] taskData = RabbitMQUtils.readByteArray(buffer);
                         receiveGeneratedTask(taskId, taskData);
                     }
-                }).build();
+                }).build();*/
 
-        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        		generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
+        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
+                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
     }
 
-   
+
     @Override
     public void run() throws Exception {
         sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
@@ -228,7 +262,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * Starts termination of the main thread of this system adapter. If a cause is
      * given, it will be thrown causing an abortion from the main thread instead of
      * a normal termination.
-     * 
+     *
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
      *            component should terminate in a normal way.

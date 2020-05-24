@@ -55,9 +55,9 @@ public class DataGeneratorTest extends AbstractDataGenerator {
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator
-        testConfigs.add(new Object[] { 1, 100 });
+        testConfigs.add(new Object[] { 1, 800 });
         // We use two data generators
-        //testConfigs.add(new Object[] { 2, 10000 });
+        //testConfigs.add(new Object[] { 2, 200 });
         // We use ten data generators
         //testConfigs.add(new Object[] { 10, 20000 });
         return testConfigs;
@@ -85,7 +85,6 @@ public class DataGeneratorTest extends AbstractDataGenerator {
             msg = Integer.toString(i);
             sentData.add(msg);
             data = RabbitMQUtils.writeString(msg);
-            System.out.println("sendDataToTaskGenerator : "+data);
             sendDataToSystemAdapter(data);
             sendDataToTaskGenerator(data);
         }

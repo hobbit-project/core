@@ -64,6 +64,7 @@ public abstract class AbstractComponent implements Component {
      * The host name of the RabbitMQ broker.
      */
     protected String rabbitMQHostName;
+
     /**
      * The factory that can be used to create additional connections. However, in
      * most cases it is sufficient to create a new channel using the already
@@ -96,10 +97,9 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void init() throws Exception {
-        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+        /*hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        commonChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
         rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
@@ -112,7 +112,9 @@ public abstract class AbstractComponent implements Component {
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
         incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
-        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
+        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());*/
+        commonChannel = new ChannelFactory().getChannel(
+            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
 
 
     }

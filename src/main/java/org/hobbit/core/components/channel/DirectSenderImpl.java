@@ -32,7 +32,7 @@ public class DirectSenderImpl implements DataSender {
 
 	@Override
 	public void sendData(byte[] data) throws IOException {
-		ByteBuffer buffer = ByteBuffer.allocate(6);
+		ByteBuffer buffer = ByteBuffer.allocate(data.length);
     	buffer.put(data);
 		senderChannel.writeBytes(buffer, this.queue);
 

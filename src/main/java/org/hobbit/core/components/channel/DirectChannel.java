@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.commonchannel.CommonChannel;
@@ -25,7 +27,7 @@ public class DirectChannel implements CommonChannel {
     Pipe pipe;
     WritableByteChannel out;
     ReadableByteChannel in;
-    List<Thread> threads = new ArrayList<>();
+    private ExecutorService threadPool = Executors.newCachedThreadPool();
     public DirectChannel(){}
     public DirectChannel(String queue){
         try {
@@ -43,9 +45,7 @@ public class DirectChannel implements CommonChannel {
 
     @Override
     public byte[] readBytes(Object callback, Object classs, String queue) {
-    	Thread t = new Thread(new ReadByteChannel(pipes.get(queue), callback, classs));
-    	threads.add(t);
-    	t.start();
+    	threadPool.execute(new ReadByteChannel(pipes.get(queue), callback, classs));
         return null;
     }
 
@@ -79,47 +79,6 @@ public class DirectChannel implements CommonChannel {
         }
     }
 
-    @Override
-    public Object getConsumerCallback(AbstractCommandReceivingComponent component, String methodName, Class[] parameterTypes) {
-    	
-    	return new DirectCallback() {
-
-			@Override
-			public void callback(byte[] data, List<Object> list) {
-				for(Object classs:list) {
-					if(classs != null) {
-						try {
-							System.out.println(classs.getClass());
-							AbstractCommandReceivingComponent comp = (AbstractCommandReceivingComponent) classs;
-							Object[] parameters = new Object[2];
-				    		parameters[0] = null;
-				    		parameters[1] = data.clone();
-				    		Method method = comp.getClass().getMethod(methodName, parameterTypes);
-				    		method.invoke(comp, parameters);
-							/*AbstractCommandReceivingComponent comp = (AbstractCommandReceivingComponent) classs;
-							LOGGER.debug("INSIDE CALLBACK");
-							comp.getCmdThreadPool().execute(new Runnable() {
-								@Override
-								public void run() {
-									try {
-										LOGGER.debug("INSIDE CALLBACK RUN");
-										comp.handleCmd(data, "");
-										//byte[] bytes = commonChannel.readBytes();
-										//handleCmd(bytes, "");
-									} catch (Exception e) {
-										LOGGER.error("Exception while trying to handle incoming command.", e);
-									}
-								}
-							});*/
-						}catch(Exception e) {
-							System.out.println("CALLBACK EXCEPTION" + e);
-						}
-					}
-				}
-
-			}
-		};
-    }
 	@Override
 	public void close() {
 		if(ReadByteChannel.classes != null && ReadByteChannel.classes.size() > 0) {

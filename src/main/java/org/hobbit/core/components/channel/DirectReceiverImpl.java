@@ -16,12 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DirectReceiverImpl implements DataReceiver {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(DirectReceiverImpl.class);
-	
+
 	public DirectReceiverImpl(String queue, Object consumer) {
-		
-		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+
+		CommonChannel channel = new ChannelFactory().getChannel(
+		    EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), queue);
 		channel.readBytes(consumer, this, queue);
 	}
 
