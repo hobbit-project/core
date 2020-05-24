@@ -24,7 +24,7 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
 
 	@Override
 	public void run() {
-		ByteBuffer buffer = ByteBuffer.allocate(6);
+		ByteBuffer buffer = ByteBuffer.allocate(1024);
         try {
         	while(in.read(buffer) > 0){
                 //buffer.flip();

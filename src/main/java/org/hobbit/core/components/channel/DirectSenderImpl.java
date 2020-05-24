@@ -12,17 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DirectSenderImpl implements DataSender {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(DirectSenderImpl.class);
-	
+
 	CommonChannel senderChannel;
 	String queue;
-	
+
 	public DirectSenderImpl(String queue){
 		this.queue = queue;
 		senderChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), queue);
 	}
-	
+
 
 	@Override
 	public void close() throws IOException {
@@ -34,7 +34,12 @@ public class DirectSenderImpl implements DataSender {
 	public void sendData(byte[] data) throws IOException {
 		ByteBuffer buffer = ByteBuffer.allocate(data.length);
     	buffer.put(data);
-		senderChannel.writeBytes(buffer, this.queue);
+    	try {
+			Thread.sleep(0, 1000);
+			senderChannel.writeBytes(buffer, this.queue);
+		} catch (InterruptedException e) {
+            LOGGER.error("Error waiting during send data", e);
+		}
 
 	}
 
