@@ -26,6 +26,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.channel.DirectCallback;
+import org.hobbit.core.components.communicationfactory.SenderReceiverFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
@@ -126,46 +128,130 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
         String queueName = EnvVariables.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
-        taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        ByteBuffer buffer = ByteBuffer.wrap(data);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        LOGGER.trace("Received from task generator {}.", taskId);
-                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                        long timestamp = buffer.getLong();
-                        receiveExpectedResponseData(taskId, timestamp, taskData);
-                    }
-                }).build();
+        System.out.println("plll:"+queueName);
+        
+        Object taskresultconsumer= new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                LOGGER.trace("Received from task generator {}.", taskId);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                long timestamp = buffer.getLong();
+                receiveExpectedResponseData(taskId, timestamp, taskData);
+            }
+        };
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	taskresultconsumer= new DirectCallback() {
+        		@Override
+    			public void callback(byte[] data, List<Object> classs) {
+        			ByteBuffer buffer = ByteBuffer.wrap(data);
+                    String taskId = RabbitMQUtils.readString(buffer);
+                    LOGGER.trace("Received from task generator {}.", taskId);
+                    byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                    long timestamp = buffer.getLong();
+                    receiveExpectedResponseData(taskId, timestamp, taskData);
 
+    			}
+
+       		};
+        }
+
+        
+        
+        taskResultReceiver = SenderReceiverFactory.getReceiverImpl(
+                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+            		 generateSessionQueueName(queueName), taskresultconsumer,
+                        maxParallelProcessedMsgs,this);
+        		
+        		
+        		
+				/*
+				 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+				 * .queue(incomingDataQueueFactory,
+				 * generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
+				 * 
+				 * @Override public void handleData(byte[] data) { ByteBuffer buffer =
+				 * ByteBuffer.wrap(data); String taskId = RabbitMQUtils.readString(buffer);
+				 * LOGGER.trace("Received from task generator {}.", taskId); byte[] taskData =
+				 * RabbitMQUtils.readByteArray(buffer); long timestamp = buffer.getLong();
+				 * receiveExpectedResponseData(taskId, timestamp, taskData); } }).build();
+				 */
         queueName = EnvVariables.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         final boolean receiveTimeStamp = EnvVariables.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
                 LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-        systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        ByteBuffer buffer = ByteBuffer.wrap(data);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        LOGGER.trace("Received from system {}.", taskId);
-                        byte[] responseData = RabbitMQUtils.readByteArray(buffer);
-                        long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
-                        receiveResponseData(taskId, timestamp, responseData);
-                        // If we should send acknowledgments (and there was no
-                        // error until now)
-                        if (ackChannel != null) {
-                            try {
-                                ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
-                            } catch (IOException e) {
-                                LOGGER.error("Error while sending acknowledgement.", e);
-                            }
-                            LOGGER.trace("Sent ack {}.", taskId);
-                        }
-                    }
-                }).build();
+        Object systemresultconsumer= new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	 ByteBuffer buffer = ByteBuffer.wrap(data);
+                 String taskId = RabbitMQUtils.readString(buffer);
+                 LOGGER.trace("Received from system {}.", taskId);
+                 byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+                 long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+                 receiveResponseData(taskId, timestamp, responseData);
+                 // If we should send acknowledgments (and there was no
+                 // error until now)
+                 if (ackChannel != null) {
+                     try {
+                         ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                     } catch (IOException e) {
+                         LOGGER.error("Error while sending acknowledgement.", e);
+                     }
+                     LOGGER.trace("Sent ack {}.", taskId);
+                 }
+            }
+        };
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	systemresultconsumer= new DirectCallback() {
+        		@Override
+    			public void callback(byte[] data, List<Object> classs) {
+        			 ByteBuffer buffer = ByteBuffer.wrap(data);
+                     String taskId = RabbitMQUtils.readString(buffer);
+                     LOGGER.trace("Received from system {}.", taskId);
+                     byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+                     long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+                     receiveResponseData(taskId, timestamp, responseData);
+                     // If we should send acknowledgments (and there was no
+                     // error until now)
+                     if (ackChannel != null) {
+                         try {
+                             ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                         } catch (IOException e) {
+                             LOGGER.error("Error while sending acknowledgement.", e);
+                         }
+                         LOGGER.trace("Sent ack {}.", taskId);
+                     }
+
+    			}
+
+       		};
+        }
+       
+        systemResultReceiver = SenderReceiverFactory.getReceiverImpl(
+                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+            		 generateSessionQueueName(queueName), systemresultconsumer,
+                        maxParallelProcessedMsgs,this);
+        		
+        		
+		/*
+		 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
+		 * .queue(incomingDataQueueFactory,
+		 * generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
+		 * 
+		 * @Override public void handleData(byte[] data) { ByteBuffer buffer =
+		 * ByteBuffer.wrap(data); String taskId = RabbitMQUtils.readString(buffer);
+		 * LOGGER.trace("Received from system {}.", taskId); byte[] responseData =
+		 * RabbitMQUtils.readByteArray(buffer); long timestamp = receiveTimeStamp ?
+		 * buffer.getLong() : System.currentTimeMillis(); receiveResponseData(taskId,
+		 * timestamp, responseData); // If we should send acknowledgments (and there was
+		 * no // error until now) if (ackChannel != null) { try {
+		 * ackChannel.basicPublish(ackExchangeName, "", null,
+		 * RabbitMQUtils.writeString(taskId)); } catch (IOException e) {
+		 * LOGGER.error("Error while sending acknowledgement.", e); }
+		 * LOGGER.trace("Sent ack {}.", taskId); } } }).build();
+		 */
 
         queueName = EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
@@ -256,6 +342,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     @Override
     public void run() throws Exception {
         sendToCmdQueue(Commands.EVAL_STORAGE_READY_SIGNAL);
+       
         terminationMutex.acquire();
         taskResultReceiver.closeWhenFinished();
         systemResultReceiver.closeWhenFinished();

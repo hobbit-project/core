@@ -97,7 +97,7 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void init() throws Exception {
-        /*hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
         rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
@@ -112,7 +112,7 @@ public abstract class AbstractComponent implements Component {
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
         incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
-        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());*/
+        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
         commonChannel = new ChannelFactory().getChannel(
             EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
 
