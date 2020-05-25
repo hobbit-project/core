@@ -68,13 +68,13 @@ public class DirectChannel implements CommonChannel {
     public void writeBytes(ByteBuffer buffer, String queue) {
 
         try {
-            buffer.flip();
+        	buffer.flip();
             System.out.println("\nINSIDE writeBytes ");
             while (buffer.hasRemaining())
                 pipes.get(queue).sink().write(buffer);
             buffer.clear();
             //System.out.println(buffer+"\n\n");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

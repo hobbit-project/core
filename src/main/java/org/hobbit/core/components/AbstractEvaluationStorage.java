@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
@@ -27,6 +28,8 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.channel.DirectCallback;
+import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.components.communicationfactory.SenderReceiverFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.Result;
@@ -40,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -101,6 +105,10 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
      * Channel on which the acknowledgements are send.
      */
     protected Channel ackChannel = null;
+    
+    protected CommonChannel evaluationStorageChannel = null;
+    
+    private ExecutorService cmdThreadPool;
 
     /**
      * Constructor using the {@link #DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES}=
@@ -257,71 +265,191 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(queueName));
-        evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.name, true,
-                new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
-                            byte[] body) throws IOException {
-                        byte response[] = null;
-                        // get iterator id
-                        ByteBuffer buffer = ByteBuffer.wrap(body);
-                        if (buffer.remaining() < 1) {
-                            response = EMPTY_RESPONSE;
-                            LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-                        } else {
-                            byte iteratorId = buffer.get();
+        Object consumerCallback = new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+            	  byte response[] = null;
+                  // get iterator id
+                  ByteBuffer buffer = ByteBuffer.wrap(body);
+                  if (buffer.remaining() < 1) {
+                      response = EMPTY_RESPONSE;
+                      LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+                  } else {
+                      byte iteratorId = buffer.get();
 
-                            // get the iterator
-                            Iterator<? extends ResultPair> iterator = null;
-                            if (iteratorId == NEW_ITERATOR_ID) {
-                                // create and save a new iterator
-                                iteratorId = (byte) resultPairIterators.size();
-                                LOGGER.info("Creating new iterator #{}", iteratorId);
-                                resultPairIterators.add(iterator = createIterator());
-                            } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-                                response = EMPTY_RESPONSE;
-                                LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-                                        + "). Returning emtpy response.");
-                            } else {
-                                iterator = resultPairIterators.get(iteratorId);
-                            }
-                            if ((iterator != null) && (iterator.hasNext())) {
-                                ResultPair resultPair = iterator.next();
-                                Result result = resultPair.getExpected();
-                                byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
-                                        actualResultTimeStamp[];
-                                // Make sure that the result is not null
-                                if (result != null) {
-                                    // Check whether the data array is null
-                                    expectedResultData = result.getData() != null ? result.getData() : new byte[0];
-                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
-                                } else {
-                                    expectedResultData = new byte[0];
-                                    expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
-                                }
-                                result = resultPair.getActual();
-                                // Make sure that the result is not null
-                                if (result != null) {
-                                    // Check whether the data array is null
-                                    actualResultData = result.getData() != null ? result.getData() : new byte[0];
-                                    actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
-                                } else {
-                                    actualResultData = new byte[0];
-                                    actualResultTimeStamp = RabbitMQUtils.writeLong(0);
-                                }
+                      // get the iterator
+                      Iterator<? extends ResultPair> iterator = null;
+                      if (iteratorId == NEW_ITERATOR_ID) {
+                          // create and save a new iterator
+                          iteratorId = (byte) resultPairIterators.size();
+                          LOGGER.info("Creating new iterator #{}", iteratorId);
+                          resultPairIterators.add(iterator = createIterator());
+                      } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+                          response = EMPTY_RESPONSE;
+                          LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+                                  + "). Returning emtpy response.");
+                      } else {
+                          iterator = resultPairIterators.get(iteratorId);
+                      }
+                      if ((iterator != null) && (iterator.hasNext())) {
+                          ResultPair resultPair = iterator.next();
+                          Result result = resultPair.getExpected();
+                          byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
+                                  actualResultTimeStamp[];
+                          // Make sure that the result is not null
+                          if (result != null) {
+                              // Check whether the data array is null
+                              expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+                              expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                          } else {
+                              expectedResultData = new byte[0];
+                              expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
+                          }
+                          result = resultPair.getActual();
+                          // Make sure that the result is not null
+                          if (result != null) {
+                              // Check whether the data array is null
+                              actualResultData = result.getData() != null ? result.getData() : new byte[0];
+                              actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+                          } else {
+                              actualResultData = new byte[0];
+                              actualResultTimeStamp = RabbitMQUtils.writeLong(0);
+                          }
 
-                                response = RabbitMQUtils
-                                        .writeByteArrays(
-                                                new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
-                                                        expectedResultData, actualResultTimeStamp, actualResultData },
-                                                null);
-                            } else {
-                                response = new byte[] { iteratorId };
-                            }
-                        }
-                        getChannel().basicPublish("", properties.getReplyTo(), null, response);
-                    }
-                });
+                          response = RabbitMQUtils
+                                  .writeByteArrays(
+                                          new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
+                                                  expectedResultData, actualResultTimeStamp, actualResultData },
+                                          null);
+                      } else {
+                          response = new byte[] { iteratorId };
+                      }
+                  }
+                  getChannel().basicPublish("", properties.getReplyTo(), null, response);
+            }
+        };
+        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	consumerCallback = new DirectCallback(evaluationStorageChannel,generateSessionQueueName(queueName) ) {
+    			@Override
+    			public void callback(byte[] data, List<Object> cmdCallbackObjectList) {
+    				for(Object cmdCallbackObject:cmdCallbackObjectList) {
+    					if(cmdCallbackObject != null &&
+    							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
+    						 byte response[] = null;
+    		                  // get iterator id
+    		                  ByteBuffer buffer = ByteBuffer.wrap(data);
+    		                  if (buffer.remaining() < 1) {
+    		                      response = EMPTY_RESPONSE;
+    		                      LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+    		                  } else {
+    		                      byte iteratorId = buffer.get();
+
+    		                      // get the iterator
+    		                      Iterator<? extends ResultPair> iterator = null;
+    		                      if (iteratorId == NEW_ITERATOR_ID) {
+    		                          // create and save a new iterator
+    		                          iteratorId = (byte) resultPairIterators.size();
+    		                          LOGGER.info("Creating new iterator #{}", iteratorId);
+    		                          resultPairIterators.add(iterator = createIterator());
+    		                      } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+    		                          response = EMPTY_RESPONSE;
+    		                          LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+    		                                  + "). Returning emtpy response.");
+    		                      } else {
+    		                          iterator = resultPairIterators.get(iteratorId);
+    		                      }
+    		                      if ((iterator != null) && (iterator.hasNext())) {
+    		                          ResultPair resultPair = iterator.next();
+    		                          Result result = resultPair.getExpected();
+    		                          byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
+    		                                  actualResultTimeStamp[];
+    		                          // Make sure that the result is not null
+    		                          if (result != null) {
+    		                              // Check whether the data array is null
+    		                              expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+    		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+    		                          } else {
+    		                              expectedResultData = new byte[0];
+    		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
+    		                          }
+    		                          result = resultPair.getActual();
+    		                          // Make sure that the result is not null
+    		                          if (result != null) {
+    		                              // Check whether the data array is null
+    		                              actualResultData = result.getData() != null ? result.getData() : new byte[0];
+    		                              actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+    		                          } else {
+    		                              actualResultData = new byte[0];
+    		                              actualResultTimeStamp = RabbitMQUtils.writeLong(0);
+    		                          }
+
+    		                          response = RabbitMQUtils
+    		                                  .writeByteArrays(
+    		                                          new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
+    		                                                  expectedResultData, actualResultTimeStamp, actualResultData },
+    		                                          null);
+    		                      } else {
+    		                          response = new byte[] { iteratorId };
+    		                      }
+    		                  }
+    		                  ByteBuffer resposebuffer = ByteBuffer.allocate(response.length);
+    		                channel.writeBytes(resposebuffer,queue);
+    		                 // getChannel().basicPublish("", properties.getReplyTo(), null, response);
+		    				
+    					}
+    				}
+    			}
+    		};
+        }
+        evaluationStorageChannel = new ChannelFactory().getChannel(
+                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(queueName));
+        evaluationStorageChannel.readBytes(consumerCallback, this,generateSessionQueueName(queueName));
+
+        
+        
+        
+		/*
+		 * evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.
+		 * name, true, new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+		 * 
+		 * @Override public void handleDelivery(String consumerTag, Envelope envelope,
+		 * BasicProperties properties, byte[] body) throws IOException { byte response[]
+		 * = null; // get iterator id ByteBuffer buffer = ByteBuffer.wrap(body); if
+		 * (buffer.remaining() < 1) { response = EMPTY_RESPONSE; LOGGER.
+		 * error("Got a request without a valid iterator Id. Returning emtpy response."
+		 * ); } else { byte iteratorId = buffer.get();
+		 * 
+		 * // get the iterator Iterator<? extends ResultPair> iterator = null; if
+		 * (iteratorId == NEW_ITERATOR_ID) { // create and save a new iterator
+		 * iteratorId = (byte) resultPairIterators.size();
+		 * LOGGER.info("Creating new iterator #{}", iteratorId);
+		 * resultPairIterators.add(iterator = createIterator()); } else if ((iteratorId
+		 * < 0) || iteratorId >= resultPairIterators.size()) { response =
+		 * EMPTY_RESPONSE; LOGGER.error("Got a request without a valid iterator Id (" +
+		 * Byte.toString(iteratorId) + "). Returning emtpy response."); } else {
+		 * iterator = resultPairIterators.get(iteratorId); } if ((iterator != null) &&
+		 * (iterator.hasNext())) { ResultPair resultPair = iterator.next(); Result
+		 * result = resultPair.getExpected(); byte expectedResultData[],
+		 * expectedResultTimeStamp[], actualResultData[], actualResultTimeStamp[]; //
+		 * Make sure that the result is not null if (result != null) { // Check whether
+		 * the data array is null expectedResultData = result.getData() != null ?
+		 * result.getData() : new byte[0]; expectedResultTimeStamp =
+		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else {
+		 * expectedResultData = new byte[0]; expectedResultTimeStamp =
+		 * RabbitMQUtils.writeLong(0); } result = resultPair.getActual(); // Make sure
+		 * that the result is not null if (result != null) { // Check whether the data
+		 * array is null actualResultData = result.getData() != null ? result.getData()
+		 * : new byte[0]; actualResultTimeStamp =
+		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else { actualResultData
+		 * = new byte[0]; actualResultTimeStamp = RabbitMQUtils.writeLong(0); }
+		 * 
+		 * response = RabbitMQUtils .writeByteArrays( new byte[] { iteratorId }, new
+		 * byte[][] { expectedResultTimeStamp, expectedResultData,
+		 * actualResultTimeStamp, actualResultData }, null); } else { response = new
+		 * byte[] { iteratorId }; } } getChannel().basicPublish("",
+		 * properties.getReplyTo(), null, response); } });
+		 */
 
         boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
         if (sendAcks) {

@@ -35,7 +35,7 @@ public class DirectSenderImpl implements DataSender {
 		ByteBuffer buffer = ByteBuffer.allocate(data.length);
     	buffer.put(data);
     	try {
-			Thread.sleep(0, 1000);
+			Thread.sleep(0, 5000);
 			senderChannel.writeBytes(buffer, this.queue);
 		} catch (InterruptedException e) {
             LOGGER.error("Error waiting during send data", e);

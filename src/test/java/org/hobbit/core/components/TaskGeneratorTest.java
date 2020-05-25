@@ -62,7 +62,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 800, 1, 0 });
+        testConfigs.add(new Object[] { 1, 1500, 1, 0 });
         // We use only one single data generator with parallel message
         // processing (max 100)
      //   testConfigs.add(new Object[] { 1, 10000, 100, 0 });

@@ -2,8 +2,27 @@ package org.hobbit.core.components.channel;
 
 import java.util.List;
 
-public interface DirectCallback {
+import org.hobbit.core.components.commonchannel.CommonChannel;
 
-	void callback(byte[] data, List<Object> classs);
+public class  DirectCallback {
+	
+	protected CommonChannel channel;
+	protected String queue;
+	
+public DirectCallback() {
+		
+		
+	}
+
+	 public DirectCallback(CommonChannel channel, String queue) {
+		
+		this.channel = channel;
+		this.queue = queue;
+	}
+
+
+	public void callback(byte[] data, List<Object> classs) {
+		 
+	 }
 
 }
