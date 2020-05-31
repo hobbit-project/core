@@ -41,6 +41,8 @@ import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+
 /**
  * This abstract class implements basic functions that can be used to implement
  * a system adapter.
@@ -129,7 +131,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
         	consumer= new DirectCallback() {
         		@Override
-    			public void callback(byte[] data, List<Object> classs) {
+    			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
     				System.out.println("INSIDE READBYTES CALLBACK : "+
                         RabbitMQUtils.readString(data)+"T");
     				receiveGeneratedData(data);
@@ -168,7 +170,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
         	taskGenReceiverConsumer= new DirectCallback() {
         		@Override
-    			public void callback(byte[] data, List<Object> classs) {
+    			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
         		    System.out.println("INSIDE READBYTES CALLBACK taskGenReceiverConsumer : "+
                         RabbitMQUtils.readString(data)+"T");
         		    ByteBuffer buffer = ByteBuffer.wrap(data);

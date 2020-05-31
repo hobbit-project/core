@@ -63,6 +63,7 @@ public class ContainerCreationTest {
     public void setUp() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"false");
 
         platformController = new DummyPlatformController(HOBBIT_SESSION_ID);
         DummyComponentExecutor platformExecutor = new DummyComponentExecutor(platformController);

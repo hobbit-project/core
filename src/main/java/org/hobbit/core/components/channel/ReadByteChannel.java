@@ -9,15 +9,19 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+
 public class ReadByteChannel extends DirectChannel implements Runnable{
 
-	ReadableByteChannel in;
+	//ReadableByteChannel in;
+	PipeChannel pipeChannel;
 	DirectCallback callback;
 	public static ArrayList<Object> classes = new ArrayList<>();
 	private ExecutorService threadPool = Executors.newCachedThreadPool();
 
-	public ReadByteChannel(Pipe pipe, Object callback, Object classs) {
-		in = pipe.source();
+	public ReadByteChannel(PipeChannel pipeChannel, Object callback, Object classs) {
+		//in = pipe.source();
+		this.pipeChannel = pipeChannel;
 		this.callback = (DirectCallback) callback;
         classes.add(classs);
 	}
@@ -26,13 +30,16 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
 	public void run() {
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
         try {
-        	while(in.read(buffer) > 0){
-                //buffer.flip();
-        		//callback.callback(getNonEmptyArray(buffer), classes);
-        		threadPool.execute(new ProcessCallback(callback, clone(buffer)));
-                buffer.clear();
-             }
-        	System.out.println("CLOSE IN");
+        	if(pipeChannel != null && pipeChannel.getPipe() !=null) {
+        		while(pipeChannel.getPipe().source().isOpen() && 
+        				pipeChannel.getPipe().source().read(buffer) > 0){
+        			//buffer.flip();
+        			//callback.callback(getNonEmptyArray(buffer), classes);
+        			threadPool.execute(new ProcessCallback(callback, clone(buffer), pipeChannel.getProps()));
+        			buffer.clear();
+        		}
+        		System.out.println("CLOSE IN");
+        	}
             //in.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,15 +61,17 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
 	protected class ProcessCallback implements Runnable {
 		DirectCallback callbackObj;
 		ByteBuffer byteBuffer;
+		BasicProperties props;
 		
-		ProcessCallback(DirectCallback callback, ByteBuffer byteBuffer){
+		ProcessCallback(DirectCallback callback, ByteBuffer byteBuffer, BasicProperties props){
 			this.callbackObj = callback;
 			this.byteBuffer = byteBuffer;
+			this.props = props;
 		}
 
 		@Override
 		public void run() {
-			callbackObj.callback(getNonEmptyArray(byteBuffer), classes);
+			callbackObj.callback(getNonEmptyArray(byteBuffer), classes, props);
 		}
 		
 		public byte[] getNonEmptyArray(ByteBuffer buffer) {

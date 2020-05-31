@@ -82,7 +82,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
      */
-    private Consumer responseConsumer = null;
+    private Object responseConsumer = null;
     /**
      * Factory for generating queues with which the commands are sent and
      * received. It is separated from the data connections since otherwise the
@@ -163,7 +163,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
         	consumerCallback = new DirectCallback() {
     			@Override
-    			public void callback(byte[] data, List<Object> cmdCallbackObjectList) {
+    			public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
     				for(Object cmdCallbackObject:cmdCallbackObjectList) {
     					if(cmdCallbackObject != null &&
     							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
@@ -251,7 +251,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             buffer.put(data);
         }
 
-        commonChannel.writeBytes(buffer, "commonChannel");
+        commonChannel.writeBytes(buffer, "commonChannel", props);
         //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -532,46 +532,14 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
-            responseQueueName = cmdChannel.queueDeclare().getQueue();
+            responseQueueName = "commonChannel"; //cmdChannel.queueDeclare().getQueue();
         }
         if (responseConsumer == null) {
-            responseConsumer = new DefaultConsumer(cmdChannel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                        byte[] body) throws IOException {
-                    String key = properties.getCorrelationId();
-
-                    synchronized (responseFutures) {
-                        //byte[] bytes = commonChannel.readBytes();
-                        //handleCmd(bytes, "");
-                        SettableFuture<String> future = null;
-                        if (key != null) {
-                            future = responseFutures.remove(key);
-                            if (future == null) {
-                                LOGGER.error("Received a message with correlationId ({}) not in map ({})", key, responseFutures.keySet());
-                            }
-                        } else {
-                            LOGGER.warn("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library.");
-                            Iterator<SettableFuture<String>> iter = responseFutures.values().iterator();
-                            if (iter.hasNext()) {
-                                LOGGER.info("Correlating with the eldest request as a workaround.");
-                                future = iter.next();
-                                iter.remove();
-                            } else {
-                                LOGGER.error("There are no pending requests.");
-                            }
-                        }
-
-                        if (future != null) {
-                            String value = RabbitMQUtils.readString(body);
-                            future.set(value);
-                        }
-                    }
-                }
-            };
+            responseConsumer = getResponseConsumer();
             //byte[] bytes = commonChannel.readBytes(this);
 
-            cmdChannel.basicConsume(responseQueueName, responseConsumer);
+            //cmdChannel.basicConsume(responseQueueName, responseConsumer);
+            commonChannel.readBytes(responseConsumer, this, "commonChannel");
 
         }
     }
@@ -606,6 +574,94 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         	commonChannel.close();
         }*/
         super.close();
+    }
+    
+    private Object getResponseConsumer() {
+    	Object consumer = null;
+    	if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+    		consumer = getResponseDirectConsumer();
+    	} else {
+    		consumer = getResponseDefaultConsumer();
+    	}
+    	return consumer;
+    }
+    
+    private Object getResponseDefaultConsumer() {
+    	
+    	return new DefaultConsumer(cmdChannel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+                String key = properties.getCorrelationId();
+
+                synchronized (responseFutures) {
+                    //byte[] bytes = commonChannel.readBytes();
+                    //handleCmd(bytes, "");
+                    SettableFuture<String> future = null;
+                    if (key != null) {
+                        future = responseFutures.remove(key);
+                        if (future == null) {
+                            LOGGER.error("Received a message with correlationId ({}) not in map ({})", key, responseFutures.keySet());
+                        }
+                    } else {
+                        LOGGER.warn("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library.");
+                        Iterator<SettableFuture<String>> iter = responseFutures.values().iterator();
+                        if (iter.hasNext()) {
+                            LOGGER.info("Correlating with the eldest request as a workaround.");
+                            future = iter.next();
+                            iter.remove();
+                        } else {
+                            LOGGER.error("There are no pending requests.");
+                        }
+                    }
+
+                    if (future != null) {
+                        String value = RabbitMQUtils.readString(body);
+                        future.set(value);
+                    }
+                }
+            }
+        };
+    }
+    
+    private Object getResponseDirectConsumer() {
+    	
+    	return new DirectCallback() {
+    		
+    		@Override
+    		public void callback(byte[] data, List<Object> classs, BasicProperties properties) {
+    			String key = properties.getCorrelationId();
+    			System.out.println("CORRELATION ID : " +key);
+
+                synchronized (responseFutures) {
+                    //byte[] bytes = commonChannel.readBytes();
+                    //handleCmd(bytes, "");
+                    SettableFuture<String> future = null;
+                    if (key != null) {
+                        future = responseFutures.remove(key);
+                        if (future == null) {
+                            LOGGER.error("Received a message with correlationId ({}) not in map ({})", key, responseFutures.keySet());
+                        }
+                    } else {
+                        LOGGER.warn("Received a message with null correlationId. This is an error unless the other component uses an older version of HOBBIT core library.");
+                        Iterator<SettableFuture<String>> iter = responseFutures.values().iterator();
+                        if (iter.hasNext()) {
+                            LOGGER.info("Correlating with the eldest request as a workaround.");
+                            future = iter.next();
+                            iter.remove();
+                        } else {
+                            LOGGER.error("There are no pending requests.");
+                        }
+                    }
+
+                    if (future != null) {
+                        String value = RabbitMQUtils.readString(data);
+                        future.set(value);
+                    }
+                }
+    		}
+    		
+    	};
     }
 
 }

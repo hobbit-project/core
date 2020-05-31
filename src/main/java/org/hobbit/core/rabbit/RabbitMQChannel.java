@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.commonchannel.CommonChannel;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+
 public class RabbitMQChannel implements CommonChannel {
 
     @Override
@@ -18,7 +20,7 @@ public class RabbitMQChannel implements CommonChannel {
     }
 
     @Override
-    public void writeBytes(ByteBuffer buffer, String queue) {
+    public void writeBytes(ByteBuffer buffer, String queue, BasicProperties props) {
 
     }
 

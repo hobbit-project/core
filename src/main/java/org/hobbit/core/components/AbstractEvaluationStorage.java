@@ -104,7 +104,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     /**
      * Channel on which the acknowledgements are send.
      */
-    protected Channel ackChannel = null;
+    protected CommonChannel ackChannel = null;
     
     protected CommonChannel evaluationStorageChannel = null;
     
@@ -138,41 +138,14 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         System.out.println("plll:"+queueName);
         
-        Object taskresultconsumer= new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-            	ByteBuffer buffer = ByteBuffer.wrap(data);
-                String taskId = RabbitMQUtils.readString(buffer);
-                LOGGER.trace("Received from task generator {}.", taskId);
-                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                long timestamp = buffer.getLong();
-                receiveExpectedResponseData(taskId, timestamp, taskData);
-            }
-        };
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	taskresultconsumer= new DirectCallback() {
-        		@Override
-    			public void callback(byte[] data, List<Object> classs) {
-        			ByteBuffer buffer = ByteBuffer.wrap(data);
-                    String taskId = RabbitMQUtils.readString(buffer);
-                    LOGGER.trace("Received from task generator {}.", taskId);
-                    byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                    long timestamp = buffer.getLong();
-                    receiveExpectedResponseData(taskId, timestamp, taskData);
-
-    			}
-
-       		};
-        }
-
-        
+        Object taskresultconsumer= getTaskResultConsumer();
         
         taskResultReceiver = SenderReceiverFactory.getReceiverImpl(
                 EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
             		 generateSessionQueueName(queueName), taskresultconsumer,
                         maxParallelProcessedMsgs,this);
         		
-        		
+        System.out.println("1");		
         		
 				/*
 				 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
@@ -190,59 +163,14 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         final boolean receiveTimeStamp = EnvVariables.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
                 LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-        Object systemresultconsumer= new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-            	 ByteBuffer buffer = ByteBuffer.wrap(data);
-                 String taskId = RabbitMQUtils.readString(buffer);
-                 LOGGER.trace("Received from system {}.", taskId);
-                 byte[] responseData = RabbitMQUtils.readByteArray(buffer);
-                 long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
-                 receiveResponseData(taskId, timestamp, responseData);
-                 // If we should send acknowledgments (and there was no
-                 // error until now)
-                 if (ackChannel != null) {
-                     try {
-                         ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
-                     } catch (IOException e) {
-                         LOGGER.error("Error while sending acknowledgement.", e);
-                     }
-                     LOGGER.trace("Sent ack {}.", taskId);
-                 }
-            }
-        };
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	systemresultconsumer= new DirectCallback() {
-        		@Override
-    			public void callback(byte[] data, List<Object> classs) {
-        			 ByteBuffer buffer = ByteBuffer.wrap(data);
-                     String taskId = RabbitMQUtils.readString(buffer);
-                     LOGGER.trace("Received from system {}.", taskId);
-                     byte[] responseData = RabbitMQUtils.readByteArray(buffer);
-                     long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
-                     receiveResponseData(taskId, timestamp, responseData);
-                     // If we should send acknowledgments (and there was no
-                     // error until now)
-                     if (ackChannel != null) {
-                         try {
-                             ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
-                         } catch (IOException e) {
-                             LOGGER.error("Error while sending acknowledgement.", e);
-                         }
-                         LOGGER.trace("Sent ack {}.", taskId);
-                     }
-
-    			}
-
-       		};
-        }
-       
+        Object systemresultconsumer= getSystemResultConsumer(receiveTimeStamp, ackExchangeName);
+        System.out.println("2");		
         systemResultReceiver = SenderReceiverFactory.getReceiverImpl(
                 EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
             		 generateSessionQueueName(queueName), systemresultconsumer,
                         maxParallelProcessedMsgs,this);
         		
-        		
+        System.out.println("3");				
 		/*
 		 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
 		 * .queue(incomingDataQueueFactory,
@@ -263,9 +191,238 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 
         queueName = EnvVariables.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
-        evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(queueName));
-        Object consumerCallback = new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+        //evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+        //        .createDefaultRabbitQueue(generateSessionQueueName(queueName));
+        Object consumerCallback = getConsumerCallback(queueName);
+        evaluationStorageChannel = new ChannelFactory().getChannel(
+                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(queueName));
+        evaluationStorageChannel.readBytes(consumerCallback, this,generateSessionQueueName(queueName));
+
+        System.out.println("4");		
+        
+        
+        
+		/*
+		 * evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.
+		 * name, true, new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
+		 * 
+		 * @Override public void handleDelivery(String consumerTag, Envelope envelope,
+		 * BasicProperties properties, byte[] body) throws IOException { byte response[]
+		 * = null; // get iterator id ByteBuffer buffer = ByteBuffer.wrap(body); if
+		 * (buffer.remaining() < 1) { response = EMPTY_RESPONSE; LOGGER.
+		 * error("Got a request without a valid iterator Id. Returning emtpy response."
+		 * ); } else { byte iteratorId = buffer.get();
+		 * 
+		 * // get the iterator Iterator<? extends ResultPair> iterator = null; if
+		 * (iteratorId == NEW_ITERATOR_ID) { // create and save a new iterator
+		 * iteratorId = (byte) resultPairIterators.size();
+		 * LOGGER.info("Creating new iterator #{}", iteratorId);
+		 * resultPairIterators.add(iterator = createIterator()); } else if ((iteratorId
+		 * < 0) || iteratorId >= resultPairIterators.size()) { response =
+		 * EMPTY_RESPONSE; LOGGER.error("Got a request without a valid iterator Id (" +
+		 * Byte.toString(iteratorId) + "). Returning emtpy response."); } else {
+		 * iterator = resultPairIterators.get(iteratorId); } if ((iterator != null) &&
+		 * (iterator.hasNext())) { ResultPair resultPair = iterator.next(); Result
+		 * result = resultPair.getExpected(); byte expectedResultData[],
+		 * expectedResultTimeStamp[], actualResultData[], actualResultTimeStamp[]; //
+		 * Make sure that the result is not null if (result != null) { // Check whether
+		 * the data array is null expectedResultData = result.getData() != null ?
+		 * result.getData() : new byte[0]; expectedResultTimeStamp =
+		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else {
+		 * expectedResultData = new byte[0]; expectedResultTimeStamp =
+		 * RabbitMQUtils.writeLong(0); } result = resultPair.getActual(); // Make sure
+		 * that the result is not null if (result != null) { // Check whether the data
+		 * array is null actualResultData = result.getData() != null ? result.getData()
+		 * : new byte[0]; actualResultTimeStamp =
+		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else { actualResultData
+		 * = new byte[0]; actualResultTimeStamp = RabbitMQUtils.writeLong(0); }
+		 * 
+		 * response = RabbitMQUtils .writeByteArrays( new byte[] { iteratorId }, new
+		 * byte[][] { expectedResultTimeStamp, expectedResultData,
+		 * actualResultTimeStamp, actualResultData }, null); } else { response = new
+		 * byte[] { iteratorId }; } } getChannel().basicPublish("",
+		 * properties.getReplyTo(), null, response); } });
+		 */
+
+        boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
+        System.out.println("5");		
+        if (sendAcks) {
+        	System.out.println("6");		
+            // Create channel for acknowledgements
+        	ackChannel = new ChannelFactory().getChannel(
+                    EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME));
+        	System.out.println("7");		
+        	/*
+			 * ackChannel =
+			 * getFactoryForOutgoingCmdQueues().getConnection().createChannel();
+			 * ackChannel.exchangeDeclare(generateSessionQueueName(Constants.
+			 * HOBBIT_ACK_EXCHANGE_NAME), "fanout", false, true, null);
+			 */
+        }
+    }
+
+    /**
+     * Creates a new iterator that iterates over the response pairs.
+     *
+     * @return a new iterator or null if an error occurred
+     */
+    protected abstract Iterator<? extends ResultPair> createIterator();
+
+    @Override
+    public void run() throws Exception {
+        sendToCmdQueue(Commands.EVAL_STORAGE_READY_SIGNAL);
+       
+        terminationMutex.acquire();
+        taskResultReceiver.closeWhenFinished();
+        systemResultReceiver.closeWhenFinished();
+    }
+
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        // If this is the signal to start the data generation
+        if (command == Commands.EVAL_STORAGE_TERMINATE) {
+            // release the mutex
+            terminationMutex.release();
+        }
+        super.receiveCommand(command, data);
+    }
+
+    @Override
+    public void close() throws IOException {
+        IOUtils.closeQuietly(taskResultReceiver);
+        IOUtils.closeQuietly(systemResultReceiver);
+        //IOUtils.closeQuietly(evalModule2EvalStoreQueue);
+        if (ackChannel != null) {
+            try {
+                ackChannel.close();
+            } catch (Exception e) {
+                LOGGER.error("Error while trying to close the acknowledgement channel.", e);
+            }
+        }
+        super.close();
+    }
+    
+    private Object getTaskResultConsumer() {
+    	Object taskresultconsumer = getDataHandler(); 
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	taskresultconsumer= getDirectHandler();
+        }
+        return taskresultconsumer;
+    }
+    
+    private Object getDataHandler() {
+    	return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                LOGGER.trace("Received from task generator {}.", taskId);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                long timestamp = buffer.getLong();
+                receiveExpectedResponseData(taskId, timestamp, taskData);
+            }
+        };
+    }
+    
+    private Object getDirectHandler() {
+    	return new DirectCallback() {
+    		@Override
+			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+    			ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                LOGGER.debug("Received from task generator {}.", taskId);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                long timestamp = buffer.getLong();
+                receiveExpectedResponseData(taskId, timestamp, taskData);
+
+			}
+
+   		};
+    }
+    
+    private Object getSystemResultConsumer(boolean receiveTimeStamp, String ackExchangeName) {
+    	Object systemresultconsumer = getSystemDataHandler(receiveTimeStamp, ackExchangeName);
+        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	systemresultconsumer = getSystemDirectHandler(receiveTimeStamp, ackExchangeName);
+        }
+        return systemresultconsumer;
+    }
+    
+    private Object getSystemDataHandler(boolean receiveTimeStamp, String ackExchangeName) {
+    	return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	 ByteBuffer buffer = ByteBuffer.wrap(data);
+                 String taskId = RabbitMQUtils.readString(buffer);
+                 LOGGER.trace("Received from system {}.", taskId);
+                 byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+                 long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+                 receiveResponseData(taskId, timestamp, responseData);
+                 // If we should send acknowledgments (and there was no
+                 // error until now)
+                 if (ackChannel != null) {
+                     try {
+                         //ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                    	 ByteBuffer buf = ByteBuffer.wrap(RabbitMQUtils.writeString(taskId));
+                    	 ackChannel.writeBytes(buf, ackExchangeName, null);
+                     } catch (Exception e) {
+                         LOGGER.error("Error while sending acknowledgement.", e);
+                     }
+                     LOGGER.trace("Sent ack {}.", taskId);
+                 }
+            }
+        };
+    }
+    
+    private Object getSystemDirectHandler(boolean receiveTimeStamp, String ackExchangeName) {
+    	return new DirectCallback() {
+    		@Override
+			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+    			 ByteBuffer buffer = ByteBuffer.wrap(data);
+                 String taskId = RabbitMQUtils.readString(buffer);
+                 LOGGER.trace("Received from system {}.", taskId);
+                 byte[] responseData = RabbitMQUtils.readByteArray(buffer);
+                 long timestamp = receiveTimeStamp ? buffer.getLong() : System.currentTimeMillis();
+                 receiveResponseData(taskId, timestamp, responseData);
+                 // If we should send acknowledgments (and there was no
+                 // error until now)
+                 if (ackChannel != null) {
+                     try {
+                         //ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
+                    	 ByteBuffer buf = ByteBuffer.wrap(RabbitMQUtils.writeString(taskId));
+                    	 ackChannel.writeBytes(buf, ackExchangeName, null);
+                     } catch (Exception e) {
+                         LOGGER.error("Error while sending acknowledgement.", e);
+                     }
+                     LOGGER.trace("Sent ack {}.", taskId);
+                 }
+
+			}
+
+   		};
+    }
+    
+    private Object getConsumerCallback(String queueName) {
+    	Object consumerCallback = null;
+        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+        	consumerCallback = getDirectConsumer(queueName);
+        } else {
+        	consumerCallback = getDefaultConsumer(queueName);
+        }
+        return consumerCallback;
+    }
+    
+    private Object getDefaultConsumer(String queueName) {
+    	
+    	try {
+			evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+			        .createDefaultRabbitQueue(generateSessionQueueName(queueName));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	return new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {
@@ -329,175 +486,87 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                   getChannel().basicPublish("", properties.getReplyTo(), null, response);
             }
         };
-        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	consumerCallback = new DirectCallback(evaluationStorageChannel,generateSessionQueueName(queueName) ) {
-    			@Override
-    			public void callback(byte[] data, List<Object> cmdCallbackObjectList) {
-    				for(Object cmdCallbackObject:cmdCallbackObjectList) {
-    					if(cmdCallbackObject != null &&
-    							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
-    						 byte response[] = null;
-    		                  // get iterator id
-    		                  ByteBuffer buffer = ByteBuffer.wrap(data);
-    		                  if (buffer.remaining() < 1) {
-    		                      response = EMPTY_RESPONSE;
-    		                      LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
-    		                  } else {
-    		                      byte iteratorId = buffer.get();
-
-    		                      // get the iterator
-    		                      Iterator<? extends ResultPair> iterator = null;
-    		                      if (iteratorId == NEW_ITERATOR_ID) {
-    		                          // create and save a new iterator
-    		                          iteratorId = (byte) resultPairIterators.size();
-    		                          LOGGER.info("Creating new iterator #{}", iteratorId);
-    		                          resultPairIterators.add(iterator = createIterator());
-    		                      } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
-    		                          response = EMPTY_RESPONSE;
-    		                          LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
-    		                                  + "). Returning emtpy response.");
-    		                      } else {
-    		                          iterator = resultPairIterators.get(iteratorId);
-    		                      }
-    		                      if ((iterator != null) && (iterator.hasNext())) {
-    		                          ResultPair resultPair = iterator.next();
-    		                          Result result = resultPair.getExpected();
-    		                          byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
-    		                                  actualResultTimeStamp[];
-    		                          // Make sure that the result is not null
-    		                          if (result != null) {
-    		                              // Check whether the data array is null
-    		                              expectedResultData = result.getData() != null ? result.getData() : new byte[0];
-    		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
-    		                          } else {
-    		                              expectedResultData = new byte[0];
-    		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
-    		                          }
-    		                          result = resultPair.getActual();
-    		                          // Make sure that the result is not null
-    		                          if (result != null) {
-    		                              // Check whether the data array is null
-    		                              actualResultData = result.getData() != null ? result.getData() : new byte[0];
-    		                              actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
-    		                          } else {
-    		                              actualResultData = new byte[0];
-    		                              actualResultTimeStamp = RabbitMQUtils.writeLong(0);
-    		                          }
-
-    		                          response = RabbitMQUtils
-    		                                  .writeByteArrays(
-    		                                          new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
-    		                                                  expectedResultData, actualResultTimeStamp, actualResultData },
-    		                                          null);
-    		                      } else {
-    		                          response = new byte[] { iteratorId };
-    		                      }
-    		                  }
-    		                  ByteBuffer resposebuffer = ByteBuffer.allocate(response.length);
-    		                channel.writeBytes(resposebuffer,queue);
-    		                 // getChannel().basicPublish("", properties.getReplyTo(), null, response);
-		    				
-    					}
-    				}
-    			}
-    		};
-        }
-        evaluationStorageChannel = new ChannelFactory().getChannel(
-                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(queueName));
-        evaluationStorageChannel.readBytes(consumerCallback, this,generateSessionQueueName(queueName));
-
-        
-        
-        
-		/*
-		 * evalModule2EvalStoreQueue.channel.basicConsume(evalModule2EvalStoreQueue.
-		 * name, true, new DefaultConsumer(evalModule2EvalStoreQueue.channel) {
-		 * 
-		 * @Override public void handleDelivery(String consumerTag, Envelope envelope,
-		 * BasicProperties properties, byte[] body) throws IOException { byte response[]
-		 * = null; // get iterator id ByteBuffer buffer = ByteBuffer.wrap(body); if
-		 * (buffer.remaining() < 1) { response = EMPTY_RESPONSE; LOGGER.
-		 * error("Got a request without a valid iterator Id. Returning emtpy response."
-		 * ); } else { byte iteratorId = buffer.get();
-		 * 
-		 * // get the iterator Iterator<? extends ResultPair> iterator = null; if
-		 * (iteratorId == NEW_ITERATOR_ID) { // create and save a new iterator
-		 * iteratorId = (byte) resultPairIterators.size();
-		 * LOGGER.info("Creating new iterator #{}", iteratorId);
-		 * resultPairIterators.add(iterator = createIterator()); } else if ((iteratorId
-		 * < 0) || iteratorId >= resultPairIterators.size()) { response =
-		 * EMPTY_RESPONSE; LOGGER.error("Got a request without a valid iterator Id (" +
-		 * Byte.toString(iteratorId) + "). Returning emtpy response."); } else {
-		 * iterator = resultPairIterators.get(iteratorId); } if ((iterator != null) &&
-		 * (iterator.hasNext())) { ResultPair resultPair = iterator.next(); Result
-		 * result = resultPair.getExpected(); byte expectedResultData[],
-		 * expectedResultTimeStamp[], actualResultData[], actualResultTimeStamp[]; //
-		 * Make sure that the result is not null if (result != null) { // Check whether
-		 * the data array is null expectedResultData = result.getData() != null ?
-		 * result.getData() : new byte[0]; expectedResultTimeStamp =
-		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else {
-		 * expectedResultData = new byte[0]; expectedResultTimeStamp =
-		 * RabbitMQUtils.writeLong(0); } result = resultPair.getActual(); // Make sure
-		 * that the result is not null if (result != null) { // Check whether the data
-		 * array is null actualResultData = result.getData() != null ? result.getData()
-		 * : new byte[0]; actualResultTimeStamp =
-		 * RabbitMQUtils.writeLong(result.getSentTimestamp()); } else { actualResultData
-		 * = new byte[0]; actualResultTimeStamp = RabbitMQUtils.writeLong(0); }
-		 * 
-		 * response = RabbitMQUtils .writeByteArrays( new byte[] { iteratorId }, new
-		 * byte[][] { expectedResultTimeStamp, expectedResultData,
-		 * actualResultTimeStamp, actualResultData }, null); } else { response = new
-		 * byte[] { iteratorId }; } } getChannel().basicPublish("",
-		 * properties.getReplyTo(), null, response); } });
-		 */
-
-        boolean sendAcks = EnvVariables.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
-        if (sendAcks) {
-            // Create channel for acknowledgements
-            ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();
-            ackChannel.exchangeDeclare(generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), "fanout", false,
-                    true, null);
-        }
     }
+    
+    private Object getDirectConsumer(String queueName) {
+    	
+    	return new DirectCallback(evaluationStorageChannel,generateSessionQueueName(queueName), null) {
+			@Override
+			public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
+				for(Object cmdCallbackObject:cmdCallbackObjectList) {
+					System.out.println("callback : " + cmdCallbackObject.getClass());
+					if(cmdCallbackObject != null &&
+							cmdCallbackObject instanceof AbstractEvaluationStorage) {
+						 byte response[] = null;
+		                  // get iterator id
+		                  ByteBuffer buffer = ByteBuffer.wrap(data);
+		                  if (buffer.remaining() < 1) {
+		                      response = EMPTY_RESPONSE;
+		                      LOGGER.error("Got a request without a valid iterator Id. Returning emtpy response.");
+		                  } else {
+		                      byte iteratorId = buffer.get();
 
-    /**
-     * Creates a new iterator that iterates over the response pairs.
-     *
-     * @return a new iterator or null if an error occurred
-     */
-    protected abstract Iterator<? extends ResultPair> createIterator();
+		                      // get the iterator
+		                      Iterator<? extends ResultPair> iterator = null;
+		                      if (iteratorId == NEW_ITERATOR_ID) {
+		                          // create and save a new iterator
+		                          iteratorId = (byte) resultPairIterators.size();
+		                          LOGGER.info("Creating new iterator #{}", iteratorId);
+		                          resultPairIterators.add(iterator = createIterator());
+		                      } else if ((iteratorId < 0) || iteratorId >= resultPairIterators.size()) {
+		                          response = EMPTY_RESPONSE;
+		                          LOGGER.error("Got a request without a valid iterator Id (" + Byte.toString(iteratorId)
+		                                  + "). Returning emtpy response.");
+		                      } else {
+		                          iterator = resultPairIterators.get(iteratorId);
+		                      }
+		                      if ((iterator != null) && (iterator.hasNext())) {
+		                          ResultPair resultPair = iterator.next();
+		                          Result result = resultPair.getExpected();
+		                          byte expectedResultData[], expectedResultTimeStamp[], actualResultData[],
+		                                  actualResultTimeStamp[];
+		                          // Make sure that the result is not null
+		                          if (result != null) {
+		                              // Check whether the data array is null
+		                              expectedResultData = result.getData() != null ? result.getData() : new byte[0];
+		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+		                          } else {
+		                              expectedResultData = new byte[0];
+		                              expectedResultTimeStamp = RabbitMQUtils.writeLong(0);
+		                          }
+		                          result = resultPair.getActual();
+		                          // Make sure that the result is not null
+		                          if (result != null) {
+		                              // Check whether the data array is null
+		                              actualResultData = result.getData() != null ? result.getData() : new byte[0];
+		                              actualResultTimeStamp = RabbitMQUtils.writeLong(result.getSentTimestamp());
+		                          } else {
+		                              actualResultData = new byte[0];
+		                              actualResultTimeStamp = RabbitMQUtils.writeLong(0);
+		                          }
 
-    @Override
-    public void run() throws Exception {
-        sendToCmdQueue(Commands.EVAL_STORAGE_READY_SIGNAL);
-       
-        terminationMutex.acquire();
-        taskResultReceiver.closeWhenFinished();
-        systemResultReceiver.closeWhenFinished();
-    }
-
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        // If this is the signal to start the data generation
-        if (command == Commands.EVAL_STORAGE_TERMINATE) {
-            // release the mutex
-            terminationMutex.release();
-        }
-        super.receiveCommand(command, data);
-    }
-
-    @Override
-    public void close() throws IOException {
-        IOUtils.closeQuietly(taskResultReceiver);
-        IOUtils.closeQuietly(systemResultReceiver);
-        IOUtils.closeQuietly(evalModule2EvalStoreQueue);
-        if (ackChannel != null) {
-            try {
-                ackChannel.close();
-            } catch (Exception e) {
-                LOGGER.error("Error while trying to close the acknowledgement channel.", e);
-            }
-        }
-        super.close();
+		                          response = RabbitMQUtils
+		                                  .writeByteArrays(
+		                                          new byte[] { iteratorId }, new byte[][] { expectedResultTimeStamp,
+		                                                  expectedResultData, actualResultTimeStamp, actualResultData },
+		                                          null);
+		                      } else {
+		                          response = new byte[] { iteratorId };
+		                      }
+		                  }
+		                  try {
+							Thread.sleep(0, 1000);
+							ByteBuffer resposebuffer = ByteBuffer.allocate(response.length);
+							channel.writeBytes(resposebuffer,queue, null);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+		                 // getChannel().basicPublish("", properties.getReplyTo(), null, response);
+	    				
+					}
+				}
+			}
+		};
     }
 }

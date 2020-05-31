@@ -97,22 +97,21 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void init() throws Exception {
-        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
-                Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
-
-        rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
-        connectionFactory = new ConnectionFactory();
-        if(rabbitMQHostName.contains(":")){
-            String[] splitted = rabbitMQHostName.split(":");
-            connectionFactory.setHost(splitted[0]);
-            connectionFactory.setPort(Integer.parseInt(splitted[1]));
-        }else
-            connectionFactory.setHost(rabbitMQHostName);
-        connectionFactory.setAutomaticRecoveryEnabled(true);
-        // attempt recovery every 10 seconds
-        connectionFactory.setNetworkRecoveryInterval(10000);
-        incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
-        outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
+		/*
+		 * hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+		 * Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+		 * 
+		 * rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY,
+		 * LOGGER); connectionFactory = new ConnectionFactory();
+		 * if(rabbitMQHostName.contains(":")){ String[] splitted =
+		 * rabbitMQHostName.split(":"); connectionFactory.setHost(splitted[0]);
+		 * connectionFactory.setPort(Integer.parseInt(splitted[1])); }else
+		 * connectionFactory.setHost(rabbitMQHostName);
+		 * connectionFactory.setAutomaticRecoveryEnabled(true); // attempt recovery
+		 * every 10 seconds connectionFactory.setNetworkRecoveryInterval(10000);
+		 * incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+		 * outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
+		 */
         commonChannel = new ChannelFactory().getChannel(
             EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
 
@@ -151,6 +150,7 @@ public abstract class AbstractComponent implements Component {
     public void close() throws IOException {
         //IOUtils.closeQuietly(incomingDataQueueFactory);
         //IOUtils.closeQuietly(outgoingDataQueuefactory);
+    	commonChannel.close();
     }
 
     public String getHobbitSessionId() {

@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.AMQP.BasicProperties;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -168,7 +169,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 		if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
 			consumer= new DirectCallback() {
 				@Override
-				public void callback(byte[] data, List<Object> classs) {
+				public void callback(byte[] data, List<Object> classs, BasicProperties props) {
 					System.out.println("INSIDE READBYTES CALLBACK : "+RabbitMQUtils.readString(data)+"T");
 					receiveGeneratedData(data);
 				}
@@ -262,8 +263,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      *             if there is an error during the sending
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
-        sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null,
-                new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp)));
+    	try {
+			//Thread.sleep(0, 5000);
+			sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null,
+					new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp)));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     /**
