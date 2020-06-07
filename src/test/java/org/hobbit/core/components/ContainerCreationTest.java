@@ -129,7 +129,7 @@ public class ContainerCreationTest {
 
 //                    cmdChannel.basicPublish("", props.getReplyTo(), replyProps,
 //                            RabbitMQUtils.writeString(containerId));
-                } catch (Exception e/*IOException | InterruptedException e*/) {
+                } catch (Exception e) {
                     LOGGER.error("Exception in receiveCommand", e);
                 }
             }
