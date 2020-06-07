@@ -55,7 +55,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
     public static Collection<Object[]> data() {
     	List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator
-        testConfigs.add(new Object[] { 1, 10000 });
+        testConfigs.add(new Object[] { 1, 1000 });
         // We use two data generators
         testConfigs.add(new Object[] { 2, 10000 });
         // We use ten data generators
@@ -90,7 +90,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         }
     }
 
-    @Test(timeout=80000)
+    @Test(timeout=90000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");

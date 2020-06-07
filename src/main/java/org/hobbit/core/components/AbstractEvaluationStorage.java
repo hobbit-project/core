@@ -37,6 +37,7 @@ import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.data.handlers.DataHandler;
 import org.hobbit.core.data.handlers.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
@@ -140,10 +141,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         
         Object taskresultconsumer= getTaskResultConsumer();
         
-        taskResultReceiver = SenderReceiverFactory.getReceiverImpl(
-                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
-            		 generateSessionQueueName(queueName), taskresultconsumer,
-                        maxParallelProcessedMsgs,this);
+        taskResultReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+        		generateSessionQueueName(queueName), taskresultconsumer, maxParallelProcessedMsgs,this);
         		
         System.out.println("1");		
         		
@@ -164,13 +163,9 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                 LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         Object systemresultconsumer= getSystemResultConsumer(receiveTimeStamp, ackExchangeName);
-        System.out.println("2");		
-        systemResultReceiver = SenderReceiverFactory.getReceiverImpl(
-                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
-            		 generateSessionQueueName(queueName), systemresultconsumer,
-                        maxParallelProcessedMsgs,this);
+        systemResultReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+        		generateSessionQueueName(queueName), systemresultconsumer, maxParallelProcessedMsgs,this);
         		
-        System.out.println("3");				
 		/*
 		 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
 		 * .queue(incomingDataQueueFactory,
@@ -194,9 +189,9 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         //evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
         //        .createDefaultRabbitQueue(generateSessionQueueName(queueName));
         Object consumerCallback = getConsumerCallback(queueName);
-        evaluationStorageChannel = new ChannelFactory().getChannel(
-                EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(queueName));
-        evaluationStorageChannel.readBytes(consumerCallback, this,generateSessionQueueName(queueName));
+        evaluationStorageChannel = new ChannelFactory().getChannel(isRabbitMQEnabled(),
+                generateSessionQueueName(queueName), connectionFactory);
+        evaluationStorageChannel.readBytes(consumerCallback, this, true, generateSessionQueueName(queueName));
 
         System.out.println("4");		
         
@@ -249,8 +244,8 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
         if (sendAcks) {
         	System.out.println("6");		
             // Create channel for acknowledgements
-        	ackChannel = new ChannelFactory().getChannel(
-                    EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME));
+        	ackChannel = new ChannelFactory().getChannel(isRabbitMQEnabled(),
+                    generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME), connectionFactory);
         	System.out.println("7");		
         	/*
 			 * ackChannel =
@@ -303,8 +298,10 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     }
     
     private Object getTaskResultConsumer() {
-    	Object taskresultconsumer = getDataHandler(); 
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+    	Object taskresultconsumer = null; 
+        if (isRabbitMQEnabled()) {
+        	taskresultconsumer = getDataHandler();
+        }else {
         	taskresultconsumer= getDirectHandler();
         }
         return taskresultconsumer;
@@ -341,8 +338,10 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     }
     
     private Object getSystemResultConsumer(boolean receiveTimeStamp, String ackExchangeName) {
-    	Object systemresultconsumer = getSystemDataHandler(receiveTimeStamp, ackExchangeName);
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
+    	Object systemresultconsumer = null;
+        if (isRabbitMQEnabled()) {
+        	systemresultconsumer = getSystemDataHandler(receiveTimeStamp, ackExchangeName);
+        }else {
         	systemresultconsumer = getSystemDirectHandler(receiveTimeStamp, ackExchangeName);
         }
         return systemresultconsumer;
@@ -364,7 +363,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                      try {
                          //ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
                     	 ByteBuffer buf = ByteBuffer.wrap(RabbitMQUtils.writeString(taskId));
-                    	 ackChannel.writeBytes(buf, ackExchangeName, null);
+                    	 ackChannel.writeBytes(buf, ackExchangeName, null, null);
                      } catch (Exception e) {
                          LOGGER.error("Error while sending acknowledgement.", e);
                      }
@@ -390,7 +389,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                      try {
                          //ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
                     	 ByteBuffer buf = ByteBuffer.wrap(RabbitMQUtils.writeString(taskId));
-                    	 ackChannel.writeBytes(buf, ackExchangeName, null);
+                    	 ackChannel.writeBytes(buf, ackExchangeName, null, null);
                      } catch (Exception e) {
                          LOGGER.error("Error while sending acknowledgement.", e);
                      }
@@ -404,10 +403,10 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     
     private Object getConsumerCallback(String queueName) {
     	Object consumerCallback = null;
-        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	consumerCallback = getDirectConsumer(queueName);
-        } else {
+        if(isRabbitMQEnabled()) {
         	consumerCallback = getDefaultConsumer(queueName);
+        } else {
+        	consumerCallback = getDirectConsumer(queueName);
         }
         return consumerCallback;
     }
@@ -415,7 +414,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     private Object getDefaultConsumer(String queueName) {
     	
     	try {
-			evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
+			evalModule2EvalStoreQueue = ((RabbitMQChannel)getFactoryForIncomingDataQueues()).getCmdQueueFactory()
 			        .createDefaultRabbitQueue(generateSessionQueueName(queueName));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -557,7 +556,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
 		                  try {
 							Thread.sleep(0, 1000);
 							ByteBuffer resposebuffer = ByteBuffer.allocate(response.length);
-							channel.writeBytes(resposebuffer,queue, null);
+							channel.writeBytes(resposebuffer, null, queue, null);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();

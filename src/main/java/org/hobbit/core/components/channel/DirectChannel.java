@@ -49,9 +49,8 @@ public class DirectChannel implements CommonChannel {
 
 
     @Override
-    public byte[] readBytes(Object callback, Object classs, String queue) {
+    public void readBytes(Object callback, Object classs, Boolean autoAck, String queue) {
     	threadPool.execute(new ReadByteChannel(pipes.get(queue), callback, classs));
-        return null;
     }
 
     @Override
@@ -70,8 +69,8 @@ public class DirectChannel implements CommonChannel {
     }
 
     @Override
-    public void writeBytes(ByteBuffer buffer, String queue, BasicProperties props) {
-
+    public void writeBytes(ByteBuffer buffer, String exchange, String routingKey, BasicProperties props) {
+    	String queue = StringUtils.isEmpty(exchange) ? routingKey : exchange;
         try {
         	if(!pipes.isEmpty()) {
         		pipes.get(queue).setProps(props);
@@ -110,5 +109,27 @@ public class DirectChannel implements CommonChannel {
 		 * } catch (IOException e) { LOGGER.error("Error closing pipe",e); } } }
 		 */
 		
+	}
+	
+	@Override
+	public void createChannel() throws Exception {
+		
+	}
+	@Override
+	public String getQueueName(AbstractCommandReceivingComponent abstractCommandReceivingComponent) throws Exception {
+		return null;
+	}
+	@Override
+	public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete,
+			Map<String, Object> arguments) throws IOException {
+		
+	}
+	@Override
+	public void queueBind(String queue, String exchange, String routingKey) throws IOException {
+		
+	}
+	@Override
+	public Object getChannel() {
+		return null;
 	}
 }

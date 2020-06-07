@@ -14,13 +14,14 @@ import org.hobbit.core.data.handlers.DataReceiver;
 import org.hobbit.core.data.handlers.DataSender;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 
 public class SenderReceiverFactory {
 	
-	public static DataSender getSenderImpl(String rabbitEnabled, String queue, AbstractPlatformConnectorComponent object) {
-		if(!StringUtils.isEmpty(rabbitEnabled) && rabbitEnabled.equals("true")) {
+	public static DataSender getSenderImpl(boolean isRabbitEnabled, String queue, AbstractPlatformConnectorComponent object) {
+		if(isRabbitEnabled) {
 			try {
-				return DataSenderImpl.builder().queue(object.getFactoryForOutgoingDataQueues(),
+				return DataSenderImpl.builder().queue(((RabbitMQChannel)object.getFactoryForOutgoingDataQueues()).getCmdQueueFactory(),
 		                queue).build();
 			} catch (IllegalStateException | IOException e) {
 				// TODO Auto-generated catch block
@@ -30,11 +31,13 @@ public class SenderReceiverFactory {
 		return new DirectSenderImpl(queue);
 	}
 	
-	public static DataReceiver getReceiverImpl(String rabbitEnabled, String queue, Object consumer, int maxParallelProcessedMsgs, AbstractPlatformConnectorComponent object ) {
-		if(!StringUtils.isEmpty(rabbitEnabled) && rabbitEnabled.equals("true")) {
+	public static DataReceiver getReceiverImpl(boolean isRabbitEnabled, String queue, Object consumer, 
+			int maxParallelProcessedMsgs, AbstractPlatformConnectorComponent object ) {
+		if(isRabbitEnabled) {
 			try {
-				return DataReceiverImpl.builder().dataHandler((DataHandler) consumer).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(object.getFactoryForIncomingDataQueues(),
-		                queue).build();
+				return DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs).
+						queue(((RabbitMQChannel)object.getFactoryForIncomingDataQueues()).getCmdQueueFactory(),
+		                queue).dataHandler((DataHandler) consumer).build();
 			} catch (IllegalStateException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

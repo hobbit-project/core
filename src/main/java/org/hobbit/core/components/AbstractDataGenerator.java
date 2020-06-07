@@ -50,15 +50,13 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY);
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
-        sender2TaskGen = SenderReceiverFactory.getSenderImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        sender2TaskGen = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), this);
         		//DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 //generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
 
 
-        sender2System =   SenderReceiverFactory.getSenderImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        sender2System =   SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), this);
 
 

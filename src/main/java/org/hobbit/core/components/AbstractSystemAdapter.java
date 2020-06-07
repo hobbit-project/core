@@ -122,30 +122,10 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         // Get the benchmark parameter model
         systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
                 () -> ModelFactory.createDefaultModel(), LOGGER);
-        Object consumer= new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-            	receiveGeneratedData(data);
-            }
-        };
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	consumer= new DirectCallback() {
-        		@Override
-    			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-    				System.out.println("INSIDE READBYTES CALLBACK : "+
-                        RabbitMQUtils.readString(data)+"T");
-    				receiveGeneratedData(data);
+        Object dataGenReceiverConsumer= getDataReceiverHandler();
 
-    			}
-
-       		};
-        }
-
-
-        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
-        		 generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), consumer,
-                    maxParallelProcessedMsgs,this);
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+        		generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), dataGenReceiverConsumer, maxParallelProcessedMsgs,this);
 
 		/*
 		 * dataGenReceiver =
@@ -158,34 +138,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 		 * }).build();
 		 */
 
-        Object taskGenReceiverConsumer= new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-            	ByteBuffer buffer = ByteBuffer.wrap(data);
-                String taskId = RabbitMQUtils.readString(buffer);
-                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                receiveGeneratedTask(taskId, taskData);
-            }
-        };
-        if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	taskGenReceiverConsumer= new DirectCallback() {
-        		@Override
-    			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-        		    System.out.println("INSIDE READBYTES CALLBACK taskGenReceiverConsumer : "+
-                        RabbitMQUtils.readString(data)+"T");
-        		    ByteBuffer buffer = ByteBuffer.wrap(data);
-                    String taskId = RabbitMQUtils.readString(buffer);
-                    byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                    receiveGeneratedTask(taskId, taskData);
-
-    			}
-
-       		};
-        }
-        taskGenReceiver = SenderReceiverFactory.getReceiverImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
-        		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), taskGenReceiverConsumer,
-                    maxParallelProcessedMsgs,this);
+        Object taskGenReceiverConsumer= getTaskReceiverHandler();
+        taskGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+        		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), taskGenReceiverConsumer, maxParallelProcessedMsgs,this);
         		/*DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
                 .dataHandler(new DataHandler() {
@@ -198,8 +153,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
                     }
                 }).build();*/
 
-        sender2EvalStore = SenderReceiverFactory.getSenderImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
         /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
@@ -289,7 +243,71 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         IOUtils.closeQuietly(taskGenReceiver);
         // Close the sender (we shouldn't close it before this point since we want to be
         // sure that all results have been sent)
-        sender2EvalStore.closeWhenFinished();
+        //sender2EvalStore.closeWhenFinished();
         super.close();
     }
+    
+    private Object getDataReceiverHandler() {
+    	if(isRabbitMQEnabled()) {
+    		return getDataReceiverDataHandler();
+    	}
+    	return getDataReceiverDirectHandler();
+    }
+
+	private Object getDataReceiverDirectHandler() {
+		return new DirectCallback() {
+    		@Override
+			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+				System.out.println("INSIDE READBYTES CALLBACK : "+
+                    RabbitMQUtils.readString(data)+"T");
+				receiveGeneratedData(data);
+
+			}
+
+   		};
+	}
+
+	private Object getDataReceiverDataHandler() {
+		return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	receiveGeneratedData(data);
+            }
+        };
+	}
+	
+	private Object getTaskReceiverHandler() {
+		if(isRabbitMQEnabled()) {
+			return getTaskReceiverDataHandler();
+		}
+		return getTaskReceiverDirectHandler();
+	}
+
+	private Object getTaskReceiverDirectHandler() {
+		return new DirectCallback() {
+    		@Override
+			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+    		    System.out.println("INSIDE READBYTES CALLBACK taskGenReceiverConsumer : "+
+                    RabbitMQUtils.readString(data)+"T");
+    		    ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                receiveGeneratedTask(taskId, taskData);
+
+			}
+
+   		};
+	}
+
+	private Object getTaskReceiverDataHandler() {
+		return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+            	ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                receiveGeneratedTask(taskId, taskData);
+            }
+        };
+	}
 }

@@ -20,7 +20,7 @@ public class DirectSenderImpl implements DataSender {
 
 	public DirectSenderImpl(String queue){
 		this.queue = queue;
-		senderChannel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), queue);
+		senderChannel = new ChannelFactory().getChannel(false, queue, null);
 	}
 
 
@@ -36,7 +36,8 @@ public class DirectSenderImpl implements DataSender {
     	buffer.put(data);
     	try {
 			Thread.sleep(0, 1000);
-			senderChannel.writeBytes(buffer, this.queue, null);
+			System.out.println("SEND DATA");
+			senderChannel.writeBytes(buffer, null, this.queue, null);
 		} catch (InterruptedException e) {
             LOGGER.error("Error waiting during send data", e);
 		}

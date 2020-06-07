@@ -26,6 +26,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.components.ContainerStateObserver;
 import org.hobbit.core.components.PlatformConnector;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 import org.hobbit.core.rabbit.SimpleFileReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
         SimpleFileReceiver receiver = null;
         try {
             // create the queue to get data from the container
-            queue = connector.getFactoryForIncomingDataQueues()
+            queue = ((RabbitMQChannel)connector.getFactoryForIncomingDataQueues()).getCmdQueueFactory()
                     .createDefaultRabbitQueue(UUID.randomUUID().toString().replace("-", ""));
             // create a receiver that writes incoming data to the files
             receiver = SimpleFileReceiver.create(queue);

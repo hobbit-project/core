@@ -93,7 +93,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Channel that is used for the command queue.
      */
-    protected Channel cmdChannel = null;
+    //protected Channel cmdChannel = null;
     /**
      * Default type of containers created by this container
      */
@@ -134,57 +134,21 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     @Override
     public void init() throws Exception {
         super.init();
-        /*addCommandHeaderId(getHobbitSessionId());
+        addCommandHeaderId(getHobbitSessionId());
 
-        cmdQueueFactory = new RabbitQueueFactoryImpl(createConnection());
+        /*cmdQueueFactory = new RabbitQueueFactoryImpl(createConnection());
         cmdChannel = cmdQueueFactory.getConnection().createChannel();
         String queueName = cmdChannel.queueDeclare().getQueue();
         cmdChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");*/
-
-        Object consumerCallback = new DefaultConsumer(cmdChannel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                    byte[] body) throws IOException {
-                cmdThreadPool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            handleCmd(body, properties);
-                            //byte[] bytes = commonChannel.readBytes();
-                            //handleCmd(bytes, "");
-                        } catch (Exception e) {
-                            LOGGER.error("Exception while trying to handle incoming command.", e);
-                        }
-                    }
-                });
-            }
-        };
-        if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-        	consumerCallback = new DirectCallback() {
-    			@Override
-    			public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
-    				for(Object cmdCallbackObject:cmdCallbackObjectList) {
-    					if(cmdCallbackObject != null &&
-    							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
-		    				cmdThreadPool.execute(new Runnable() {
-		    					@Override
-		    					public void run() {
-		    						try {
-		    						    System.out.println("DIRECTCALLBACK : "+cmdCallbackObject.getClass());
-		    							((AbstractCommandReceivingComponent) cmdCallbackObject).
-                                            handleCmd(data, "");
-		    						} catch (Exception e) {
-		    							LOGGER.error("Exception while trying to handle incoming command.", e);
-		    						}
-		    					}
-		    				});
-    					}
-    				}
-    			}
-    		};
-        }
-        commonChannel.readBytes(consumerCallback, this, "commonChannel");
+        
+        commonChannel.createChannel();
+        String queueName = commonChannel.getQueueName(this) == null ? Constants.HOBBIT_COMMAND_EXCHANGE_NAME : commonChannel.getQueueName(this);
+        commonChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
+        commonChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
+        System.out.println("AbstractCommandReceivingComponent QUEUE NAME : "+queueName);
+        Object consumerCallback = getCommonConsumer();
+        commonChannel.readBytes(consumerCallback, this, true, queueName);
         //cmdChannel.basicConsume(queueName, true, consumer);
 
         containerName = EnvVariables.getString(Constants.CONTAINER_NAME_KEY, containerName);
@@ -251,7 +215,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             buffer.put(data);
         }
 
-        commonChannel.writeBytes(buffer, "commonChannel", props);
+        commonChannel.writeBytes(buffer, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props);
         //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
@@ -532,14 +496,20 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
-            responseQueueName = "commonChannel"; //cmdChannel.queueDeclare().getQueue();
+        	try {
+				commonChannel.createChannel();
+				responseQueueName =  commonChannel.getQueueName(this);//cmdChannel.queueDeclare().getQueue();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         if (responseConsumer == null) {
             responseConsumer = getResponseConsumer();
             //byte[] bytes = commonChannel.readBytes(this);
 
             //cmdChannel.basicConsume(responseQueueName, responseConsumer);
-            commonChannel.readBytes(responseConsumer, this, "commonChannel");
+            commonChannel.readBytes(responseConsumer, this, null, responseQueueName);
 
         }
     }
@@ -560,12 +530,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 
     @Override
     public void close() throws IOException {
-        if (cmdChannel != null) {
+        /*if (cmdChannel != null) {
             try {
                 cmdChannel.close();
             } catch (Exception e) {
             }
-        }
+        }*/
         IOUtils.closeQuietly(cmdQueueFactory);
         /*if (cmdThreadPool != null) {
             cmdThreadPool.shutdown();
@@ -576,19 +546,74 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         super.close();
     }
     
-    private Object getResponseConsumer() {
+    private Object getCommonConsumer() {
     	Object consumer = null;
-    	if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-    		consumer = getResponseDirectConsumer();
+    	if(isRabbitMQEnabled()) {
+    		consumer = getCommonDefaultConsumer();    		
     	} else {
+    		consumer = getCommonDirectConsumer();
+    	}
+    	return consumer;
+    }
+    
+    private Object getCommonDefaultConsumer() {
+    	
+		return new DefaultConsumer((Channel) commonChannel.getChannel()) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+                cmdThreadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            handleCmd(body, properties);
+                        } catch (Exception e) {
+                            LOGGER.error("Exception while trying to handle incoming command.", e);
+                        }
+                    }
+                });
+            }
+        };
+	}
+
+	private Object getCommonDirectConsumer() {
+		return new DirectCallback() {
+			@Override
+			public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
+				for(Object cmdCallbackObject:cmdCallbackObjectList) {
+					if(cmdCallbackObject != null &&
+							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
+						cmdThreadPool.execute(new Runnable() {
+							@Override
+							public void run() {
+								try {
+							System.out.println("DIRECTCALLBACK : "+cmdCallbackObject.getClass());
+							((AbstractCommandReceivingComponent) cmdCallbackObject).
+									handleCmd(data, "");
+								} catch (Exception e) {
+									LOGGER.error("Exception while trying to handle incoming command.", e);
+								}
+							}
+						});
+					}
+				}
+			}
+		};
+	}
+
+	private Object getResponseConsumer() {
+    	Object consumer = null;
+    	if(isRabbitMQEnabled()) {
     		consumer = getResponseDefaultConsumer();
+    	} else {
+    		consumer = getResponseDirectConsumer();
     	}
     	return consumer;
     }
     
     private Object getResponseDefaultConsumer() {
     	
-    	return new DefaultConsumer(cmdChannel) {
+    	return new DefaultConsumer((Channel) commonChannel.getChannel()) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                     byte[] body) throws IOException {

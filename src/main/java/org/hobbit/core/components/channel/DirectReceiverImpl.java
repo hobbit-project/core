@@ -21,9 +21,13 @@ public class DirectReceiverImpl implements DataReceiver {
 
 	public DirectReceiverImpl(String queue, Object consumer) {
 
-		CommonChannel channel = new ChannelFactory().getChannel(
-		    EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), queue);
-		channel.readBytes(consumer, this, queue);
+		CommonChannel channel = new ChannelFactory().getChannel(false, queue, null);
+		try {
+			channel.readBytes(consumer, this, null, queue);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override

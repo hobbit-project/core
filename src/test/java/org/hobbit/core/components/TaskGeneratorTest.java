@@ -62,7 +62,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator without parallel message
         // processing
-        testConfigs.add(new Object[] { 1, 1500, 1, 0 });
+        testConfigs.add(new Object[] { 1, 500, 1, 0 });
         // We use only one single data generator with parallel message
         // processing (max 100)
      //   testConfigs.add(new Object[] { 1, 10000, 100, 0 });
@@ -115,7 +115,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"false");
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"true");
 
         init();
 
@@ -146,7 +146,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
 
         dataGensReady.acquire(numberOfGenerators);
         systemReady.acquire();
-       evalStoreReady.acquire();
+        evalStoreReady.acquire();
 
         try {
             // start dummy

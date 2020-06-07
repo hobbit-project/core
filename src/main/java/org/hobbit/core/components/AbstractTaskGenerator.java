@@ -133,13 +133,11 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         nextTaskId = generatorId;
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
-        sender2System = SenderReceiverFactory.getSenderImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        sender2System = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), this);
         /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();*/
-        sender2EvalStore = SenderReceiverFactory.getSenderImpl(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
         /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
@@ -160,23 +158,9 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      //   parameterTypes[0] = byte[].class;
 
      //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
-		Object consumer= new DataHandler() {
-		    @Override
-		    public void handleData(byte[] data) {
-		        receiveGeneratedData(data);
-		    }
-		};
-		if (EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals("false")) {
-			consumer= new DirectCallback() {
-				@Override
-				public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-					System.out.println("INSIDE READBYTES CALLBACK : "+RabbitMQUtils.readString(data)+"T");
-					receiveGeneratedData(data);
-				}
-			};
-		}
-        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER),
-        		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), consumer,maxParallelProcessedMsgs,this);
+		Object dataGenReceiverConsumer= getDataReceiverHandler();
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(),
+        		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), dataGenReceiverConsumer,maxParallelProcessedMsgs,this);
         /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
             public void handleData(byte[] data) {
@@ -303,4 +287,30 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         IOUtils.closeQuietly(sender2System);
         super.close();
     }
+    
+    private Object getDataReceiverHandler() {
+    	if(isRabbitMQEnabled()) {
+    		return getDataReceiverDataHandler();
+    	}
+    	return getDataReceiverDirectHandler();
+    }
+
+	private Object getDataReceiverDataHandler() {
+		return new DataHandler() {
+		    @Override
+		    public void handleData(byte[] data) {
+		        receiveGeneratedData(data);
+		    }
+		};
+	}
+
+	private Object getDataReceiverDirectHandler() {
+		return new DirectCallback() {
+			@Override
+			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+				System.out.println("INSIDE READBYTES CALLBACK : "+RabbitMQUtils.readString(data)+"T");
+				receiveGeneratedData(data);
+			}
+		};
+	}
 }

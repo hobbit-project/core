@@ -50,16 +50,18 @@ public abstract class AbstractComponent implements Component {
      * time will be multiplied with the number of already failed tries.
      */
     public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
+    
+    public static final String TRUE = "true";
 
     private String hobbitSessionId;
     /**
      * Factory for creating outgoing data queues.
      */
-    protected RabbitQueueFactory outgoingDataQueuefactory = null;
+    protected CommonChannel outgoingDataQueuefactory = null;
     /**
      * Factory for creating outgoing data queues.
      */
-    protected RabbitQueueFactory incomingDataQueueFactory = null;
+    protected CommonChannel incomingDataQueueFactory = null;
     /**
      * The host name of the RabbitMQ broker.
      */
@@ -112,13 +114,37 @@ public abstract class AbstractComponent implements Component {
 		 * incomingDataQueueFactory = new RabbitQueueFactoryImpl(createConnection());
 		 * outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
 		 */
-        commonChannel = new ChannelFactory().getChannel(
-            EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), "commonChannel");
-
+    	hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+                Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+    	setConnectionFactory();
+        commonChannel = new ChannelFactory().getChannel(isRabbitMQEnabled(),
+        		Constants.HOBBIT_COMMAND_EXCHANGE_NAME, connectionFactory);
+        incomingDataQueueFactory = new ChannelFactory().getChannel(isRabbitMQEnabled(),
+                "", connectionFactory);//new RabbitQueueFactoryImpl(createConnection());
+        outgoingDataQueuefactory = new ChannelFactory().getChannel(isRabbitMQEnabled(),
+                "", connectionFactory);//new RabbitQueueFactoryImpl(createConnection());
+        incomingDataQueueFactory.createChannel();
+        outgoingDataQueuefactory.createChannel();
 
     }
 
-    public Connection createConnection() throws Exception {
+    private void setConnectionFactory() {
+    	connectionFactory = new ConnectionFactory();
+		rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        connectionFactory = new ConnectionFactory();
+        if(rabbitMQHostName.contains(":")){
+            String[] splitted = rabbitMQHostName.split(":");
+            connectionFactory.setHost(splitted[0]);
+            connectionFactory.setPort(Integer.parseInt(splitted[1]));
+        }else
+            connectionFactory.setHost(rabbitMQHostName);
+        connectionFactory.setAutomaticRecoveryEnabled(true);
+        // attempt recovery every 10 seconds
+        connectionFactory.setNetworkRecoveryInterval(10000);
+		
+	}
+
+	public Connection createConnection() throws Exception {
         Connection connection = null;
         Exception exception = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
@@ -160,5 +186,12 @@ public abstract class AbstractComponent implements Component {
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
     }
+    
+    protected boolean isRabbitMQEnabled() {
+		if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals(TRUE)) {
+			return true;
+		}
+		return false;
+	}
 
 }

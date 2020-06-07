@@ -11,6 +11,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.PlatformConnector;
 import org.hobbit.core.data.usage.ResourceUsageInformation;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,7 @@ public class SystemResourceUsageRequester implements Closeable {
     public static SystemResourceUsageRequester create(PlatformConnector connector, String sessionId) {
         try {
             Channel cmdChannel = connector.getFactoryForOutgoingCmdQueues().createChannel();
-            Channel incomingChannel = connector.getFactoryForIncomingDataQueues().createChannel();
+            Channel incomingChannel = ((RabbitMQChannel)connector.getFactoryForIncomingDataQueues()).getCmdQueueFactory().createChannel();
             String responseQueueName = null;
             // if (responseQueueName == null) {
             responseQueueName = incomingChannel.queueDeclare().getQueue();
