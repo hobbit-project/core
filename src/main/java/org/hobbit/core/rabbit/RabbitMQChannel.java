@@ -53,8 +53,10 @@ public class RabbitMQChannel implements CommonChannel {
     }
 
     @Override
-    public void writeBytes(byte[] data) {
-
+    public void writeBytes(byte[] data, String exchange, String routingKey, BasicProperties props) throws IOException {
+    	ByteBuffer buffer = ByteBuffer.allocate(data.length);
+        buffer.put(data);
+        writeBytes(buffer, exchange, routingKey, props);
     }
 
     @Override

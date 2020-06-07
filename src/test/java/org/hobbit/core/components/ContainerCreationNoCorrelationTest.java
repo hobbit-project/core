@@ -86,7 +86,6 @@ public class ContainerCreationNoCorrelationTest {
         Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2"}, null);
         String containerId1 = container1.get();
         String containerId2 = container2.get();
-        System.out.println("Container ID : "+ containerId1);
         assertEquals("IDs of asynchronously created containers", "1;2", containerId1 + ";" + containerId2);
     }
 
@@ -105,10 +104,11 @@ public class ContainerCreationNoCorrelationTest {
                     AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
                     propsBuilder.deliveryMode(2);
                     AMQP.BasicProperties replyProps = propsBuilder.build();
+                    commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", props.getReplyTo(), replyProps);
 
 //                    cmdChannel.basicPublish("", props.getReplyTo(), replyProps,
 //                            RabbitMQUtils.writeString(containerId));
-                } catch (Exception e/*IOException e*/) {
+                } catch (Exception e) {
                     LOGGER.error("Exception in receiveCommand", e);
                 }
             }

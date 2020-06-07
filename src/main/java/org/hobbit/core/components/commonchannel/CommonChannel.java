@@ -12,7 +12,7 @@ public interface CommonChannel {
 
 	public void readBytes(Object consumerCallback, Object classs, Boolean autoAck, String queue) throws IOException;
 
-	public void writeBytes(byte data[]);
+	public void writeBytes(byte data[], String exchange, String routingKey, BasicProperties props) throws IOException;
 
 	public void writeBytes(ByteBuffer buffer, String exchange, String routingKey, BasicProperties props) throws IOException;
 

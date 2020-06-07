@@ -54,18 +54,10 @@ public class DirectChannel implements CommonChannel {
     }
 
     @Override
-    public void writeBytes(byte[] data) {
-
-        ByteBuffer buffer = ByteBuffer.allocate(6);
+    public void writeBytes(byte[] data, String exchange, String routingKey, BasicProperties props) throws IOException {
+    	ByteBuffer buffer = ByteBuffer.allocate(data.length);
         buffer.put(data);
-        try {
-            System.out.println("\nINSIDE writeBytes ");
-            //out.write(buffer);
-            buffer.clear();
-           // System.out.println(buffer.toString()+"\n\n");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        writeBytes(buffer, exchange, routingKey, props);
     }
 
     @Override
