@@ -89,7 +89,8 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
         if (attachData) {
             buffer.put(data);
         }
-        cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
+        commonChannel.writeBytes(buffer.array(), Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props);
+        //cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
     }
 
     @Override
