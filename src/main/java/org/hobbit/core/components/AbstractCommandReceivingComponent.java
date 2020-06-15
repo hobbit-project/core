@@ -64,17 +64,17 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Name of this Docker container.
      */
-    private String containerName;
+    protected String containerName;
     /**
      * Name of the queue that is used to receive responses for messages that are
      * sent via the command queue and for which an answer is expected.
      */
-    private String responseQueueName = null;
+    protected String responseQueueName = null;
     /**
      * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
      * to that RPC call.
      */
-    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new LinkedHashMap<>());
+    protected Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new LinkedHashMap<>());
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
@@ -484,7 +484,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @throws IOException
      *             if a communication problem occurs
      */
-    private void initResponseQueue() throws IOException {
+    protected void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
             responseQueueName = cmdChannel.queueDeclare().getQueue();
         }
@@ -554,5 +554,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         }
         super.close();
     }
+
+	public void createDummyComponent(byte command, byte[] data, String sessionId, BasicProperties props) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
 
 }

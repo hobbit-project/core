@@ -29,6 +29,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
+import org.hobbit.core.containerservice.DirectContainerCreator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
@@ -45,7 +46,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 
 @RunWith(Parameterized.class)
-public class BenchmarkControllerTest extends AbstractBenchmarkController {
+public class BenchmarkControllerTest extends DirectContainerCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkControllerTest.class);
 
@@ -210,8 +211,12 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             super();
             this.sessionId = sessionId;
         }
-
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+        	System.out.println("Inside static : "+this);
+        	System.out.println("command : "+ command);
+        	createDummyComponent(command, data, sessionId, props);
+        }
+        public void createDummyComponent(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             String replyTo = null;
             if (props != null) {
                 replyTo = props.getReplyTo();

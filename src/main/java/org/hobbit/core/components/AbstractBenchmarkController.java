@@ -206,7 +206,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * @param generatorIds
      *            set of generator container names
      */
-    private void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
+    protected void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
             Set<String> generatorIds) {
         String containerId;
         String variables[] = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2)
