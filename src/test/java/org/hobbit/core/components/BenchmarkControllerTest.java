@@ -55,6 +55,7 @@ public class BenchmarkControllerTest extends DirectContainerCreator {
     private static final String DATA_GEN_IMAGE = "datagenimage";
     private static final String TASK_GEN_IMAGE = "taskgenimage";
     private static final String EVAL_IMAGE = "evaluationimage";
+    private DummyPlatformController dummyPlatformController;
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -91,7 +92,7 @@ public class BenchmarkControllerTest extends DirectContainerCreator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
 
-        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId);
+        dummyPlatformController = new DummyPlatformController(sessionId);
         try {
             DummyComponentExecutor dummyPlatformExecutor = new DummyComponentExecutor(dummyPlatformController);
             Thread dummyPlatformThread = new Thread(dummyPlatformExecutor);
@@ -156,7 +157,7 @@ public class BenchmarkControllerTest extends DirectContainerCreator {
         super.init();
 
         // create data generators
-        createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null);
+        createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null,dummyPlatformController);
 
         // Create task generators
         createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null);
