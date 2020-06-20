@@ -54,11 +54,11 @@ public class DataGeneratorTest extends AbstractDataGenerator {
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
         // We use only one single data generator
-        testConfigs.add(new Object[] { 1, 10000 });
+        testConfigs.add(new Object[] { 1, 100 });
         // We use two data generators
         testConfigs.add(new Object[] { 2, 10000 });
         // We use ten data generators
-        testConfigs.add(new Object[] { 10, 20000 });
+       // testConfigs.add(new Object[] { 10, 20000 });
         return testConfigs;
     }
 

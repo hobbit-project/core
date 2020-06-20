@@ -58,10 +58,10 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
     @Parameters
     public static Collection<Object[]> data() {
         List<Object[]> testConfigs = new ArrayList<Object[]>();
-        testConfigs.add(new Object[] { 1, 1 });
+     //   testConfigs.add(new Object[] { 1, 1 });
         testConfigs.add(new Object[] { 1, 10 });
-        testConfigs.add(new Object[] { 10, 1 });
-        testConfigs.add(new Object[] { 10, 10 });
+       // testConfigs.add(new Object[] { 10, 1 });
+        //testConfigs.add(new Object[] { 10, 10 });
         return testConfigs;
     }
 
@@ -171,6 +171,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
     protected void executeBenchmark() throws Exception {
         // give the start signals
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
+        
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
         // wait for the data generators to finish their work
