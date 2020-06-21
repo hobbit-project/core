@@ -1,18 +1,12 @@
 package org.hobbit.core.components.channel;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.commonchannel.CommonChannel;
@@ -27,23 +21,17 @@ public class DirectChannel implements CommonChannel {
 	
 	static Map<String, PipeChannel> pipes = new HashMap<>();
 
-    //Pipe pipe;
     PipeChannel pipeChannel;
-    //WritableByteChannel out;
-    //ReadableByteChannel in;
     private ExecutorService threadPool = Executors.newCachedThreadPool();
     public DirectChannel(){}
     public DirectChannel(String queue){
         try {
         	if(pipes.get(queue) == null) {
-        		//Pipe pipe= Pipe.open();
-        		//out = pipe.sink();
-        		//in = pipe.source();
         		pipeChannel = new PipeChannel(Pipe.open());
         		pipes.put(queue, pipeChannel);
         	}
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error creating pipe ",e);
         }
     }
 
@@ -61,25 +49,21 @@ public class DirectChannel implements CommonChannel {
     }
 
     @Override
-    public void writeBytes(ByteBuffer buffer, String exchange, String routingKey, BasicProperties props) {
+    public void writeBytes(ByteBuffer buffer, String exchange, String routingKey, BasicProperties props) throws IOException {
     	String queue = StringUtils.isEmpty(exchange) ? routingKey : exchange;
-        try {
-        	if(!pipes.isEmpty()) {
-        		pipes.get(queue).setProps(props);
-        		String replyQueue = queue;
-        		if(props != null && StringUtils.isNotBlank(props.getReplyTo())) {
-        			replyQueue = props.getReplyTo();
-        		}
-        		if(pipes.get(replyQueue).getPipe().sink().isOpen()) {
-        			buffer.flip();
-        			while (buffer.hasRemaining())
-        				pipes.get(replyQueue).getPipe().sink().write(buffer);
-        			buffer.clear();
-        		}
-        	}
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    	if(!pipes.isEmpty()) {
+    		pipes.get(queue).setProps(props);
+    		String replyQueue = queue;
+    		if(props != null && StringUtils.isNotBlank(props.getReplyTo())) {
+    			replyQueue = props.getReplyTo();
+    		}
+    		if(pipes.get(replyQueue).getPipe().sink().isOpen()) {
+    			buffer.flip();
+    			while (buffer.hasRemaining())
+    				pipes.get(replyQueue).getPipe().sink().write(buffer);
+    			buffer.clear();
+    		}
+    	}
     }
 
 	@Override
@@ -88,16 +72,6 @@ public class DirectChannel implements CommonChannel {
 			ReadByteChannel.classes.clear();
 		}
 		pipes.clear();*/
-		/*if(threads != null && threads.size() > 0) {
-			for(Thread t:threads) {
-				t.stop();
-			}
-		}*/
-		/*
-		 * if(pipes != null && pipes.size() > 0) { for(Map.Entry<String, PipeChannel>
-		 * entry : pipes.entrySet()) { try { entry.getValue().getPipe().sink().close();
-		 * } catch (IOException e) { LOGGER.error("Error closing pipe",e); } } }
-		 */
 		
 	}
 	

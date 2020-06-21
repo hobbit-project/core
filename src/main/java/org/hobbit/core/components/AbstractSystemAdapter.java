@@ -127,36 +127,13 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), dataGenReceiverConsumer, maxParallelProcessedMsgs,this);
 
-		/*
-		 * dataGenReceiver =
-		 * DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-		 * .queue(incomingDataQueueFactory,
-		 * generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
-		 * .dataHandler(new DataHandler() {
-		 *
-		 * @Override public void handleData(byte[] data) { receiveGeneratedData(data); }
-		 * }).build();
-		 */
 
         Object taskGenReceiverConsumer= getTaskReceiverHandler();
         taskGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), taskGenReceiverConsumer, maxParallelProcessedMsgs,this);
-        		/*DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
-                .dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        ByteBuffer buffer = ByteBuffer.wrap(data);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                        receiveGeneratedTask(taskId, taskData);
-                    }
-                }).build();*/
 
         sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
-        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
     }
 
 

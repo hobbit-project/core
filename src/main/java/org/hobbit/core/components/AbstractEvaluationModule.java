@@ -91,13 +91,6 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         
         getFactoryForIncomingDataQueues().readBytes(consumer, this, true, getFactoryForIncomingDataQueues().getQueueName(null));
 
-        /*evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
-        evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
-
-        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
-        evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);*/
     }
 
     @Override

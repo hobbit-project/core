@@ -135,39 +135,13 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
         sender2System = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), this);
-        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();*/
         sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
         		generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
-        /*DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();*/
 
 
-        /*Object consumer = new DirectCallback() {
-
-			@Override
-			public void callback(byte[] data, List<Object> classs) {
-				System.out.println("INSIDE READNYTES : "+data);
-				receiveGeneratedData(data);
-
-			}
-		};
-		CommonChannel channel = new ChannelFactory().getChannel(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER), Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
-		channel.readBytes(consumer, this, generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME));*/
-     //   Class[] parameterTypes = new Class[1];
-     //   parameterTypes[0] = byte[].class;
-
-     //   Object consumerCallback = commonChannel.getConsumerCallback(this, "receiveGeneratedData", parameterTypes);
 		Object dataGenReceiverConsumer= getDataReceiverHandler();
         dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(),
         		 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), dataGenReceiverConsumer,maxParallelProcessedMsgs,this);
-        /*DataReceiverImpl.builder().dataHandler(new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-                //receiveGeneratedData(data);
-            }
-        }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();*/
 
     }
 

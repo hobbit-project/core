@@ -278,7 +278,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                      try {
                          //ackChannel.basicPublish(ackExchangeName, "", null, RabbitMQUtils.writeString(taskId));
                     	 ByteBuffer buf = ByteBuffer.wrap(RabbitMQUtils.writeString(taskId));
-                    	 ackChannel.writeBytes(buf, ackExchangeName, null, null);
+                    	 ackChannel.writeBytes(buf, ackExchangeName, "", null);
                      } catch (Exception e) {
                          LOGGER.error("Error while sending acknowledgement.", e);
                      }
