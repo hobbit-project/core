@@ -182,7 +182,6 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
-    	System.out.println("AbstractSystemAdapter receiveCommand");
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATION_FINISHED) {
             terminate(null);
@@ -258,8 +257,6 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 		return new DirectCallback() {
     		@Override
 			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-				System.out.println("INSIDE READBYTES CALLBACK : "+
-                    RabbitMQUtils.readString(data)+"T");
 				receiveGeneratedData(data);
 
 			}
@@ -287,8 +284,6 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 		return new DirectCallback() {
     		@Override
 			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-    		    System.out.println("INSIDE READBYTES CALLBACK taskGenReceiverConsumer : "+
-                    RabbitMQUtils.readString(data)+"T");
     		    ByteBuffer buffer = ByteBuffer.wrap(data);
                 String taskId = RabbitMQUtils.readString(buffer);
                 byte[] taskData = RabbitMQUtils.readByteArray(buffer);

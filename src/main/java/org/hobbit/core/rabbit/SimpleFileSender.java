@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.components.commonchannel.CommonChannel;
 import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.MessageProperties;
@@ -46,15 +47,17 @@ public class SimpleFileSender implements Closeable {
 
     private static final int DEFAULT_MESSAGE_SIZE = 65536;
 
-    public static SimpleFileSender create(RabbitQueueFactory factory, String queueName) throws IOException {
-        return new SimpleFileSender(factory.createDefaultRabbitQueue(queueName));
+    public static SimpleFileSender create(CommonChannel outgoingDataQueuefactory, String queueName) throws IOException {
+        return new SimpleFileSender(outgoingDataQueuefactory, queueName);
     }
 
-    private RabbitQueue queue;
+    private CommonChannel channel;
+    private String queueName;
     private int messageSize = DEFAULT_MESSAGE_SIZE;
 
-    protected SimpleFileSender(RabbitQueue queue) {
-        this.queue = queue;
+    protected SimpleFileSender(CommonChannel queue, String queueName) {
+        this.channel = queue;
+        this.queueName = queueName;
     }
 
     public void streamData(InputStream is, String name) throws IOException {
@@ -71,8 +74,11 @@ public class SimpleFileSender implements Closeable {
             buffer.position(messageIdPos);
             buffer.putInt(messageId);
             length = is.read(array, dataStartPos, array.length - dataStartPos);
-            queue.channel.basicPublish("", queue.name, MessageProperties.MINIMAL_PERSISTENT_BASIC,
-                    Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
+            channel.declareQueue(queueName);
+            channel.writeBytes(Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos), "", 
+            		queueName, MessageProperties.MINIMAL_PERSISTENT_BASIC);
+//            queue.channel.basicPublish("", queue.name, MessageProperties.MINIMAL_PERSISTENT_BASIC,
+//                    Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
             ++messageId;
         } while (length > 0);
     }
@@ -83,7 +89,7 @@ public class SimpleFileSender implements Closeable {
 
     @Override
     public void close() {
-        IOUtils.closeQuietly(queue);
+        //IOUtils.closeQuietly(queue);
     }
 
 }

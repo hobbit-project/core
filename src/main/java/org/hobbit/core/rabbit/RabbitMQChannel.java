@@ -29,6 +29,7 @@ public class RabbitMQChannel implements CommonChannel {
 	
 	protected Channel cmdChannel = null;
 	
+	private String queueName;
 	/**
      * Maximum number of retries that are executed to connect to RabbitMQ.
      */
@@ -107,7 +108,7 @@ public class RabbitMQChannel implements CommonChannel {
 
 	@Override
 	public String getQueueName(AbstractCommandReceivingComponent abstractCommandReceivingComponent) throws Exception {
-		return cmdChannel.queueDeclare().getQueue();
+		return this.queueName;
 	}
 
 	@Override
@@ -130,5 +131,16 @@ public class RabbitMQChannel implements CommonChannel {
 	
 	public RabbitQueueFactory getCmdQueueFactory() {
 		return cmdQueueFactory;
+	}
+
+	@Override
+	public String declareQueue(String queueName) throws IOException {
+		this.queueName = queueName;
+		if(queueName != null) {
+			cmdChannel.queueDeclare(queueName, false, false, true, null);
+		} else {
+			this.queueName = cmdChannel.queueDeclare().getQueue();
+		}
+		return this.queueName;
 	}
 }

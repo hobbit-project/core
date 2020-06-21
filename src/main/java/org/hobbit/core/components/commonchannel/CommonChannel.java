@@ -28,4 +28,6 @@ public interface CommonChannel {
 	public void queueBind(String queue, String exchange, String routingKey) throws IOException;
 
 	public Object getChannel();
+
+	public String declareQueue(String queueName) throws IOException;
 }

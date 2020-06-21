@@ -57,6 +57,6 @@ public interface PlatformConnector {
 
     public CommonChannel getFactoryForOutgoingDataQueues();
     public CommonChannel getFactoryForIncomingDataQueues();
-    public RabbitQueueFactory getFactoryForOutgoingCmdQueues();
-    public RabbitQueueFactory getFactoryForIncomingCmdQueues();
+    public CommonChannel getFactoryForOutgoingCmdQueues();
+    public CommonChannel getFactoryForIncomingCmdQueues();
 }

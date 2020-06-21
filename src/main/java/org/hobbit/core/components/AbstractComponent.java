@@ -186,12 +186,22 @@ public abstract class AbstractComponent implements Component {
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
     }
+    /**
+     * Method gets the property value for @IS_RABBIT_MQ_ENABLED from environment variables
+     * Sets the default value to true if the property not found. 
+     */
     
     protected boolean isRabbitMQEnabled() {
-		if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals(TRUE)) {
-			return true;
-		}
-		return false;
+    	boolean isRabbitMQEnabled = false;
+    	try {
+    		if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals(TRUE)) {
+    			isRabbitMQEnabled = true;
+    		}
+    	} catch(Exception e) {
+    		LOGGER.error("Unable to fetch the property for RabbitMQ Enabled, setting the default to true");
+    		isRabbitMQEnabled = true;
+    	}
+		return isRabbitMQEnabled;
 	}
 
 }

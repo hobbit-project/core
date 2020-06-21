@@ -143,10 +143,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         cmdChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");*/
         
         commonChannel.createChannel();
-        String queueName = commonChannel.getQueueName(this) == null ? Constants.HOBBIT_COMMAND_EXCHANGE_NAME : commonChannel.getQueueName(this);
+        String queueName = commonChannel.declareQueue(null) == null ? Constants.HOBBIT_COMMAND_EXCHANGE_NAME : commonChannel.getQueueName(this);
         commonChannel.exchangeDeclare(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "fanout", false, true, null);
         commonChannel.queueBind(queueName, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "");
-        System.out.println("AbstractCommandReceivingComponent QUEUE NAME : "+queueName);
         Object consumerCallback = getCommonConsumer();
         commonChannel.readBytes(consumerCallback, this, true, queueName);
         //cmdChannel.basicConsume(queueName, true, consumer);
@@ -199,7 +198,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *             if a communication problem occurs
      */
     protected void sendToCmdQueue(byte command, byte data[], BasicProperties props) throws IOException {
-        byte sessionIdBytes[] = {};//getHobbitSessionId().getBytes(Charsets.UTF_8);
+        byte sessionIdBytes[] = getHobbitSessionId().getBytes(Charsets.UTF_8);
         // + 5 because 4 bytes for the session ID length and 1 byte for the
         // command
         int dataLength = sessionIdBytes.length + 5;
@@ -254,14 +253,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            name of the queue in which response is expected
      */
     public void handleCmd(byte bytes[], String replyTo) {
-    	System.out.println();
-    	LOGGER.debug("1");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         String sessionId = RabbitMQUtils.readString(buffer);
-        LOGGER.debug("2");
         //if (acceptedCmdHeaderIds.contains(sessionId)) {
             byte command = buffer.get();
-            LOGGER.debug("COMMAND : "+ command);
             byte remainingData[];
             if (buffer.remaining() > 0) {
                 remainingData = new byte[buffer.remaining()];
@@ -269,11 +264,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             } else {
                 remainingData = new byte[0];
             }
-            LOGGER.debug("3");
-            System.out.println(this.getClass());
             receiveCommand(command, remainingData);
-            LOGGER.debug("4");
-            System.out.println();
         //}
     }
 
@@ -498,7 +489,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if (responseQueueName == null) {
         	try {
 				commonChannel.createChannel();
-				responseQueueName =  commonChannel.getQueueName(this);//cmdChannel.queueDeclare().getQueue();
+				responseQueueName =  commonChannel.declareQueue(null);//cmdChannel.queueDeclare().getQueue();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -587,7 +578,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 							@Override
 							public void run() {
 								try {
-							System.out.println("DIRECTCALLBACK : "+cmdCallbackObject.getClass());
 							((AbstractCommandReceivingComponent) cmdCallbackObject).
 									handleCmd(data, "");
 								} catch (Exception e) {
@@ -656,7 +646,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     		@Override
     		public void callback(byte[] data, List<Object> classs, BasicProperties properties) {
     			String key = properties.getCorrelationId();
-    			System.out.println("CORRELATION ID : " +key);
 
                 synchronized (responseFutures) {
                     //byte[] bytes = commonChannel.readBytes();

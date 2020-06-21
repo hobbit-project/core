@@ -84,7 +84,7 @@ public class FileStreamingTest implements RabbitQueueFactory {
             receiverThread.start();
 
             System.out.println("Starting sender...");
-            SimpleFileSender sender = SimpleFileSender.create(this, queueName);
+            SimpleFileSenderRabbitMQ sender = SimpleFileSenderRabbitMQ.create(this, queueName);
             Thread senderThread = new Thread(new Runnable() {
                 @Override
                 public void run() {

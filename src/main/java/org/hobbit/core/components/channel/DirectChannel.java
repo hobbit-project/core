@@ -72,13 +72,11 @@ public class DirectChannel implements CommonChannel {
         		}
         		if(pipes.get(replyQueue).getPipe().sink().isOpen()) {
         			buffer.flip();
-        			System.out.println("\nINSIDE writeBytes ");
         			while (buffer.hasRemaining())
         				pipes.get(replyQueue).getPipe().sink().write(buffer);
         			buffer.clear();
         		}
         	}
-            //System.out.println(buffer+"\n\n");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,10 +84,10 @@ public class DirectChannel implements CommonChannel {
 
 	@Override
 	public void close() {
-		if(ReadByteChannel.classes != null && ReadByteChannel.classes.size() > 0) {
+		/*if(ReadByteChannel.classes != null && ReadByteChannel.classes.size() > 0) {
 			ReadByteChannel.classes.clear();
 		}
-		pipes.clear();
+		pipes.clear();*/
 		/*if(threads != null && threads.size() > 0) {
 			for(Thread t:threads) {
 				t.stop();
@@ -123,5 +121,9 @@ public class DirectChannel implements CommonChannel {
 	@Override
 	public Object getChannel() {
 		return null;
+	}
+	@Override
+	public String declareQueue(String queueName) throws IOException {
+		return queueName;
 	}
 }

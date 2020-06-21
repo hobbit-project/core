@@ -80,8 +80,8 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
     }
 
     @Override
-    public RabbitQueueFactory getFactoryForIncomingCmdQueues() {
-        return cmdQueueFactory;
+    public CommonChannel getFactoryForIncomingCmdQueues() {
+        return commonChannel;
     }
 
     @Override
@@ -90,8 +90,8 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
     }
 
     @Override
-    public RabbitQueueFactory getFactoryForOutgoingCmdQueues() {
-        return cmdQueueFactory;
+    public CommonChannel getFactoryForOutgoingCmdQueues() {
+        return commonChannel;
     }
 
     @Override

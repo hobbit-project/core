@@ -27,7 +27,7 @@ public class SystemResourceUsageRequester implements Closeable {
 
     public static SystemResourceUsageRequester create(PlatformConnector connector, String sessionId) {
         try {
-            Channel cmdChannel = connector.getFactoryForOutgoingCmdQueues().createChannel();
+            Channel cmdChannel = ((RabbitMQChannel)connector.getFactoryForOutgoingCmdQueues()).getCmdQueueFactory().createChannel();
             Channel incomingChannel = ((RabbitMQChannel)connector.getFactoryForIncomingDataQueues()).getCmdQueueFactory().createChannel();
             String responseQueueName = null;
             // if (responseQueueName == null) {

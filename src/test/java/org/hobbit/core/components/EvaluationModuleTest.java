@@ -71,6 +71,7 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
         environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"true");
 
         // Create the eval store and add some data
         InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore();

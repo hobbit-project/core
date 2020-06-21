@@ -31,7 +31,6 @@ public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
     @Override
     protected void generateTask(byte[] data) throws Exception {
-    	System.out.println("DummyTaskGenReceiver.generateTask : "+ RabbitMQUtils.readString(data)+"T");
         receivedData.add(RabbitMQUtils.readString(data));
     }
 
@@ -39,7 +38,6 @@ public class DummyTaskGenReceiver extends AbstractTaskGenerator {
      * @return the receiveddata
      */
     public List<String> getReceiveddata() {
-    	System.out.println("DummyTaskGenReceiver.getReceiveddata : "+receivedData.size());
         return receivedData;
     }
 

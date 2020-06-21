@@ -38,7 +38,6 @@ public class ReadByteChannel extends DirectChannel implements Runnable{
         			threadPool.execute(new ProcessCallback(callback, clone(buffer), pipeChannel.getProps()));
         			buffer.clear();
         		}
-        		System.out.println("CLOSE IN");
         	}
             //in.close();
         } catch (IOException e) {

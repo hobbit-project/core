@@ -219,7 +219,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
-    	System.out.println("AbstractTaskGenerator receiveCommand");
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
             LOGGER.info("Received signal to start.");
@@ -308,7 +307,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 		return new DirectCallback() {
 			@Override
 			public void callback(byte[] data, List<Object> classs, BasicProperties props) {
-				System.out.println("INSIDE READBYTES CALLBACK : "+RabbitMQUtils.readString(data)+"T");
 				receiveGeneratedData(data);
 			}
 		};
