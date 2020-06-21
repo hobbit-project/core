@@ -1,23 +1,18 @@
 package org.hobbit.core.components.channel;
 
 import java.io.IOException;
-import java.util.List;
-
-import org.hobbit.core.Constants;
-import org.hobbit.core.components.AbstractPlatformConnectorComponent;
-import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.components.commonchannel.CommonChannel;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.data.handlers.DataHandler;
 import org.hobbit.core.data.handlers.DataReceiver;
-import org.hobbit.utils.EnvVariables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * DataReceiver implementation for DirectChannel 
+ * @author altaf, sourabh, yamini, melisa
+ *
+ */
 public class DirectReceiverImpl implements DataReceiver {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(DirectReceiverImpl.class);
 
 	public DirectReceiverImpl(String queue, Object consumer) {
 

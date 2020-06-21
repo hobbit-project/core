@@ -525,7 +525,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         }*/
         super.close();
     }
-    
+    /**
+     * Provides the instance for command queue based on property {@link org.hobbit.core.Constants#IS_RABBIT_MQ_ENABLED}
+     * @return
+     */
     private Object getCommonConsumer() {
     	Object consumer = null;
     	if(isRabbitMQEnabled()) {
@@ -535,7 +538,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     	}
     	return consumer;
     }
-    
+    /**
+     * RabbitMQ consumer for command queue
+     */
     private Object getCommonDefaultConsumer() {
     	
 		return new DefaultConsumer((Channel) commonChannel.getChannel()) {
@@ -555,7 +560,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         };
 	}
-
+    /**
+     * Direct consumer for command queue
+     */
 	private Object getCommonDirectConsumer() {
 		return new DirectCallback() {
 			@Override
@@ -579,7 +586,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 			}
 		};
 	}
-
+	/**
+	 * Provides the consumer for container creation
+	 */
 	private Object getResponseConsumer() {
     	Object consumer = null;
     	if(isRabbitMQEnabled()) {
@@ -589,7 +598,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     	}
     	return consumer;
     }
-    
+    /**
+     * Provides RabbirMQ consumer for container creation
+     */
     private Object getResponseDefaultConsumer() {
     	
     	return new DefaultConsumer((Channel) commonChannel.getChannel()) {
@@ -625,7 +636,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             }
         };
     }
-    
+    /**
+     * Provides Direct consumer for container creation
+     */
     private Object getResponseDirectConsumer() {
     	
     	return new DirectCallback() {

@@ -7,7 +7,11 @@ import java.util.Map;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-
+/**
+ * Interface implemented by RabbitMQChannel and DirectChannel
+ * @author altaf, sourabh, yamini, melisa
+ *
+ */
 public interface CommonChannel {
 
 	public void readBytes(Object consumerCallback, Object classs, Boolean autoAck, String queue) throws IOException;

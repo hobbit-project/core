@@ -172,8 +172,8 @@ public abstract class AbstractComponent implements Component {
         return queueName + "." + hobbitSessionId;
     }
     /**
-     * Method gets the property value for @IS_RABBIT_MQ_ENABLED from environment variables
-     * Sets the default value to true if the property not found. 
+     * Method gets the property value for {@link org.hobbit.core.Constants#IS_RABBIT_MQ_ENABLED} 
+     * from environment variables. Sets the default value to true if the property not found. 
      */
     
     protected boolean isRabbitMQEnabled() {

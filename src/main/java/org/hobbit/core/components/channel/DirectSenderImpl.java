@@ -6,7 +6,11 @@ import java.nio.ByteBuffer;
 import org.hobbit.core.components.commonchannel.CommonChannel;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.data.handlers.DataSender;
-
+/**
+ * DataSender implementation for DirectChannel
+ * @author altaf, sourabh, yamini, melisa
+ *
+ */
 public class DirectSenderImpl implements DataSender {
 
 	CommonChannel senderChannel;

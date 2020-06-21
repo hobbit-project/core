@@ -3,7 +3,11 @@ package org.hobbit.core.components.channel;
 import java.nio.channels.Pipe;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-
+/**
+ * PipeChannel is a POJO class to map pipe with the respective properties.
+ * @author altaf, sourabh, yamini, melisa
+ *
+ */
 public class PipeChannel {
 	
 	Pipe pipe;

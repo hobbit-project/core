@@ -14,7 +14,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-
+/**
+ * This class implements the necessary functionality for message sharing 
+ * without using RabbitMQ. DirectChannel uses Java NIO Pipe for message queuing
+ * implementation 
+ * @author altaf, sourabh, yamini, melisa
+ *
+ */
 public class DirectChannel implements CommonChannel {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DirectChannel.class);
