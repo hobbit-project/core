@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.io.Charsets;
 import org.hobbit.core.Commands;
+import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractBenchmarkController;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.data.StartCommandData;
@@ -80,6 +81,23 @@ public abstract class DirectContainerCreator extends AbstractBenchmarkController
             String[] envVariables, AbstractCommandReceivingComponent dummyComponent) {
 		this.directComponent = dummyComponent;
         createGenerator(dataGeneratorImageName, numberOfDataGenerators, envVariables, dataGenContainerIds);
+    }
+	
+	protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators,
+            String[] envVariables, AbstractCommandReceivingComponent dummyComponent) {
+		this.directComponent = dummyComponent;
+        createGenerator(taskGeneratorImageName, numberOfTaskGenerators, envVariables, taskGenContainerIds);
+    }
+	
+	protected void createEvaluationStorage(String evalStorageImageName, String[] envVariables,
+			AbstractCommandReceivingComponent dummyComponent) {
+		this.directComponent = dummyComponent;
+        evalStoreContainerId = createContainer(evalStorageImageName, Constants.CONTAINER_TYPE_DATABASE, envVariables);
+        if (evalStoreContainerId == null) {
+            String errorMsg = "Couldn't create evaluation storage. Aborting.";
+            LOGGER.error(errorMsg);
+            throw new IllegalStateException(errorMsg);
+        }
     }
 	
 

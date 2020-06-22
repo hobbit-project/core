@@ -46,17 +46,16 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 
 @RunWith(Parameterized.class)
-public class BenchmarkControllerTest extends AbstractBenchmarkController  {
+public class DirectBenchmarkControllerTest extends DirectContainerCreator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkControllerTest.class);
-    
-    DummyPlatformController dummyPlatformController;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DirectBenchmarkControllerTest.class);
 
     private static final String HOBBIT_SESSION_ID = "123";
     private static final String SYSTEM_CONTAINER_ID = "systemContainerId";
     private static final String DATA_GEN_IMAGE = "datagenimage";
     private static final String TASK_GEN_IMAGE = "taskgenimage";
     private static final String EVAL_IMAGE = "evaluationimage";
+    private DummyPlatformController dummyPlatformController;
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -75,7 +74,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
     private int numberOfTaskGenerators;
     private String sessionId;
 
-    public BenchmarkControllerTest(int numberOfDataGenerators, int numberOfTaskGenerators) {
+    public DirectBenchmarkControllerTest(int numberOfDataGenerators, int numberOfTaskGenerators) {
         this.numberOfDataGenerators = numberOfDataGenerators;
         this.numberOfTaskGenerators = numberOfTaskGenerators;
         this.sessionId = HOBBIT_SESSION_ID + Integer.toString(numberOfDataGenerators)
@@ -92,7 +91,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         // Needed for the generators
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        
 
         dummyPlatformController = new DummyPlatformController(sessionId);
         try {
@@ -159,13 +157,13 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         super.init();
 
         // create data generators
-        createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null);
+        createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null,dummyPlatformController);
 
         // Create task generators
-        createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null);
+        createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null, dummyPlatformController);
 
         // Create evaluation storage
-        createEvaluationStorage(EVAL_IMAGE, null);
+        createEvaluationStorage(EVAL_IMAGE, null, dummyPlatformController);
 
         // Wait for all components to finish their initialization
         waitForComponentsToInitialize();
@@ -214,127 +212,122 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
             super();
             this.sessionId = sessionId;
         }
-        
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
         	System.out.println("Inside static : "+this);
         	System.out.println("command : "+ command);
         	createDummyComponent(command, data, sessionId, props);
         }
-        
         public void createDummyComponent(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
-        	  String replyTo = null;
-              if (props != null) {
-                  replyTo = props.getReplyTo();
-              }
+            String replyTo = null;
+            if (props != null) {
+                replyTo = props.getReplyTo();
+            }
 
-              LOGGER.info("received command: session={}, command={}, data={}", sessionId, Commands.toString(command),
-                      data != null ? RabbitMQUtils.readString(data) : "null");
-              if (command == Commands.BENCHMARK_READY_SIGNAL) {
-                  System.out.println("Benchmark Ready!");
-                  try {
-                      sendToCmdQueue(sessionId, Commands.START_BENCHMARK_SIGNAL,
-                              RabbitMQUtils.writeString(SYSTEM_CONTAINER_ID), null);
-                  } catch (IOException e) {
-                      e.printStackTrace();
-                      Assert.fail(e.getLocalizedMessage());
-                  }
-              } else if (command == Commands.DOCKER_CONTAINER_START) {
-                  try {
-                      String startCommandJson = RabbitMQUtils.readString(data);
-                      final String containerId = Integer.toString(random.nextInt());
+            LOGGER.info("received command: session={}, command={}, data={}", sessionId, Commands.toString(command),
+                    data != null ? RabbitMQUtils.readString(data) : "null");
+            if (command == Commands.BENCHMARK_READY_SIGNAL) {
+                System.out.println("Benchmark Ready!");
+                try {
+                    sendToCmdQueue(sessionId, Commands.START_BENCHMARK_SIGNAL,
+                            RabbitMQUtils.writeString(SYSTEM_CONTAINER_ID), null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Assert.fail(e.getLocalizedMessage());
+                }
+            } else if (command == Commands.DOCKER_CONTAINER_START) {
+                try {
+                    String startCommandJson = RabbitMQUtils.readString(data);
+                    final String containerId = Integer.toString(random.nextInt());
 
-                      AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
-                      propsBuilder.deliveryMode(2);
-                      propsBuilder.correlationId(props.getCorrelationId());
-                      AMQP.BasicProperties replyProps = propsBuilder.build();
+                    AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+                    propsBuilder.deliveryMode(2);
+                    propsBuilder.correlationId(props.getCorrelationId());
+                    AMQP.BasicProperties replyProps = propsBuilder.build();
 
-                      if (startCommandJson.contains(DATA_GEN_IMAGE)) {
-                          // Create data generators that are waiting for a random
-                          // amount of time and terminate after that
-                          DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(
-                                  new AbstractDataGenerator() {
-                                      @Override
-                                      protected void generateData() throws Exception {
-                                          LOGGER.debug("Data Generator started...");
-                                          Thread.sleep(1000 + random.nextInt(1000));
-                                      }
-                                  }) {
-                              @Override
-                              public void run() {
-                                  super.run();
-                                  try {
-                                      sendToCmdQueue(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS,
-                                              Commands.DOCKER_CONTAINER_TERMINATED,
-                                              RabbitMQUtils.writeByteArrays(null,
-                                                      new byte[][] { RabbitMQUtils.writeString(containerId) },
-                                                      new byte[] { (byte) 0 }),
-                                              null);
-                                  } catch (IOException e) {
-                                      e.printStackTrace();
-                                      success = false;
-                                  }
-                              }
-                          };
-                          dataGenExecutors.add(dataGenExecutor);
-                          Thread t = new Thread(dataGenExecutor);
-                          dataGenThreads.add(t);
-                          t.start();
+                    if (startCommandJson.contains(DATA_GEN_IMAGE)) {
+                        // Create data generators that are waiting for a random
+                        // amount of time and terminate after that
+                        DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(
+                                new AbstractDataGenerator() {
+                                    @Override
+                                    protected void generateData() throws Exception {
+                                        LOGGER.debug("Data Generator started...");
+                                        Thread.sleep(1000 + random.nextInt(1000));
+                                    }
+                                }) {
+                            @Override
+                            public void run() {
+                                super.run();
+                                try {
+                                    sendToCmdQueue(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS,
+                                            Commands.DOCKER_CONTAINER_TERMINATED,
+                                            RabbitMQUtils.writeByteArrays(null,
+                                                    new byte[][] { RabbitMQUtils.writeString(containerId) },
+                                                    new byte[] { (byte) 0 }),
+                                            null);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    success = false;
+                                }
+                            }
+                        };
+                        dataGenExecutors.add(dataGenExecutor);
+                        Thread t = new Thread(dataGenExecutor);
+                        dataGenThreads.add(t);
+                        t.start();
 
-                          cmdChannel.basicPublish("", replyTo, replyProps,
-                                  RabbitMQUtils.writeString(containerId));
-                      } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
-                          // Create task generators that are waiting for a random
-                          // amount of
-                          // time and terminate after that
-                          DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(
-                                  new AbstractTaskGenerator() {
-                                      @Override
-                                      public void run() throws Exception {
-                                          LOGGER.debug("Task Generator started...");
-                                          super.run();
-                                      }
+                        cmdChannel.basicPublish("", replyTo, replyProps,
+                                RabbitMQUtils.writeString(containerId));
+                    } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
+                        // Create task generators that are waiting for a random
+                        // amount of
+                        // time and terminate after that
+                        DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(
+                                new AbstractTaskGenerator() {
+                                    @Override
+                                    public void run() throws Exception {
+                                        LOGGER.debug("Task Generator started...");
+                                        super.run();
+                                    }
 
-                                      @Override
-                                      protected void generateTask(byte[] data) throws Exception {
-                                      }
-                                  }) {
-                              @Override
-                              public void run() {
-                                  super.run();
-                                  try {
-                                      sendToCmdQueue(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS,
-                                              Commands.DOCKER_CONTAINER_TERMINATED,
-                                              RabbitMQUtils.writeByteArrays(null,
-                                                      new byte[][] { RabbitMQUtils.writeString(containerId) },
-                                                      new byte[] { (byte) 0 }),
-                                              null);
-                                  } catch (IOException e) {
-                                      e.printStackTrace();
-                                      success = false;
-                                  }
-                              }
-                          };
-                          taskGenExecutors.add(taskGenExecutor);
-                          Thread t = new Thread(taskGenExecutor);
-                          taskGenThreads.add(t);
-                          t.start();
+                                    @Override
+                                    protected void generateTask(byte[] data) throws Exception {
+                                    }
+                                }) {
+                            @Override
+                            public void run() {
+                                super.run();
+                                try {
+                                    sendToCmdQueue(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS,
+                                            Commands.DOCKER_CONTAINER_TERMINATED,
+                                            RabbitMQUtils.writeByteArrays(null,
+                                                    new byte[][] { RabbitMQUtils.writeString(containerId) },
+                                                    new byte[] { (byte) 0 }),
+                                            null);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    success = false;
+                                }
+                            }
+                        };
+                        taskGenExecutors.add(taskGenExecutor);
+                        Thread t = new Thread(taskGenExecutor);
+                        taskGenThreads.add(t);
+                        t.start();
 
-                         cmdChannel.basicPublish("", replyTo, replyProps,
-                                 RabbitMQUtils.writeString(containerId));
-                      } else if (startCommandJson.contains(EVAL_IMAGE)) {
-                          cmdChannel.basicPublish("", replyTo, replyProps,
-                                  RabbitMQUtils.writeString(containerId));
-                          sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
-                      } else {
-                          LOGGER.error("Got unknown start command. Ignoring it.");
-                      }
-                  } catch (IOException e) {
-                      LOGGER.error("Exception while trying to respond to a container creation command.", e);
-                  }
-              }
-        	
+                        cmdChannel.basicPublish("", replyTo, replyProps,
+                                RabbitMQUtils.writeString(containerId));
+                    } else if (startCommandJson.contains(EVAL_IMAGE)) {
+                        cmdChannel.basicPublish("", replyTo, replyProps,
+                                RabbitMQUtils.writeString(containerId));
+                        sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
+                    } else {
+                        LOGGER.error("Got unknown start command. Ignoring it.");
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Exception while trying to respond to a container creation command.", e);
+                }
+            }
         }
-
-        
     }
 }
