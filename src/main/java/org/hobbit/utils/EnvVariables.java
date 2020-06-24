@@ -59,7 +59,7 @@ public class EnvVariables {
             try {
                 return conversion.apply(env.get(name));
             } catch (Throwable t) {
-                errorMsg = "Error while reading the value of the variable " + name + ". Aborting.";
+                errorMsg = "Error while reading the value of the variable " + name + ".";
                 error = t;
                 // If the logger is available, log the parsing error
                 if (logger != null) {
@@ -67,7 +67,7 @@ public class EnvVariables {
                 }
             }
         } else {
-            errorMsg = "Couldn't find the expected variable " + name + " from environment. Aborting.";
+            errorMsg = "Couldn't find the expected variable " + name + " from environment.";
             if ((logger != null) && (defaultValueFactory != null)) {
                 logger.error(errorMsg);
             }

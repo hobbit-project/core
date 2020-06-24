@@ -50,7 +50,7 @@ public abstract class AbstractComponent implements Component {
      * time will be multiplied with the number of already failed tries.
      */
     public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
-    
+
     public static final String TRUE = "true";
 
     private String hobbitSessionId;
@@ -66,7 +66,6 @@ public abstract class AbstractComponent implements Component {
      * The host name of the RabbitMQ broker.
      */
     protected String rabbitMQHostName;
-
     /**
      * The factory that can be used to create additional connections. However, in
      * most cases it is sufficient to create a new channel using the already
@@ -99,7 +98,7 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void init() throws Exception {
-    	hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
     	setConnectionFactory();
         commonChannel = new ChannelFactory().getChannel(isRabbitMQEnabled(),
@@ -111,6 +110,9 @@ public abstract class AbstractComponent implements Component {
         incomingDataQueueFactory.createChannel();
         outgoingDataQueuefactory.createChannel();
 
+        if (rabbitMQHostName == null) {
+            rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        }
     }
 
     private void setConnectionFactory() {
@@ -126,7 +128,7 @@ public abstract class AbstractComponent implements Component {
         connectionFactory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
-		
+
 	}
 
 	public Connection createConnection() throws Exception {
@@ -172,10 +174,10 @@ public abstract class AbstractComponent implements Component {
         return queueName + "." + hobbitSessionId;
     }
     /**
-     * Method gets the property value for {@link org.hobbit.core.Constants#IS_RABBIT_MQ_ENABLED} 
-     * from environment variables. Sets the default value to true if the property not found. 
+     * Method gets the property value for {@link org.hobbit.core.Constants#IS_RABBIT_MQ_ENABLED}
+     * from environment variables. Sets the default value to true if the property not found.
      */
-    
+
     protected boolean isRabbitMQEnabled() {
     	boolean isRabbitMQEnabled = false;
     	try {
