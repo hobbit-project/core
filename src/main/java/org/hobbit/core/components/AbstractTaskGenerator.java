@@ -61,7 +61,8 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     /**
      * Mutex used to wait for the start signal after the component has been started
      * and initialized.
-     */final private Semaphore currentlyProcessedMessages = new Semaphore(0);
+     */
+    final private Semaphore currentlyProcessedMessages = new Semaphore(0);
 
     private Semaphore startTaskGenMutex = new Semaphore(0);
     /**
@@ -142,13 +143,11 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void run() throws Exception {
-        Thread.sleep(20000);
+
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
-        System.out.println("1: Before Release");
         currentlyProcessedMessages.release(maxParallelProcessedMsgs);
-        System.out.println("1: After Release");
         // Wait for message to terminate
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
@@ -161,10 +160,9 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void receiveGeneratedData(byte[] data) {
         try {
-            System.out.println("2 : Before Acquire");
             currentlyProcessedMessages.acquire();
-            System.out.println("2 : After Acquire");
             generateTask(data);
+            currentlyProcessedMessages.release(1);
         } catch (Exception e) {
             LOGGER.error("Exception while generating task.", e);
         }
