@@ -61,7 +61,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         testConfigs.add(new Object[] { 1, 1 });
         testConfigs.add(new Object[] { 1, 10 });
         testConfigs.add(new Object[] { 10, 1 });
-        //testConfigs.add(new Object[] { 10, 10 });
+        testConfigs.add(new Object[] { 10, 10 });
         return testConfigs;
     }
 

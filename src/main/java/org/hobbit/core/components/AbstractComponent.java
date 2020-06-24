@@ -110,21 +110,20 @@ public abstract class AbstractComponent implements Component {
         incomingDataQueueFactory.createChannel();
         outgoingDataQueuefactory.createChannel();
 
-        if (rabbitMQHostName == null) {
-            rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
-        }
     }
 
     private void setConnectionFactory() {
     	connectionFactory = new ConnectionFactory();
-		rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        if (rabbitMQHostName == null) {
+            rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        }
         connectionFactory = new ConnectionFactory();
         if(rabbitMQHostName.contains(":")){
             String[] splitted = rabbitMQHostName.split(":");
             connectionFactory.setHost(splitted[0]);
             connectionFactory.setPort(Integer.parseInt(splitted[1]));
         }else
-            connectionFactory.setHost(rabbitMQHostName);
+        connectionFactory.setHost(rabbitMQHostName);
         connectionFactory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
@@ -161,8 +160,8 @@ public abstract class AbstractComponent implements Component {
 
     @Override
     public void close() throws IOException {
-        //IOUtils.closeQuietly(incomingDataQueueFactory);
-        //IOUtils.closeQuietly(outgoingDataQueuefactory);
+    	incomingDataQueueFactory.close();
+    	outgoingDataQueuefactory.close();
     	commonChannel.close();
     }
 

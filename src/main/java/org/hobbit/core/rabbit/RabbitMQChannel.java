@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.commonchannel.CommonChannel;
@@ -67,8 +68,7 @@ public class RabbitMQChannel implements CommonChannel {
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-		
+        IOUtils.closeQuietly(cmdQueueFactory);
 	}
 	
 	protected Connection createConnection() throws Exception {

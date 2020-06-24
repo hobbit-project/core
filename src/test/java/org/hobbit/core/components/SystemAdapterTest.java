@@ -104,7 +104,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         this.numberOfMessages = numberOfMessages;
     }
 
-    @Test(timeout = 90000)
+    @Test(timeout = 30000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
