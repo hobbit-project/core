@@ -34,6 +34,9 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.containerservice.ContainerCreation;
+import org.hobbit.core.containerservice.ContainerCreationFactory;
+import org.hobbit.core.containerservice.RabbitMQContainerCreator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
@@ -135,6 +138,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * The URI of the experiment.
      */
     protected String experimentUri;
+    /**
+     * The instance to create container  
+     */
+    protected ContainerCreation containerCreation;
 
     public AbstractBenchmarkController() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -143,6 +150,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     @Override
     public void init() throws Exception {
         super.init();
+        containerCreation = ContainerCreationFactory.getContainerCreationObject(EnvVariables.getString(Constants.RABBIT_CONTAINER_SERVICE, LOGGER), this);
         // benchmark controllers should be able to accept broadcasts
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
@@ -206,7 +214,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * @param generatorIds
      *            set of generator container names
      */
-    protected void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
+    public void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
             Set<String> generatorIds) {
         String containerId;
         String variables[] = envVariables != null ? Arrays.copyOf(envVariables, envVariables.length + 2)
@@ -608,4 +616,23 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         sendResultModel(resultModel);
         System.exit(1);
     }
+
+	public Set<String> getDataGenContainerIds() {
+		return dataGenContainerIds;
+	}
+
+	public Set<String> getTaskGenContainerIds() {
+		return taskGenContainerIds;
+	}
+
+	public String getEvalStoreContainerId() {
+		return evalStoreContainerId;
+	}
+
+	public void setEvalStoreContainerId(String evalStoreContainerId) {
+		this.evalStoreContainerId = evalStoreContainerId;
+	}
+	
+	
+
 }

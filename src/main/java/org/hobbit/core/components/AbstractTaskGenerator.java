@@ -141,11 +141,9 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void run() throws Exception {
-    	Thread.sleep(1000);
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
-        System.out.println("inside run");
         // Wait for message to terminate
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
@@ -158,7 +156,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void receiveGeneratedData(byte[] data) {
         try {
-        	System.out.println("inside receive");
             generateTask(data);
         } catch (Exception e) {
             LOGGER.error("Exception while generating task.", e);

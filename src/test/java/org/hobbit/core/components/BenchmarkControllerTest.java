@@ -92,6 +92,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         // Needed for the generators
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+        environmentVariables.set(Constants.RABBIT_CONTAINER_SERVICE, "true");
         
 
         dummyPlatformController = new DummyPlatformController(sessionId);
@@ -159,13 +160,13 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         super.init();
 
         // create data generators
-        createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null);
+        containerCreation.createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null, dummyPlatformController);
 
         // Create task generators
-        createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null);
+        containerCreation.createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null, dummyPlatformController);
 
         // Create evaluation storage
-        createEvaluationStorage(EVAL_IMAGE, null);
+        containerCreation.createEvaluationStorage(EVAL_IMAGE, null, dummyPlatformController);
 
         // Wait for all components to finish their initialization
         waitForComponentsToInitialize();
@@ -216,8 +217,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         }
         
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
-        	System.out.println("Inside static : "+this);
-        	System.out.println("command : "+ command);
         	createDummyComponent(command, data, sessionId, props);
         }
         
