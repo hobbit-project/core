@@ -67,7 +67,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         // processing (max 100)
         testConfigs.add(new Object[] { 1, 10000, 100, 0 });
         // We use two data generators without parallel message processing
-        testConfigs.add(new Object[] { 1, 10000, 1, 0 });
+        testConfigs.add(new Object[] { 2, 10000, 1, 0 });
         // We use two data generators with parallel message processing (max
         // 100)
         testConfigs.add(new Object[] { 2, 10000, 100, 0 });
@@ -109,7 +109,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
         super.close();
     }
 
-    @Test(timeout = 600000)
+    @Test(timeout = 60000)
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
