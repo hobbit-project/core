@@ -171,7 +171,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
     protected void executeBenchmark() throws Exception {
         // give the start signals
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
-
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
         // wait for the data generators to finish their work
