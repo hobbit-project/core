@@ -12,7 +12,7 @@ import org.hobbit.core.data.RabbitQueue;
 import com.rabbitmq.client.MessageProperties;
 
 public class SimpleFileSenderRabbitMQ implements Closeable {
-	private static final int DEFAULT_MESSAGE_SIZE = 65536;
+    private static final int DEFAULT_MESSAGE_SIZE = 65536;
 
     public static SimpleFileSenderRabbitMQ create(RabbitQueueFactory factory, String queueName) throws IOException {
         return new SimpleFileSenderRabbitMQ(factory.createDefaultRabbitQueue(queueName));
@@ -40,7 +40,7 @@ public class SimpleFileSenderRabbitMQ implements Closeable {
             buffer.putInt(messageId);
             length = is.read(array, dataStartPos, array.length - dataStartPos);
             queue.channel.basicPublish("", queue.name, MessageProperties.MINIMAL_PERSISTENT_BASIC,
-                    Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
+                Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
             ++messageId;
         } while (length > 0);
     }

@@ -127,8 +127,6 @@ public class ContainerCreationTest {
                     AMQP.BasicProperties replyProps = propsBuilder.build();
                     commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", props.getReplyTo(), replyProps);
 
-//                    cmdChannel.basicPublish("", props.getReplyTo(), replyProps,
-//                            RabbitMQUtils.writeString(containerId));
                 } catch (Exception e) {
                     LOGGER.error("Exception in receiveCommand", e);
                 }

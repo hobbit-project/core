@@ -209,18 +209,18 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     @Override
     public void close() throws IOException {
         try {
-        	((Channel)getFactoryForIncomingCmdQueues().getChannel()).close();
+            ((Channel)getFactoryForIncomingCmdQueues().getChannel()).close();
         } catch (TimeoutException e) {
         }
         super.close();
     }
     
     private Object getConsumer() {
-    	if(isRabbitMQEnabled()) {
-    		return new DefaultConsumer(((Channel)getFactoryForIncomingCmdQueues().getChannel())) {
+        if(isRabbitMQEnabled()) {
+            return new DefaultConsumer(((Channel)getFactoryForIncomingCmdQueues().getChannel())) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                        byte[] body) throws IOException {
+                	    byte[] body) throws IOException {
                     try {
                         handleAck(body);
                     } catch (Exception e) {
@@ -228,7 +228,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
                     }
                 }
             };
-    	}
-    	return null;
+        }
+        return null;
     }
 }

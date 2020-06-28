@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.com.CommonChannel;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
@@ -100,20 +100,20 @@ public abstract class AbstractComponent implements Component {
     public void init() throws Exception {
         hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
-    	setConnectionFactory();
+        setConnectionFactory();
         commonChannel = new ChannelFactory().getChannel(isRabbitMQEnabled(),
-        		Constants.HOBBIT_COMMAND_EXCHANGE_NAME, connectionFactory);
+            Constants.HOBBIT_COMMAND_EXCHANGE_NAME, connectionFactory);
         incomingDataQueueFactory = new ChannelFactory().getChannel(isRabbitMQEnabled(),
-                "", connectionFactory);
+            "", connectionFactory);
         outgoingDataQueuefactory = new ChannelFactory().getChannel(isRabbitMQEnabled(),
-                "", connectionFactory);
+            "", connectionFactory);
         incomingDataQueueFactory.createChannel();
         outgoingDataQueuefactory.createChannel();
 
     }
 
     private void setConnectionFactory() {
-    	connectionFactory = new ConnectionFactory();
+        connectionFactory = new ConnectionFactory();
         if (rabbitMQHostName == null) {
             rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
         }
@@ -128,9 +128,9 @@ public abstract class AbstractComponent implements Component {
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
 
-	}
+    }
 
-	public Connection createConnection() throws Exception {
+    public Connection createConnection() throws Exception {
         Connection connection = null;
         Exception exception = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
@@ -178,16 +178,16 @@ public abstract class AbstractComponent implements Component {
      */
 
     protected boolean isRabbitMQEnabled() {
-    	boolean isRabbitMQEnabled = false;
-    	try {
-    		if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals(TRUE)) {
-    			isRabbitMQEnabled = true;
-    		}
-    	} catch(Exception e) {
-    		LOGGER.error("Unable to fetch the property for RabbitMQ Enabled, setting the default to true");
-    		isRabbitMQEnabled = true;
-    	}
-		return isRabbitMQEnabled;
-	}
+        boolean isRabbitMQEnabled = false;
+        try {
+            if(EnvVariables.getString(Constants.IS_RABBIT_MQ_ENABLED, LOGGER).equals(TRUE)) {
+                isRabbitMQEnabled = true;
+            }
+        } catch(Exception e) {
+            LOGGER.error("Unable to fetch the property for RabbitMQ Enabled, setting the default to true");
+            isRabbitMQEnabled = true;
+        }
+        return isRabbitMQEnabled;
+    }
 
 }

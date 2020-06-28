@@ -18,20 +18,14 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
-
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.DirectReceiverImpl;
+import org.hobbit.core.com.DataSender;
 import org.hobbit.core.components.communicationfactory.SenderReceiverFactory;
-import org.hobbit.core.data.handlers.DataSender;
 import org.hobbit.utils.EnvVariables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataGenerator.class);
 
     private Semaphore startDataGenMutex = new Semaphore(0);
     private int generatorId;
@@ -51,11 +45,10 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2TaskGen = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
-        		generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), this);
-
+            generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), this);
 
         sender2System =   SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
-        		generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), this);
+            generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), this);
 
     }
 

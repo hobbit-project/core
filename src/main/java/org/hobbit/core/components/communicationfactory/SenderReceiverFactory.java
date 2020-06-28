@@ -1,13 +1,13 @@
 package org.hobbit.core.components.communicationfactory;
 
-import java.io.IOException;
+import org.hobbit.core.Constants;
+import org.hobbit.core.com.DataHandler;
+import org.hobbit.core.com.DataReceiver;
+import org.hobbit.core.com.DataSender;
+import org.hobbit.core.com.java.DirectChannel;
+import org.hobbit.core.com.java.DirectReceiverImpl;
+import org.hobbit.core.com.java.DirectSenderImpl;
 import org.hobbit.core.components.AbstractPlatformConnectorComponent;
-import org.hobbit.core.components.channel.DirectChannel;
-import org.hobbit.core.components.channel.DirectReceiverImpl;
-import org.hobbit.core.components.channel.DirectSenderImpl;
-import org.hobbit.core.data.handlers.DataHandler;
-import org.hobbit.core.data.handlers.DataReceiver;
-import org.hobbit.core.data.handlers.DataSender;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQChannel;
@@ -19,34 +19,31 @@ import org.hobbit.core.rabbit.RabbitMQChannel;
  *
  */
 public class SenderReceiverFactory {
-	
-	public static DataSender getSenderImpl(boolean isRabbitEnabled, String queue, AbstractPlatformConnectorComponent object) {
-		if(isRabbitEnabled) {
-			try {
-				return DataSenderImpl.builder().queue(((RabbitMQChannel)object.getFactoryForOutgoingDataQueues()).getCmdQueueFactory(),
-		                queue).build();
-			} catch (IllegalStateException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return new DirectSenderImpl(queue);
-	}
-	
-	public static DataReceiver getReceiverImpl(boolean isRabbitEnabled, String queue, Object consumer, 
-			int maxParallelProcessedMsgs, AbstractPlatformConnectorComponent object ) {
-		if(isRabbitEnabled) {
-			try {
-				return DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs).
-						queue(((RabbitMQChannel)object.getFactoryForIncomingDataQueues()).getCmdQueueFactory(),
-		                queue).dataHandler((DataHandler) consumer).build();
-			} catch (IllegalStateException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return new DirectReceiverImpl(queue, consumer);
-		
-	}
+    
+    /**
+     * Factory method to fetch the instance of {@link DataSenderImpl} or {@link DirectSenderImpl}
+     * based on the environment configuration {@link Constants#IS_RABBIT_MQ_ENABLED}
+     */
+    public static DataSender getSenderImpl(boolean isRabbitEnabled, String queue, AbstractPlatformConnectorComponent object) throws Exception {
+        if(isRabbitEnabled) {
+            return DataSenderImpl.builder().queue(((RabbitMQChannel)object.getFactoryForOutgoingDataQueues()).getCmdQueueFactory(),
+                queue).build();
+        }
+        return new DirectSenderImpl(queue);
+    }
+
+    /**
+     * Factory method to fetch the instance of {@link DataReceiverImpl} or {@link DirectReceiverImpl}
+     * based on the environment configuration {@link Constants#IS_RABBIT_MQ_ENABLED}
+     */
+    public static DataReceiver getReceiverImpl(boolean isRabbitEnabled, String queue, Object consumer, 
+    	    int maxParallelProcessedMsgs, AbstractPlatformConnectorComponent object ) throws Exception {
+        if(isRabbitEnabled) {
+            return DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs).
+                queue(((RabbitMQChannel)object.getFactoryForIncomingDataQueues()).getCmdQueueFactory(),
+                queue).dataHandler((DataHandler) consumer).build();
+        }
+        return new DirectReceiverImpl(queue, consumer);
+    }
 
 }

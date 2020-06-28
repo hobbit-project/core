@@ -19,6 +19,7 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -26,8 +27,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.DirectCallback;
-import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.java.DirectCallback;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
@@ -221,10 +222,14 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     }
     
     private Object getConsumer() {
-    	if(isRabbitMQEnabled()) {
-    		return new QueueingConsumer((Channel) getFactoryForIncomingDataQueues().getChannel()); 
-    	} 
-    	return new DirectCallback();
+        if(isRabbitMQEnabled()) {
+            return new QueueingConsumer((Channel) getFactoryForIncomingDataQueues().getChannel()); 
+        } 
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+                // TODO Auto-generated method stub
+            }};
     }
     
     private byte[] getBodyFromResponse() throws Exception {

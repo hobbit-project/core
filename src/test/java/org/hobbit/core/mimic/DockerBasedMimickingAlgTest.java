@@ -160,12 +160,9 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                         propsBuilder.deliveryMode(2);
                         propsBuilder.correlationId(props.getCorrelationId());
                         AMQP.BasicProperties replyProps = propsBuilder.build();
-                        
                         commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", 
                         		replyTo, replyProps);
 
-//                        cmdChannel.basicPublish("", replyTo, replyProps,
-//                                RabbitMQUtils.writeString(containerId));
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");
                     }

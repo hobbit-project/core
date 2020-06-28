@@ -1,4 +1,4 @@
-package org.hobbit.core.data.handlers;
+package org.hobbit.core.com;
 
 public interface DataHandler {
 

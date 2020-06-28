@@ -39,7 +39,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.channel.DirectCallback;
+import org.hobbit.core.com.java.DirectCallback;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -114,10 +114,10 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     private ExecutorService cmdThreadPool;
 
     public ExecutorService getCmdThreadPool() {
-		return cmdThreadPool;
-	}
+        return cmdThreadPool;
+    }
 
-	public AbstractCommandReceivingComponent() {
+    public AbstractCommandReceivingComponent() {
         this(false);
     }
 
@@ -148,7 +148,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }
     }
-
 
     /**
      * Sends the given command to the command queue.
@@ -206,7 +205,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         if (attachData) {
             buffer.put(data);
         }
-
         commonChannel.writeBytes(buffer, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props);
     }
 
@@ -231,7 +229,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            properties of the RabbitMQ message
      */
     protected void handleCmd(byte bytes[], AMQP.BasicProperties props) {
-    	String replyTo = props!=null?props.getReplyTo():"";
+        String replyTo = props!=null?props.getReplyTo():"";
         handleCmd(bytes, replyTo);
     }
 
@@ -479,19 +477,15 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
-        	try {
-				commonChannel.createChannel();
-				responseQueueName =  commonChannel.declareQueue(null);//cmdChannel.queueDeclare().getQueue();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+            try {
+                commonChannel.createChannel();
+                responseQueueName =  commonChannel.declareQueue(null);//cmdChannel.queueDeclare().getQueue();
+            } catch (Exception e) {
+                LOGGER.error("Error creating channel",e);
+            }
         }
         if (responseConsumer == null) {
             responseConsumer = getResponseConsumer();
-            //byte[] bytes = commonChannel.readBytes(this);
-
-            //cmdChannel.basicConsume(responseQueueName, responseConsumer);
             commonChannel.readBytes(responseConsumer, this, null, responseQueueName);
 
         }
@@ -530,23 +524,23 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @return
      */
     private Object getCommonConsumer() {
-    	Object consumer = null;
-    	if(isRabbitMQEnabled()) {
-    		consumer = getCommonDefaultConsumer();    		
-    	} else {
-    		consumer = getCommonDirectConsumer();
-    	}
-    	return consumer;
+        Object consumer = null;
+        if(isRabbitMQEnabled()) {
+            consumer = getCommonDefaultConsumer();    		
+        } else {
+            consumer = getCommonDirectConsumer();
+        }
+        return consumer;
     }
     /**
      * RabbitMQ consumer for command queue
      */
     private Object getCommonDefaultConsumer() {
     	
-		return new DefaultConsumer((Channel) commonChannel.getChannel()) {
+        return new DefaultConsumer((Channel) commonChannel.getChannel()) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                    byte[] body) throws IOException {
+            	    byte[] body) throws IOException {
                 cmdThreadPool.execute(new Runnable() {
                     @Override
                     public void run() {
@@ -559,54 +553,54 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                 });
             }
         };
-	}
+    }
     /**
      * Direct consumer for command queue
      */
-	private Object getCommonDirectConsumer() {
-		return new DirectCallback() {
-			@Override
-			public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
-				for(Object cmdCallbackObject:cmdCallbackObjectList) {
-					if(cmdCallbackObject != null &&
-							cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
-						cmdThreadPool.execute(new Runnable() {
-							@Override
-							public void run() {
-								try {
-							((AbstractCommandReceivingComponent) cmdCallbackObject).
-									handleCmd(data, "");
-								} catch (Exception e) {
-									LOGGER.error("Exception while trying to handle incoming command.", e);
-								}
-							}
-						});
-					}
-				}
-			}
-		};
-	}
-	/**
-	 * Provides the consumer for container creation
-	 */
-	private Object getResponseConsumer() {
-    	Object consumer = null;
-    	if(isRabbitMQEnabled()) {
-    		consumer = getResponseDefaultConsumer();
-    	} else {
-    		consumer = getResponseDirectConsumer();
-    	}
-    	return consumer;
+    private Object getCommonDirectConsumer() {
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> cmdCallbackObjectList, BasicProperties props) {
+                for(Object cmdCallbackObject:cmdCallbackObjectList) {
+                    if(cmdCallbackObject != null &&
+                    	    cmdCallbackObject instanceof AbstractCommandReceivingComponent) {
+                        cmdThreadPool.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    ((AbstractCommandReceivingComponent) cmdCallbackObject).
+                                    handleCmd(data, "");
+                                } catch (Exception e) {
+                                    LOGGER.error("Exception while trying to handle incoming command.", e);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        };
+    }
+    /**
+     * Provides the consumer for container creation
+     */
+    private Object getResponseConsumer() {
+        Object consumer = null;
+        if(isRabbitMQEnabled()) {
+            consumer = getResponseDefaultConsumer();
+        } else {
+            consumer = getResponseDirectConsumer();
+        }
+        return consumer;
     }
     /**
      * Provides RabbirMQ consumer for container creation
      */
     private Object getResponseDefaultConsumer() {
     	
-    	return new DefaultConsumer((Channel) commonChannel.getChannel()) {
+        return new DefaultConsumer((Channel) commonChannel.getChannel()) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                    byte[] body) throws IOException {
+            	    byte[] body) throws IOException {
                 String key = properties.getCorrelationId();
 
                 synchronized (responseFutures) {
@@ -641,11 +635,11 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      */
     private Object getResponseDirectConsumer() {
     	
-    	return new DirectCallback() {
+        return new DirectCallback() {
     		
-    		@Override
-    		public void callback(byte[] data, List<Object> classs, BasicProperties properties) {
-    			String key = properties.getCorrelationId();
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties properties) {
+                String key = properties.getCorrelationId();
 
                 synchronized (responseFutures) {
                     SettableFuture<String> future = null;
@@ -671,9 +665,9 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                         future.set(value);
                     }
                 }
-    		}
+            }
     		
-    	};
+        };
     }
 
 }

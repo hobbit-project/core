@@ -17,7 +17,7 @@
 package org.hobbit.core.components;
 
 import org.hobbit.core.Commands;
-import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.com.CommonChannel;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 
 /**

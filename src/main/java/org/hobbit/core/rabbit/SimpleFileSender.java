@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.com.CommonChannel;
 import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.MessageProperties;
@@ -77,8 +77,6 @@ public class SimpleFileSender implements Closeable {
             channel.declareQueue(queueName);
             channel.writeBytes(Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos), "", 
             		queueName, MessageProperties.MINIMAL_PERSISTENT_BASIC);
-//            queue.channel.basicPublish("", queue.name, MessageProperties.MINIMAL_PERSISTENT_BASIC,
-//                    Arrays.copyOf(array, (length > 0) ? (dataStartPos + length) : dataStartPos));
             ++messageId;
         } while (length > 0);
     }
@@ -89,6 +87,7 @@ public class SimpleFileSender implements Closeable {
 
     @Override
     public void close() {
+    	channel.close();
         //IOUtils.closeQuietly(queue);
     }
 

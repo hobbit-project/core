@@ -1,7 +1,8 @@
 package org.hobbit.core.components.communicationfactory;
 
-import org.hobbit.core.components.channel.DirectChannel;
-import org.hobbit.core.components.commonchannel.CommonChannel;
+import org.hobbit.core.Constants;
+import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.java.DirectChannel;
 import org.hobbit.core.rabbit.RabbitMQChannel;
 
 import com.rabbitmq.client.ConnectionFactory;
@@ -12,7 +13,11 @@ import com.rabbitmq.client.ConnectionFactory;
  *
  */
 public class ChannelFactory {
-	
+
+    /**
+     * Factory method to get the instance of {@link RabbitMQChannel} or {@link DirectChannel}
+     * based on the environment configuration {@link Constants#IS_RABBIT_MQ_ENABLED}
+     */
     public CommonChannel getChannel(boolean rabbitMQEnabled, String queue, ConnectionFactory connectionFactory) {
         if(rabbitMQEnabled){
             return new RabbitMQChannel(connectionFactory);

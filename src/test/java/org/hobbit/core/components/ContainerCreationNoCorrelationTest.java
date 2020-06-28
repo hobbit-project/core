@@ -80,7 +80,7 @@ public class ContainerCreationNoCorrelationTest {
         platformController.terminate();
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 1000)
     public void test() throws Exception {
         Future<String> container1 = component.createContainerAsync("hello-world", null, new String[]{"ID=1"}, null);
         Future<String> container2 = component.createContainerAsync("hello-world", null, new String[]{"ID=2"}, null);
@@ -106,8 +106,6 @@ public class ContainerCreationNoCorrelationTest {
                     AMQP.BasicProperties replyProps = propsBuilder.build();
                     commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", props.getReplyTo(), replyProps);
 
-//                    cmdChannel.basicPublish("", props.getReplyTo(), replyProps,
-//                            RabbitMQUtils.writeString(containerId));
                 } catch (Exception e) {
                     LOGGER.error("Exception in receiveCommand", e);
                 }

@@ -272,8 +272,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         t.start();
                         commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
 
-                        //cmdChannel.basicPublish("", replyTo, replyProps,
-                        //        RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
                         // Create task generators that are waiting for a random
                         // amount of
@@ -312,12 +310,8 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         t.start();
                         commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
 
-                        //cmdChannel.basicPublish("", replyTo, replyProps,
-                        //        RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(EVAL_IMAGE)) {
                     	commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
-                        //cmdChannel.basicPublish("", replyTo, replyProps,
-                        //        RabbitMQUtils.writeString(containerId));
                         sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");

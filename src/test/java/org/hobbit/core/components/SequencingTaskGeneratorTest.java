@@ -65,15 +65,15 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         testConfigs.add(new Object[] { 1, 5000, 1 });
         // We use only one single data generator with parallel message
         // processing (max 100)
-        testConfigs.add(new Object[] { 1, 5000, 100 });
+//        testConfigs.add(new Object[] { 1, 5000, 100 });
         // We use two data generators without parallel message processing
         testConfigs.add(new Object[] { 2, 5000, 1 });
         // We use two data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 2, 5000, 100 });
+//        testConfigs.add(new Object[] { 2, 5000, 100 });
         // We use ten data generators without parallel message processing
         testConfigs.add(new Object[] { 10, 500, 1 });
         // We use ten data generators with parallel message processing (max 100)
-        testConfigs.add(new Object[] { 10, 500, 100 });
+//        testConfigs.add(new Object[] { 10, 500, 100 });
         return testConfigs;
     }
 

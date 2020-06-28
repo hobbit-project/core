@@ -7,8 +7,8 @@ import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
+import org.hobbit.core.com.DataSender;
 import org.hobbit.core.data.RabbitQueue;
-import org.hobbit.core.data.handlers.DataSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
