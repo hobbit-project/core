@@ -17,7 +17,6 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
