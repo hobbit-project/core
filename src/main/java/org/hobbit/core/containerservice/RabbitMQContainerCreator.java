@@ -1,8 +1,11 @@
 package org.hobbit.core.containerservice;
 
+import java.util.Set;
+
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractBenchmarkController;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
+import org.hobbit.core.components.AbstractPlatformController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +29,9 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 	 * is already implemented there
 	 */
 	@Override
-	public void createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators, String[] envVariables,
-			AbstractCommandReceivingComponent dummyComponent) {
-		abstractBenchmarkController.createGenerator(dataGeneratorImageName, numberOfDataGenerators, envVariables, abstractBenchmarkController.getDataGenContainerIds());
+	public Set<String> createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators, String[] envVariables,
+	        AbstractPlatformController dummyComponent) {
+		return abstractBenchmarkController.createGenerator(dataGeneratorImageName, numberOfDataGenerators, envVariables);
 
 	}
 
@@ -37,9 +40,9 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 	 * is already implemented there
 	 */
 	@Override
-	public void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators, String[] envVariables,
-			AbstractCommandReceivingComponent dummyComponent) {
-		abstractBenchmarkController.createGenerator(taskGeneratorImageName, numberOfTaskGenerators, envVariables, abstractBenchmarkController.getTaskGenContainerIds());
+	public Set<String> createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators, String[] envVariables,
+	        AbstractPlatformController dummyComponent) {
+		return abstractBenchmarkController.createGenerator(taskGeneratorImageName, numberOfTaskGenerators, envVariables);
 
 	}
 
@@ -48,15 +51,15 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 	 * is already implemented there
 	 */
 	@Override
-	public void createEvaluationStorage(String evalStorageImageName, String[] envVariables,
-			AbstractCommandReceivingComponent dummyComponent) {
+	public String createEvaluationStorage(String evalStorageImageName, String[] envVariables,
+	        AbstractPlatformController dummyComponent) {
 		abstractBenchmarkController.setEvalStoreContainerId(abstractBenchmarkController.createContainer(evalStorageImageName, Constants.CONTAINER_TYPE_DATABASE, envVariables));
         if (abstractBenchmarkController.getEvalStoreContainerId() == null) {
             String errorMsg = "Couldn't create evaluation storage. Aborting.";
             LOGGER.error(errorMsg);
             throw new IllegalStateException(errorMsg);
         }
-
+        return abstractBenchmarkController.getEvalStoreContainerId();
 	}
 
 }

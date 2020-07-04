@@ -160,13 +160,13 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         super.init();
 
         // create data generators
-        containerCreation.createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null, dummyPlatformController);
+        dataGenContainerIds = containerCreation.createDataGenerators(DATA_GEN_IMAGE, numberOfDataGenerators, null, dummyPlatformController);
 
         // Create task generators
-        containerCreation.createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null, dummyPlatformController);
+        taskGenContainerIds = containerCreation.createTaskGenerators(TASK_GEN_IMAGE, numberOfTaskGenerators, null, dummyPlatformController);
 
         // Create evaluation storage
-        containerCreation.createEvaluationStorage(EVAL_IMAGE, null, dummyPlatformController);
+        evalStoreContainerId = containerCreation.createEvaluationStorage(EVAL_IMAGE, null, dummyPlatformController);
 
         // Wait for all components to finish their initialization
         waitForComponentsToInitialize();
@@ -217,10 +217,10 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController  {
         }
         
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
-        	createDummyComponent(command, data, sessionId, props);
+        	createComponent(command, data, sessionId, props);
         }
         
-        public void createDummyComponent(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+        public void createComponent(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
         	  String replyTo = null;
               if (props != null) {
                   replyTo = props.getReplyTo();

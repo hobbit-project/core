@@ -34,7 +34,6 @@ public class DummyDataCreator extends AbstractDataGenerator {
         byte data[];
         for (int i = 0; i < dataSize; ++i) {
             data = RabbitMQUtils.writeString(Integer.toString(i));
-            
             sendDataToSystemAdapter(data);
             sendDataToTaskGenerator(data);
         }

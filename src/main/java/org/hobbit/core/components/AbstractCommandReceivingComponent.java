@@ -64,7 +64,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     /**
      * Name of this Docker container.
      */
-    protected String containerName;
+    private String containerName;
     /**
      * Name of the queue that is used to receive responses for messages that are
      * sent via the command queue and for which an answer is expected.
@@ -579,10 +579,6 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
 		this.gson = gson;
 	}
 
-	public void createDummyComponent(byte command, byte[] data, String sessionId, BasicProperties props) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	
 

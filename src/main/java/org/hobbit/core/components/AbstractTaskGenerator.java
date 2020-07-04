@@ -132,7 +132,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         dataGenReceiver = DataReceiverImpl.builder().dataHandler(new DataHandler() {
             @Override
             public void handleData(byte[] data) {
-            	
                 receiveGeneratedData(data);
             }
         }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
