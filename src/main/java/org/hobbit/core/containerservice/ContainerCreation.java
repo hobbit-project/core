@@ -2,10 +2,15 @@ package org.hobbit.core.containerservice;
 
 import java.util.Set;
 import org.hobbit.core.components.AbstractPlatformController;
+
 /**
- * ContainerCreation provides the facility to implement the functionalities 
+ * This interface provides methods that provides functionalities
  * to create {@link DirectContainerCreator} or {@link RabbitMQContainerCreator}
- * @author altaf, sourabh, yamini, melisa
+ *
+ * @author Altafhusen Makandar
+ * @author Sourabh Poddar
+ * @author Yamini Punetha
+ * @author Melissa Das
  *
  */
 public interface ContainerCreation {

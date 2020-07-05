@@ -23,8 +23,12 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP.BasicProperties;
 
 /**
- * This class provides the implementation to create container functionality
- * @author altaf, sourabh, yamini, melisa
+ * This class provides the implementation to create container functionality.
+ *
+ * @author Altafhusen Makandar
+ * @author Sourabh Poddar
+ * @author Yamini Punetha
+ * @author Melissa Das
  *
  */
 public class DirectContainerCreator implements ContainerCreation {
@@ -34,7 +38,10 @@ public class DirectContainerCreator implements ContainerCreation {
     private AbstractPlatformController platformController = null;
 	
     private AbstractCommandReceivingComponent abstractCommandReceivingComponent;
-	
+
+    /**
+     * The name of the container instance
+     */
     private String containerName;
 	
     private String hobbitSessionId;
@@ -203,7 +210,7 @@ public class DirectContainerCreator implements ContainerCreation {
                 }
             }
         }catch(Exception e) {
-            LOGGER.error("Exception occured",e);
+            LOGGER.error("Exception occurred.",e);
         }
         return generatorIds;
     }

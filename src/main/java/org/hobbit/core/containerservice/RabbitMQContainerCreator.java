@@ -10,8 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements functionality for RabbitMQ container creation
- * @author altaf, sourabh, yamini, melisa
+ * This class implements the functionality for RabbitMQ container creation.
+ *
+ * @author Altafhusen Makandar
+ * @author Sourabh Poddar
+ * @author Yamini Punetha
+ * @author Melissa Das
  *
  */
 public class RabbitMQContainerCreator implements ContainerCreation {
@@ -24,10 +28,18 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 		this.abstractBenchmarkController = abstractBenchmarkController;
 	}
 
-	/**
-	 * This method calls the createGenerator of {@link AbstractBenchmarkController} as the implementation
-	 * is already implemented there
-	 */
+    /**
+     * This method calls the createGenerator method of {@link AbstractBenchmarkController}
+     *
+     * @param dataGeneratorImageName
+     *            name of the data generator Docker image
+     * @param numberOfDataGenerators
+     *            number of generators that should be created
+     * @param envVariables
+     *            environment variables required for the creation of the data generators
+     * @param dummyComponent
+     *
+     */
 	@Override
 	public Set<String> createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators, String[] envVariables,
 	        AbstractPlatformController dummyComponent) {
@@ -35,10 +47,18 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 
 	}
 
-	/**
-	 * This method calls the createTaskGenerators of {@link AbstractBenchmarkController} as the implementation
-	 * is already implemented there
-	 */
+    /**
+     * This method calls the createTaskGenerators method of {@link AbstractBenchmarkController}
+     *
+     * @param taskGeneratorImageName
+     *            name of the task generator Docker image
+     * @param numberOfTaskGenerators
+     *            number of generators that should be created
+     * @param envVariables
+     *            environment variables required for the creation of the task generators
+     * @param dummyComponent
+     *
+     */
 	@Override
 	public Set<String> createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators, String[] envVariables,
 	        AbstractPlatformController dummyComponent) {
@@ -46,10 +66,16 @@ public class RabbitMQContainerCreator implements ContainerCreation {
 
 	}
 
-	/**
-	 * This method calls the createEvaluationStorage of {@link AbstractBenchmarkController} as the implementation
-	 * is already implemented there
-	 */
+    /**
+     * This method calls the createEvaluationStorage method of {@link AbstractBenchmarkController}
+     *
+     * @param evalStorageImageName
+     *            name of the evaluation storage image
+     * @param envVariables
+     *            environment variables required for the creation of evaluation storage
+     * @param dummyComponent
+     * @return the container id of the evaluation storage.
+     */
 	@Override
 	public String createEvaluationStorage(String evalStorageImageName, String[] envVariables,
 	        AbstractPlatformController dummyComponent) {
@@ -61,5 +87,5 @@ public class RabbitMQContainerCreator implements ContainerCreation {
         }
         return abstractBenchmarkController.getEvalStoreContainerId();
 	}
-
 }
+
