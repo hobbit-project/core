@@ -17,8 +17,12 @@ import com.rabbitmq.client.AMQP.BasicProperties;
 /**
  * This class implements the necessary functionality for message sharing 
  * without using RabbitMQ. DirectChannel uses Java NIO Pipe for message queuing
- * implementation 
- * @author altaf, sourabh, yamini, melisa
+ * implementation
+ *
+ * @author Altafhusen Makandar
+ * @author Sourabh Poddar
+ * @author Yamini Punetha
+ * @author Melissa Das
  *
  */
 public class DirectChannel implements CommonChannel {

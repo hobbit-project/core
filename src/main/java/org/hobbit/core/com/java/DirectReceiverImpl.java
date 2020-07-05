@@ -9,8 +9,12 @@ import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.data.RabbitQueue;
 
 /**
- * DataReceiver implementation for DirectChannel 
- * @author altaf, sourabh, yamini, melisa
+ * This class implements the methods of DataReceiver for {@link DirectChannel}
+ *
+ * @author Altafhusen Makander
+ * @author Sourabh Poddar
+ * @author Yamini Punetha
+ * @author Melissa Das
  *
  */
 public class DirectReceiverImpl implements DataReceiver {
