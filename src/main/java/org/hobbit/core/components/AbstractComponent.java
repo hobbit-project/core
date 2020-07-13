@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
@@ -57,11 +57,11 @@ public abstract class AbstractComponent implements Component {
     /**
      * Factory for creating outgoing data queues.
      */
-    protected CommonChannel outgoingDataQueuefactory = null;
+    protected Channel outgoingDataQueuefactory = null;
     /**
      * Factory for creating outgoing data queues.
      */
-    protected CommonChannel incomingDataQueueFactory = null;
+    protected Channel incomingDataQueueFactory = null;
     /**
      * The host name of the RabbitMQ broker.
      */
@@ -78,7 +78,7 @@ public abstract class AbstractComponent implements Component {
      * Abstract reference for channel abstraction
      * @return
      */
-    protected CommonChannel commonChannel = null;
+    protected Channel commonChannel = null;
 
     public ConnectionFactory getConnectionFactory() {
         return connectionFactory;

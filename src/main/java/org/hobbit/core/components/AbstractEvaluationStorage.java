@@ -27,7 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.com.DataHandler;
 import org.hobbit.core.com.DataReceiver;
 import org.hobbit.core.com.java.DirectCallback;
@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
@@ -105,9 +104,9 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     /**
      * Channel on which the acknowledgements are send.
      */
-    protected CommonChannel ackChannel = null;
+    protected Channel ackChannel = null;
     
-    protected CommonChannel evaluationStorageChannel = null;
+    protected Channel evaluationStorageChannel = null;
     
     private ExecutorService cmdThreadPool;
 

@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.data.RabbitQueue;
 
 import com.rabbitmq.client.MessageProperties;
@@ -47,15 +47,15 @@ public class SimpleFileSender implements Closeable {
 
     private static final int DEFAULT_MESSAGE_SIZE = 65536;
 
-    public static SimpleFileSender create(CommonChannel outgoingDataQueuefactory, String queueName) throws IOException {
+    public static SimpleFileSender create(Channel outgoingDataQueuefactory, String queueName) throws IOException {
         return new SimpleFileSender(outgoingDataQueuefactory, queueName);
     }
 
-    private CommonChannel channel;
+    private Channel channel;
     private String queueName;
     private int messageSize = DEFAULT_MESSAGE_SIZE;
 
-    protected SimpleFileSender(CommonChannel queue, String queueName) {
+    protected SimpleFileSender(Channel queue, String queueName) {
         this.channel = queue;
         this.queueName = queueName;
     }

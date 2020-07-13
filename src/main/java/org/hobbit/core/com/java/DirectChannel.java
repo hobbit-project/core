@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ import com.rabbitmq.client.AMQP.BasicProperties;
  * @author Melissa Das
  *
  */
-public class DirectChannel implements CommonChannel {
+public class DirectChannel implements Channel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DirectChannel.class);
 	

@@ -27,7 +27,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.com.java.DirectCallback;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
@@ -60,7 +59,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Queue to the evaluation storage.
      */
-    protected CommonChannel evalModule2EvalStoreChannel;
+    protected Channel evalModule2EvalStoreChannel;
     /**
      * Channel to the evaluation storage.
      */
@@ -223,7 +222,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     
     private Object getConsumer() {
         if(isRabbitMQEnabled()) {
-            return new QueueingConsumer((Channel) getFactoryForIncomingDataQueues().getChannel()); 
+            return new QueueingConsumer((com.rabbitmq.client.Channel) getFactoryForIncomingDataQueues().getChannel()); 
         } 
         return new DirectCallback() {
             @Override

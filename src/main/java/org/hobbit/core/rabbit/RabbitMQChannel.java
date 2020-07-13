@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +12,8 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 
-public class RabbitMQChannel implements CommonChannel {
+public class RabbitMQChannel implements Channel {
 	
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQChannel.class);
 	
@@ -24,7 +23,7 @@ public class RabbitMQChannel implements CommonChannel {
 	
     protected RabbitQueueFactory cmdQueueFactory;
 	
-    protected Channel cmdChannel = null;
+    protected com.rabbitmq.client.Channel cmdChannel = null;
 	
     private String queueName;
     /**

@@ -25,7 +25,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.com.DataHandler;
 import org.hobbit.core.com.DataReceiver;
 import org.hobbit.core.com.DataSender;

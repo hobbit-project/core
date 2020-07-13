@@ -22,7 +22,7 @@ import java.util.Map;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 
@@ -80,22 +80,22 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
     }
 
     @Override
-    public CommonChannel getFactoryForIncomingCmdQueues() {
+    public Channel getFactoryForIncomingCmdQueues() {
         return commonChannel;
     }
 
     @Override
-    public CommonChannel getFactoryForIncomingDataQueues() {
+    public Channel getFactoryForIncomingDataQueues() {
         return incomingDataQueueFactory;
     }
 
     @Override
-    public CommonChannel getFactoryForOutgoingCmdQueues() {
+    public Channel getFactoryForOutgoingCmdQueues() {
         return commonChannel;
     }
 
     @Override
-    public CommonChannel getFactoryForOutgoingDataQueues() {
+    public Channel getFactoryForOutgoingDataQueues() {
         return outgoingDataQueuefactory;
     }
 

@@ -2,7 +2,7 @@ package org.hobbit.core.com.java;
 
 import java.io.IOException;
 
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.com.DataHandler;
 import org.hobbit.core.com.DataReceiver;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
@@ -21,7 +21,7 @@ public class DirectReceiverImpl implements DataReceiver {
 
     public DirectReceiverImpl(String queue, Object consumer) {
 
-        CommonChannel channel = new ChannelFactory().getChannel(false, queue, null);
+        Channel channel = new ChannelFactory().getChannel(false, queue, null);
         try {
             channel.readBytes(consumer, this, null, queue);
         } catch (IOException e) {

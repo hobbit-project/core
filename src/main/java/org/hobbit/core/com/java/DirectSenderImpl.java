@@ -3,7 +3,7 @@ package org.hobbit.core.com.java;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.com.DataSender;
 import org.hobbit.core.components.communicationfactory.ChannelFactory;
 /**
@@ -13,7 +13,7 @@ import org.hobbit.core.components.communicationfactory.ChannelFactory;
  */
 public class DirectSenderImpl implements DataSender {
 
-    CommonChannel senderChannel;
+    Channel senderChannel;
     String queue;
 
     public DirectSenderImpl(String queue){

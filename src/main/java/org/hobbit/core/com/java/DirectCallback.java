@@ -2,7 +2,7 @@ package org.hobbit.core.com.java;
 
 import java.util.List;
 
-import org.hobbit.core.com.CommonChannel;
+import org.hobbit.core.com.Channel;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 
@@ -14,13 +14,13 @@ import com.rabbitmq.client.AMQP.BasicProperties;
  */
 public abstract class  DirectCallback {
 	
-    protected CommonChannel channel;
+    protected Channel channel;
     protected String queue;
     protected BasicProperties props;
 	
     public DirectCallback() {}
 
-    public DirectCallback(CommonChannel channel, String queue, BasicProperties props) {
+    public DirectCallback(Channel channel, String queue, BasicProperties props) {
         this.channel = channel;
         this.queue = queue;
         this.props = props;

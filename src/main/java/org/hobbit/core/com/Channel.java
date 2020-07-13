@@ -19,18 +19,21 @@ import org.hobbit.core.com.java.DirectChannel;
  * @author Melissa Das
  *
  */
-public interface CommonChannel {
+public interface Channel {
 
     /**
-     * Method to start a consumer and accept messages from a queue.
+     * Method to accept messages from the channel.
      */
     public void readBytes(Object consumerCallback, Object classs, Boolean autoAck, String queue) throws IOException;
 
     /**
-     * Method to publish a message to a queue.
+     * Method to publish a message of type Byte array the channel.
      */
     public void writeBytes(byte data[], String exchange, String routingKey, BasicProperties props) throws IOException;
 
+    /**
+     * Method to publish a message of type ByteBuffer to the channel.
+     */
     public void writeBytes(ByteBuffer buffer, String exchange, String routingKey, BasicProperties props) throws IOException;
 
     /**
@@ -48,9 +51,16 @@ public interface CommonChannel {
      */
     public String getQueueName(AbstractCommandReceivingComponent abstractCommandReceivingComponent)  throws Exception;
 
+    /**
+     * Method to create an exchange for the data transfer for a broker
+     */
     public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete,
         Map<String, Object> arguments) throws IOException;
 	
+    /**
+     * Method to bind a queue with an exchange. This allows an exchange to publish the messages 
+     * to the queues that are bound to this exchange 
+     */
     public void queueBind(String queue, String exchange, String routingKey) throws IOException;
 
     /**
@@ -59,4 +69,5 @@ public interface CommonChannel {
     public Object getChannel();
 
     public String declareQueue(String queueName) throws IOException;
+
 }
