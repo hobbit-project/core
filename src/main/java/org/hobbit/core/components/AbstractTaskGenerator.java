@@ -18,7 +18,6 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
-
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;

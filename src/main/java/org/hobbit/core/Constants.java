@@ -161,4 +161,6 @@ public final class Constants {
 
     public static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
 
+	public static final String RABBIT_CONTAINER_SERVICE = "RABBIT_CONTAINER_SERVICE";
+
 }

@@ -19,18 +19,16 @@ package org.hobbit.core.components.dummy;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import java.io.IOException;
-
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import org.apache.commons.io.Charsets;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
-import org.hobbit.core.components.AbstractCommandReceivingComponent;
-
+import org.hobbit.core.components.AbstractPlatformController;
 import org.junit.Ignore;
 
 @Ignore
-public abstract class AbstractDummyPlatformController extends AbstractCommandReceivingComponent {
+public abstract class AbstractDummyPlatformController extends AbstractPlatformController {
     private boolean readyFlag = false;
     private Semaphore terminationMutex = new Semaphore(0);
 
@@ -98,6 +96,7 @@ public abstract class AbstractDummyPlatformController extends AbstractCommandRec
 
     public abstract void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props);
 
+    public abstract void createComponent(byte command, byte[] data, String sessionId, BasicProperties props);
     public void terminate() {
         terminationMutex.release();
     }
