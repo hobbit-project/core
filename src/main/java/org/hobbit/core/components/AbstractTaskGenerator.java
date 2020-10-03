@@ -17,22 +17,31 @@
 package org.hobbit.core.components;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.rabbit.DataHandler;
-import org.hobbit.core.rabbit.DataReceiver;
+import org.hobbit.core.com.Channel;
+import org.hobbit.core.com.DataHandler;
+import org.hobbit.core.com.DataReceiver;
+import org.hobbit.core.com.DataSender;
+import org.hobbit.core.com.java.DirectCallback;
+import org.hobbit.core.components.communicationfactory.ChannelFactory;
+import org.hobbit.core.components.communicationfactory.SenderReceiverFactory;
 import org.hobbit.core.rabbit.DataReceiverImpl;
-import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.AMQP.BasicProperties;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -124,18 +133,15 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         nextTaskId = generatorId;
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
 
-        sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
-        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
+        sender2System = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
+            generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), this);
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
+            generateSessionQueueName(Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
 
-        dataGenReceiver = DataReceiverImpl.builder().dataHandler(new DataHandler() {
-            @Override
-            public void handleData(byte[] data) {
-                receiveGeneratedData(data);
-            }
-        }).maxParallelProcessedMsgs(maxParallelProcessedMsgs).queue(getFactoryForIncomingDataQueues(),
-                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
+        Object dataGenReceiverConsumer= getDataReceiverHandler();
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(),
+        	generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME), dataGenReceiverConsumer,maxParallelProcessedMsgs,this);
+
     }
 
     @Override
@@ -214,7 +220,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      */
     protected void sendTaskToEvalStorage(String taskIdString, long timestamp, byte[] data) throws IOException {
         sender2EvalStore.sendData(RabbitMQUtils.writeByteArrays(null,
-                new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp)));
+            new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp)));
     }
 
     /**
@@ -246,5 +252,30 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         IOUtils.closeQuietly(sender2EvalStore);
         IOUtils.closeQuietly(sender2System);
         super.close();
+    }
+    
+    private Object getDataReceiverHandler() {
+        if(isRabbitMQEnabled()) {
+            return getDataReceiverDataHandler();
+        }
+        return getDataReceiverDirectHandler();
+    }
+
+    private Object getDataReceiverDataHandler() {
+        return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+                receiveGeneratedData(data);
+            }
+        };
+    }
+
+    private Object getDataReceiverDirectHandler() {
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+                receiveGeneratedData(data);
+            }
+        };
     }
 }

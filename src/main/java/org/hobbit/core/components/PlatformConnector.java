@@ -17,6 +17,7 @@
 package org.hobbit.core.components;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.com.Channel;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 
 /**
@@ -54,8 +55,8 @@ public interface PlatformConnector {
      */
     public void stopContainer(String containerName);
 
-    public RabbitQueueFactory getFactoryForOutgoingDataQueues();
-    public RabbitQueueFactory getFactoryForIncomingDataQueues();
-    public RabbitQueueFactory getFactoryForOutgoingCmdQueues();
-    public RabbitQueueFactory getFactoryForIncomingCmdQueues();
+    public Channel getFactoryForOutgoingDataQueues();
+    public Channel getFactoryForIncomingDataQueues();
+    public Channel getFactoryForOutgoingCmdQueues();
+    public Channel getFactoryForIncomingCmdQueues();
 }

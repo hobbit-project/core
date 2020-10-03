@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.TestConstants;
+import org.hobbit.core.com.DataHandler;
+import org.hobbit.core.com.DataReceiver;
+import org.hobbit.core.com.DataSender;
 import org.hobbit.core.data.RabbitQueue;
 import org.junit.Assert;
 import org.junit.Test;

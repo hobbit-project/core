@@ -18,24 +18,25 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.Semaphore;
-
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.rabbit.DataHandler;
-import org.hobbit.core.rabbit.DataReceiver;
-import org.hobbit.core.rabbit.DataReceiverImpl;
-import org.hobbit.core.rabbit.DataSender;
-import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.com.DataHandler;
+import org.hobbit.core.com.DataReceiver;
+import org.hobbit.core.com.DataSender;
+import org.hobbit.core.com.java.DirectCallback;
+import org.hobbit.core.components.communicationfactory.SenderReceiverFactory;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
 /**
  * This abstract class implements basic functions that can be used to implement
  * a system adapter.
@@ -114,32 +115,20 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
         // Get the benchmark parameter model
         systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
-                () -> ModelFactory.createDefaultModel(), LOGGER);
+            () -> ModelFactory.createDefaultModel(), LOGGER);
+        Object dataGenReceiverConsumer= getDataReceiverHandler();
 
-        dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
-                .dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        receiveGeneratedData(data);
-                    }
-                }).build();
+        dataGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+            generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME), dataGenReceiverConsumer, maxParallelProcessedMsgs,this);
 
-        taskGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
-                .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME))
-                .dataHandler(new DataHandler() {
-                    @Override
-                    public void handleData(byte[] data) {
-                        ByteBuffer buffer = ByteBuffer.wrap(data);
-                        String taskId = RabbitMQUtils.readString(buffer);
-                        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-                        receiveGeneratedTask(taskId, taskData);
-                    }
-                }).build();
+        Object taskGenReceiverConsumer= getTaskReceiverHandler();
+        taskGenReceiver = SenderReceiverFactory.getReceiverImpl(isRabbitMQEnabled(), 
+            generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME), taskGenReceiverConsumer, maxParallelProcessedMsgs,this);
 
-        sender2EvalStore = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
-                generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME)).build();
+        sender2EvalStore = SenderReceiverFactory.getSenderImpl(isRabbitMQEnabled(), 
+            generateSessionQueueName(Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME), this);
     }
+
 
     @Override
     public void run() throws Exception {
@@ -198,7 +187,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * Starts termination of the main thread of this system adapter. If a cause is
      * given, it will be thrown causing an abortion from the main thread instead of
      * a normal termination.
-     * 
+     *
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
      *            component should terminate in a normal way.
@@ -223,7 +212,63 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         IOUtils.closeQuietly(taskGenReceiver);
         // Close the sender (we shouldn't close it before this point since we want to be
         // sure that all results have been sent)
-        sender2EvalStore.closeWhenFinished();
+        //sender2EvalStore.closeWhenFinished();
         super.close();
+    }
+    
+    private Object getDataReceiverHandler() {
+        if(isRabbitMQEnabled()) {
+            return getDataReceiverDataHandler();
+        }
+        return getDataReceiverDirectHandler();
+    }
+
+    private Object getDataReceiverDirectHandler() {
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+                receiveGeneratedData(data);
+            }
+        };
+    }
+
+    private Object getDataReceiverDataHandler() {
+        return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+                receiveGeneratedData(data);
+            }
+        };
+    }
+	
+    private Object getTaskReceiverHandler() {
+        if(isRabbitMQEnabled()) {
+            return getTaskReceiverDataHandler();
+        }
+        return getTaskReceiverDirectHandler();
+    }
+
+    private Object getTaskReceiverDirectHandler() {
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+                ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                receiveGeneratedTask(taskId, taskData);
+            }
+        };
+    }
+
+    private Object getTaskReceiverDataHandler() {
+        return new DataHandler() {
+            @Override
+            public void handleData(byte[] data) {
+                ByteBuffer buffer = ByteBuffer.wrap(data);
+                String taskId = RabbitMQUtils.readString(buffer);
+                byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+                receiveGeneratedTask(taskId, taskData);
+            }
+        };
     }
 }

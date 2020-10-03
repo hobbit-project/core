@@ -30,6 +30,7 @@ public final class Constants {
     }
 
     // =============== ENVIRONMENT CONSTANTS ===============
+    public static final String IS_RABBIT_MQ_ENABLED = "IS_RABBIT_MQ_ENABLED";
 
     public static final String HOBBIT_SESSION_ID_KEY = "HOBBIT_SESSION_ID";
 

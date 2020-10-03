@@ -89,6 +89,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         // Needed for the generators
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"true");
 
         final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId);
         try {
@@ -269,9 +270,8 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         Thread t = new Thread(dataGenExecutor);
                         dataGenThreads.add(t);
                         t.start();
+                        commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
 
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
                         // Create task generators that are waiting for a random
                         // amount of
@@ -308,12 +308,10 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         Thread t = new Thread(taskGenExecutor);
                         taskGenThreads.add(t);
                         t.start();
+                        commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
 
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(EVAL_IMAGE)) {
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
+                    	commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", replyTo, replyProps);
                         sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");

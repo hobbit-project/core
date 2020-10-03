@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.hobbit.core.Constants;
+import org.hobbit.core.rabbit.RabbitMQChannel;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,7 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     /**
      * Channel on which the acknowledgments are received.
      */
-    protected Channel ackChannel;
+    //protected Channel ackChannel;
 
     public AbstractSequencingTaskGenerator() {
         // TODO remove this 1 from the constructor
@@ -92,24 +93,14 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
         super.init();
         // Create channel for incoming acknowledgments using the command
         // connection (not the data connection!)
-        ackChannel = getFactoryForIncomingCmdQueues().getConnection().createChannel();
-        String queueName = ackChannel.queueDeclare().getQueue();
+        //ackChannel = ((RabbitMQChannel)getFactoryForIncomingCmdQueues()).getCmdQueueFactory().createChannel();
+        String queueName = getFactoryForIncomingCmdQueues().declareQueue(null);
         String exchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-        ackChannel.exchangeDeclare(exchangeName, "fanout", false, true, null);
-        ackChannel.queueBind(queueName, exchangeName, "");
-        Consumer consumer = new DefaultConsumer(ackChannel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
-                    byte[] body) throws IOException {
-                try {
-                    handleAck(body);
-                } catch (Exception e) {
-                    LOGGER.error("Exception while trying to handle incoming command.", e);
-                }
-            }
-        };
-        ackChannel.basicConsume(queueName, true, consumer);
-        ackChannel.basicQos(1);
+        getFactoryForIncomingCmdQueues().exchangeDeclare(exchangeName, "fanout", false, true, null);
+        getFactoryForIncomingCmdQueues().queueBind(queueName, exchangeName, "");
+        Object consumer = getConsumer();
+        getFactoryForIncomingCmdQueues().readBytes(consumer, this, true, queueName);
+        ((Channel)getFactoryForIncomingCmdQueues().getChannel()).basicQos(1);
     }
 
     /**
@@ -218,9 +209,26 @@ public abstract class AbstractSequencingTaskGenerator extends AbstractTaskGenera
     @Override
     public void close() throws IOException {
         try {
-            ackChannel.close();
+            ((Channel)getFactoryForIncomingCmdQueues().getChannel()).close();
         } catch (TimeoutException e) {
         }
         super.close();
+    }
+    
+    private Object getConsumer() {
+        if(isRabbitMQEnabled()) {
+            return new DefaultConsumer(((Channel)getFactoryForIncomingCmdQueues().getChannel())) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                	    byte[] body) throws IOException {
+                    try {
+                        handleAck(body);
+                    } catch (Exception e) {
+                        LOGGER.error("Exception while trying to handle incoming command.", e);
+                    }
+                }
+            };
+        }
+        return null;
     }
 }

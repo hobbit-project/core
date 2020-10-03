@@ -59,6 +59,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
     public void test() throws Exception {
         environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"true");
 
         outputDir = generateTempDir();
         LOGGER.debug("File will be writte to {}", outputDir.getAbsolutePath());
@@ -159,9 +160,9 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                         propsBuilder.deliveryMode(2);
                         propsBuilder.correlationId(props.getCorrelationId());
                         AMQP.BasicProperties replyProps = propsBuilder.build();
+                        commonChannel.writeBytes(RabbitMQUtils.writeString(containerId), "", 
+                        		replyTo, replyProps);
 
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");
                     }

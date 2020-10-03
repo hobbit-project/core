@@ -19,6 +19,7 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -26,6 +27,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.com.Channel;
+import org.hobbit.core.com.java.DirectCallback;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.EnvVariables;
@@ -34,7 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.ShutdownSignalException;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -50,9 +55,13 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Consumer used to receive the responses from the evaluation storage.
      */
-    protected QueueingConsumer consumer;
+    protected Object consumer;
     /**
      * Queue to the evaluation storage.
+     */
+    protected Channel evalModule2EvalStoreChannel;
+    /**
+     * Channel to the evaluation storage.
      */
     protected RabbitQueue evalModule2EvalStoreQueue;
     /**
@@ -74,14 +83,14 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
         // Get the experiment URI
         experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+        
+        getFactoryForOutgoingDataQueues().declareQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
+        getFactoryForIncomingDataQueues().declareQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
+        
+        consumer = getConsumer();
+        
+        getFactoryForIncomingDataQueues().readBytes(consumer, this, true, getFactoryForIncomingDataQueues().getQueueName(null));
 
-        evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
-        evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
-
-        consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
-        evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
     }
 
     @Override
@@ -113,11 +122,15 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
         while (true) {
             // request next response pair
-            props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
-            evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+        	props = new BasicProperties.Builder().deliveryMode(2).replyTo(getFactoryForIncomingDataQueues().getQueueName(this)).build();
+        	getFactoryForOutgoingDataQueues().writeBytes(requestBody, "", getFactoryForOutgoingDataQueues().getQueueName(this), props);
+            //QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            
+            //props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
+            //evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
+            //QueueingConsumer.Delivery delivery = consumer.nextDelivery();
             // parse the response
-            buffer = ByteBuffer.wrap(delivery.getBody());
+            buffer = ByteBuffer.wrap(getBodyFromResponse());
             // if the response is empty
             if (buffer.remaining() == 0) {
                 LOGGER.error("Got a completely empty response from the evaluation storage.");
@@ -205,5 +218,24 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         Model resultModel = ModelFactory.createDefaultModel();
         resultModel.add(resultModel.createResource(experimentUri), RDF.type, HOBBIT.Experiment);
         return resultModel;
+    }
+    
+    private Object getConsumer() {
+        if(isRabbitMQEnabled()) {
+            return new QueueingConsumer((com.rabbitmq.client.Channel) getFactoryForIncomingDataQueues().getChannel()); 
+        } 
+        return new DirectCallback() {
+            @Override
+            public void callback(byte[] data, List<Object> classs, BasicProperties props) {
+                // TODO Auto-generated method stub
+            }};
+    }
+    
+    private byte[] getBodyFromResponse() throws Exception {
+    	if(isRabbitMQEnabled()) {
+    		QueueingConsumer.Delivery delivery = ((QueueingConsumer)consumer).nextDelivery();
+    		return delivery.getBody();
+    	}
+    	return new byte[] {};
     }
 }

@@ -103,6 +103,7 @@ public class TaskGeneratorSequencingTest extends AbstractTaskGenerator {
         environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
         environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
         environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        environmentVariables.set(Constants.IS_RABBIT_MQ_ENABLED,"true");
 
         init();
 
