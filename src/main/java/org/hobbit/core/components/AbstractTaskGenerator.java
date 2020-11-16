@@ -22,6 +22,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
@@ -32,7 +33,6 @@ import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -91,7 +91,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     protected DataSender sender2System;
     protected DataSender sender2EvalStore;
     protected DataReceiver dataGenReceiver;
-
+    @Deprecated
     protected QueueingConsumer consumer;
     protected boolean runFlag;
 
