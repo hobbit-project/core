@@ -11,8 +11,8 @@ import org.hobbit.utils.TerminatableRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+import com.rabbitmq.client.Delivery;
+
 
 /**
  * Implementation of the {@link DataReceiver} interface.
@@ -176,7 +176,7 @@ public class DataReceiverImpl implements DataReceiver {
             Delivery delivery = null;
             while (runFlag || (queue.messageCount() > 0) || (delivery != null)) {
                 try {
-                    delivery = consumer.nextDelivery(3000);
+                    delivery = consumer.getDeliveryQueue().poll(3000, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     if(getErrorCount() == 0) {
                         LOGGER.error("Exception while waiting for delivery.", e);
