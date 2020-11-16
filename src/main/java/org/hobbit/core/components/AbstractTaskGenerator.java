@@ -56,7 +56,10 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
     private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-
+    /**
+     * Mutex used to provide control to Benchmark Controller over task generation.
+     */
+    final private Semaphore currentlyProcessedMessages = new Semaphore(0);
     /**
      * Mutex used to wait for the start signal after the component has been started
      * and initialized.
@@ -119,7 +122,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void init() throws Exception {
         super.init();
-
         generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
         nextTaskId = generatorId;
         numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
@@ -143,6 +145,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
+        currentlyProcessedMessages.release(maxParallelProcessedMsgs);
         // Wait for message to terminate
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
@@ -155,9 +158,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void receiveGeneratedData(byte[] data) {
         try {
+            currentlyProcessedMessages.acquire();
             generateTask(data);
         } catch (Exception e) {
             LOGGER.error("Exception while generating task.", e);
+        }
+        finally
+        {
+            currentlyProcessedMessages.release(1);
         }
     }
 
