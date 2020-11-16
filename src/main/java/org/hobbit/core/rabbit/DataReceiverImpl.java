@@ -178,7 +178,11 @@ public class DataReceiverImpl implements DataReceiver {
                 try {
                     delivery = consumer.nextDelivery(3000);
                 } catch (Exception e) {
-                    LOGGER.error("Exception while waiting for delivery.", e);
+                    if(getErrorCount() == 0) {
+                        LOGGER.error("Exception while waiting for delivery.", e);
+                    } else {
+                        LOGGER.error("Exception while waiting for delivery. {}", e.getMessage());
+                    }
                     increaseErrorCount();
                 }
                 if (delivery != null) {

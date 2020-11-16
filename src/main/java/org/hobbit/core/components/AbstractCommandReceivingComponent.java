@@ -16,22 +16,21 @@
  */
 package org.hobbit.core.components;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -109,6 +108,8 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
     private ExecutorService cmdThreadPool;
+    
+    private boolean errorLogged = false;
 
     public AbstractCommandReceivingComponent() {
         this(false);
@@ -145,7 +146,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                         try {
                             handleCmd(body, properties);
                         } catch (Exception e) {
-                            LOGGER.error("Exception while trying to handle incoming command.", e);
+                            if(errorLogged) {
+                                LOGGER.error("Exception while trying to handle incoming command. {}", e.getMessage());
+                            } else {
+                                LOGGER.error("Exception while trying to handle incoming command.", e);
+                                errorLogged = true;
+                            }
                         }
                     }
                 });
