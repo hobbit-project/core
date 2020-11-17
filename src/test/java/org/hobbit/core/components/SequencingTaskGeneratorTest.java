@@ -33,7 +33,7 @@ import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystem;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;

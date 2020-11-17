@@ -37,7 +37,7 @@ import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;

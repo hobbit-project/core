@@ -18,7 +18,7 @@ package org.hobbit.core.components.dummy;
 
 import org.hobbit.core.components.AbstractDataGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore

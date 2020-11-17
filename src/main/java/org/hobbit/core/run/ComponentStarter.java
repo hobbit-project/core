@@ -24,7 +24,7 @@ import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.Component;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

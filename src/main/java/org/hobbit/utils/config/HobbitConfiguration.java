@@ -1,4 +1,4 @@
-package org.hobbit.utils;
+package org.hobbit.utils.config;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

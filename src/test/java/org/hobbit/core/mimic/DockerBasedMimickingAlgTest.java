@@ -23,7 +23,7 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.SimpleFileSender;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

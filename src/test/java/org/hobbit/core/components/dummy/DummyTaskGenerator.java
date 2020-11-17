@@ -17,7 +17,7 @@
 package org.hobbit.core.components.dummy;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore

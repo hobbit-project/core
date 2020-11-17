@@ -24,7 +24,7 @@ import java.util.Map;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for

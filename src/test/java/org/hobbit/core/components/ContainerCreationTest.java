@@ -24,11 +24,12 @@ import java.util.Random;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.MessageProperties;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.config.HobbitConfiguration;
+
 import java.io.IOException;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.data.StartCommandData;
-import org.hobbit.utils.HobbitConfiguration;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.Future;

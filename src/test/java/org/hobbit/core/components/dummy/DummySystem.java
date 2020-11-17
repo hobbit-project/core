@@ -18,7 +18,7 @@ package org.hobbit.core.components.dummy;
 
 import java.io.IOException;
 
-import org.hobbit.utils.HobbitConfiguration;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore
