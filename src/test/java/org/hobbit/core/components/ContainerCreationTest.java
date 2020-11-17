@@ -19,10 +19,8 @@ package org.hobbit.core.components;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
-import java.util.Random;
 
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.MessageProperties;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.config.HobbitConfiguration;
 
@@ -41,7 +39,6 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.Stopwatch;
