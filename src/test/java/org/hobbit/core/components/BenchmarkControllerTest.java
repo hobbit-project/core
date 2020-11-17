@@ -35,7 +35,6 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.config.HobbitConfiguration;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.MessageProperties;
 
 @RunWith(Parameterized.class)
 public class BenchmarkControllerTest extends AbstractBenchmarkController {
@@ -67,7 +65,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         return testConfigs;
     }
 
-
     private int numberOfDataGenerators;
     private int numberOfTaskGenerators;
     private String sessionId;
@@ -81,20 +78,20 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     @Test
     public void test() throws Exception {
-    	Configuration configurationVar = new PropertiesConfiguration();
-    	configurationVar.setProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-    	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
-    	configurationVar.setProperty(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
+        Configuration configurationVar = new PropertiesConfiguration();
+        configurationVar.setProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
+        configurationVar.setProperty(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
                 "{ \"@id\" : \"http://w3id.org/hobbit/experiments#New\", \"@type\" : \"http://w3id.org/hobbit/vocab#Experiment\" }");
-    	configurationVar.setProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
+        configurationVar.setProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY,
+                HobbitExperiments.getExperimentURI(sessionId));
         // Needed for the generators
-    	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
-    	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
-    	configuration = new HobbitConfiguration();
-    	configuration.addConfiguration(configurationVar);
-    	
+        configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
+        configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(configurationVar);
 
-        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configuration);
+        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId, configuration);
         try {
             DummyComponentExecutor dummyPlatformExecutor = new DummyComponentExecutor(dummyPlatformController);
             Thread dummyPlatformThread = new Thread(dummyPlatformExecutor);
@@ -214,9 +211,10 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             super();
             this.sessionId = sessionId;
         }
-        public DummyPlatformController(String sessionId,HobbitConfiguration configVar) {
+
+        public DummyPlatformController(String sessionId, HobbitConfiguration configVar) {
             this(sessionId);
-            this.configuration=configVar;
+            this.configuration = configVar;
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
@@ -249,14 +247,17 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                     if (startCommandJson.contains(DATA_GEN_IMAGE)) {
                         // Create data generators that are waiting for a random
                         // amount of time and terminate after that
-                        DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(
-                                new AbstractDataGenerator(configuration) {
-                                    @Override
-                                    protected void generateData() throws Exception {
-                                        LOGGER.debug("Data Generator started...");
-                                        Thread.sleep(1000 + random.nextInt(1000));
-                                    }
-                                }) {
+                        AbstractDataGenerator dataGenerator = new AbstractDataGenerator() {
+                            @Override
+                            protected void generateData() throws Exception {
+                                LOGGER.debug("Data Generator started...");
+                                Thread.sleep(1000 + random.nextInt(1000));
+                            }
+                        };
+                        dataGenerator.setConfiguration(configuration);
+                        // Execute the data generator and send a termination message after it is
+                        // terminated
+                        DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(dataGenerator) {
                             @Override
                             public void run() {
                                 super.run();
@@ -278,24 +279,25 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         dataGenThreads.add(t);
                         t.start();
 
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
+                        cmdChannel.basicPublish("", replyTo, replyProps, RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(TASK_GEN_IMAGE)) {
                         // Create task generators that are waiting for a random
-                        // amount of
-                        // time and terminate after that
-                        DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(
-                                new AbstractTaskGenerator(configuration) {
-                                    @Override
-                                    public void run() throws Exception {
-                                        LOGGER.debug("Task Generator started...");
-                                        super.run();
-                                    }
+                        // amount of time and terminate after that
+                        AbstractTaskGenerator taskGenerator = new AbstractTaskGenerator() {
+                            @Override
+                            public void run() throws Exception {
+                                LOGGER.debug("Task Generator started...");
+                                super.run();
+                            }
 
-                                    @Override
-                                    protected void generateTask(byte[] data) throws Exception {
-                                    }
-                                }) {
+                            @Override
+                            protected void generateTask(byte[] data) throws Exception {
+                            }
+                        };
+                        taskGenerator.setConfiguration(configuration);
+                        // Execute the task generator and send a termination message after it is
+                        // terminated
+                        DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(taskGenerator) {
                             @Override
                             public void run() {
                                 super.run();
@@ -317,11 +319,9 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         taskGenThreads.add(t);
                         t.start();
 
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
+                        cmdChannel.basicPublish("", replyTo, replyProps, RabbitMQUtils.writeString(containerId));
                     } else if (startCommandJson.contains(EVAL_IMAGE)) {
-                        cmdChannel.basicPublish("", replyTo, replyProps,
-                                RabbitMQUtils.writeString(containerId));
+                        cmdChannel.basicPublish("", replyTo, replyProps, RabbitMQUtils.writeString(containerId));
                         sendToCmdQueue(this.sessionId, Commands.EVAL_STORAGE_READY_SIGNAL, null, null);
                     } else {
                         LOGGER.error("Got unknown start command. Ignoring it.");

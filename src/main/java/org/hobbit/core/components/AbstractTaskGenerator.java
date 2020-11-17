@@ -22,14 +22,13 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
-import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.config.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,11 +117,6 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
-
-    public AbstractTaskGenerator(HobbitConfiguration configVar) {
-    	this();
-        this.configuration=configVar;
-	}
 
 	@Override
     public void init() throws Exception {

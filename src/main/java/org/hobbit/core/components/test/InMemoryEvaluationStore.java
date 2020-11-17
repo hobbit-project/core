@@ -36,11 +36,16 @@ import org.hobbit.utils.config.HobbitConfiguration;
 public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
 
     /**
+     * Constructor.
+     */
+    public InMemoryEvaluationStore() {
+    }
+
+    /**
      * Constructor to assign configuration object.
      */
-
     public InMemoryEvaluationStore(HobbitConfiguration configuration) {
-        this.configuration = configuration;
+        setConfiguration(configuration);
     }
 
     /**

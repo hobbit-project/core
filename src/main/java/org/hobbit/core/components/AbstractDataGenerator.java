@@ -24,7 +24,6 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
-import org.hobbit.utils.config.HobbitConfiguration;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
@@ -38,11 +37,6 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
     
-    public AbstractDataGenerator(HobbitConfiguration configuration) {
-        this();
-        this.configuration=configuration;
-    }
-
     @Override
     public void init() throws Exception {
         super.init();
