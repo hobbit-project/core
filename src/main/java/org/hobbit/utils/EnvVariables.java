@@ -12,8 +12,11 @@ import org.slf4j.Logger;
  * A simple class offering static access to environmental variables.
  * 
  * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
+ * 
+ * @deprecated This class should not be used anymore. Instead, 
  *
  */
+@Deprecated
 public class EnvVariables {
 
     /**

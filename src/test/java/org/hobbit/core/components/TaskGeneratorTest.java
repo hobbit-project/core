@@ -33,7 +33,7 @@ import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -115,7 +115,7 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
     	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-    	configVar = new ConfigurationVariables(); 
+    	configVar = new HobbitConfiguration(); 
     	configVar.addConfiguration(configurationVar);
 
         init();

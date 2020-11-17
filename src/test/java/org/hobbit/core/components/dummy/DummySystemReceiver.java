@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore
@@ -32,7 +32,7 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
     private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
     private final List<String> receivedTasks = Collections.synchronizedList(new ArrayList<String>());
 
-    public DummySystemReceiver(ConfigurationVariables c) {
+    public DummySystemReceiver(HobbitConfiguration c) {
         this.configVar = c;
     }
 

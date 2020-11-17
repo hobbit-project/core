@@ -31,7 +31,7 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenReceiver;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -97,7 +97,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
         configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        configVar = new ConfigurationVariables();
+        configVar = new HobbitConfiguration();
         configVar.addConfiguration(configurationVar);
         init();
         DummySystemReceiver system = new DummySystemReceiver(configVar);

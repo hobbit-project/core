@@ -24,7 +24,7 @@ import java.util.Map;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for
@@ -39,7 +39,7 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
      * Constructor to assign configuration object.
      */
 	
-	public InMemoryEvaluationStore(ConfigurationVariables c) {
+	public InMemoryEvaluationStore(HobbitConfiguration c) {
 		this.configVar=c;
 	}
 

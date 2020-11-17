@@ -23,7 +23,7 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.SimpleFileSender;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
     	Configuration configurationVar = new PropertiesConfiguration();
     	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
     	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
-    	configVar = new ConfigurationVariables();
+    	configVar = new HobbitConfiguration();
     	configVar.addConfiguration(configurationVar);
         outputDir = generateTempDir();
         LOGGER.debug("File will be writte to {}", outputDir.getAbsolutePath());
@@ -115,7 +115,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
             super();
             addCommandHeaderId(sessionId);
         }
-        public DummyPlatformController(String sessionId, ConfigurationVariables c) {
+        public DummyPlatformController(String sessionId, HobbitConfiguration c) {
             super();
             addCommandHeaderId(sessionId);
             configVar = c;
@@ -187,7 +187,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
             super();
             this.env = env;
         }
-        public DummyMimickingAlgorithm(String[] env, ConfigurationVariables c) {
+        public DummyMimickingAlgorithm(String[] env, HobbitConfiguration c) {
             super();
             this.env = env;
             configVar = c;

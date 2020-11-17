@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore
@@ -34,7 +34,7 @@ public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
     }
 
-    public DummyTaskGenReceiver(ConfigurationVariables c){
+    public DummyTaskGenReceiver(HobbitConfiguration c){
         this.configVar = c;
     }
 

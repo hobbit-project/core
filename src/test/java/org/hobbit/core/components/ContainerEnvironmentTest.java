@@ -24,7 +24,7 @@ import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -116,7 +116,7 @@ public class ContainerEnvironmentTest {
 
         configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        ConfigurationVariables configVar = new ConfigurationVariables();
+        HobbitConfiguration configVar = new HobbitConfiguration();
         configVar.addConfiguration(configurationVar);
         component = new DummyCommandReceivingComponent(configVar);
         component.init();

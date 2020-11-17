@@ -33,7 +33,7 @@ import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummySystem;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -108,7 +108,7 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         // Set the acknowledgement flag to true (read by the evaluation storage)
         configurationVar.addProperty(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
 
-        configVar = new ConfigurationVariables();
+        configVar = new HobbitConfiguration();
         configVar.addConfiguration(configurationVar);
         init();
         Thread[] dataGenThreads = new Thread[numberOfGenerators];

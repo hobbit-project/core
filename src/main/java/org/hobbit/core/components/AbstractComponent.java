@@ -22,7 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public abstract class AbstractComponent implements Component {
     /**
      * Configuration reference for configuration object.
      */
-    protected ConfigurationVariables configVar;
+    protected HobbitConfiguration configVar;
 
     @Override
     public void init() throws Exception {

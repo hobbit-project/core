@@ -28,7 +28,7 @@ import java.io.IOException;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.data.StartCommandData;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.Future;
@@ -66,7 +66,7 @@ public class ContainerCreationTest {
         configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        ConfigurationVariables configVar = new ConfigurationVariables();
+        HobbitConfiguration configVar = new HobbitConfiguration();
         configVar.addConfiguration(configurationVar);
 
         platformController = new DummyPlatformController(HOBBIT_SESSION_ID, configVar);
@@ -110,7 +110,7 @@ public class ContainerCreationTest {
     }
 
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
-        public DummyPlatformController(String sessionId, ConfigurationVariables configVar) {
+        public DummyPlatformController(String sessionId, HobbitConfiguration configVar) {
             super(true);
             this.configVar = configVar;
             addCommandHeaderId(sessionId);

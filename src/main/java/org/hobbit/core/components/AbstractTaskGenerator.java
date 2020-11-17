@@ -29,7 +29,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,7 +119,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
-    public AbstractTaskGenerator(ConfigurationVariables configVar) {
+    public AbstractTaskGenerator(HobbitConfiguration configVar) {
     	this();
         this.configVar=configVar;
 	}

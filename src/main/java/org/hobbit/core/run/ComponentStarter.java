@@ -24,7 +24,7 @@ import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.Component;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,11 +114,11 @@ public class ComponentStarter {
     private static Component createComponentInstance(String className)
             throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-    	ConfigurationVariables configVar = new ConfigurationVariables();
+    	HobbitConfiguration configVar = new HobbitConfiguration();
     	configVar.addConfiguration(new EnvironmentConfiguration());
     	
         Class<?> componentClass = ClassLoader.getSystemClassLoader().loadClass(className);
-        Constructor<?> constructor = componentClass.getConstructor(ConfigurationVariables.class);
+        Constructor<?> constructor = componentClass.getConstructor(HobbitConfiguration.class);
         return Component.class.cast(constructor.newInstance(configVar));
     }
 

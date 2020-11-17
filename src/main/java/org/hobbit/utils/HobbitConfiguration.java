@@ -8,7 +8,7 @@ import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 
-public class ConfigurationVariables extends CompositeConfiguration
+public class HobbitConfiguration extends CompositeConfiguration
 {
 
 	/**

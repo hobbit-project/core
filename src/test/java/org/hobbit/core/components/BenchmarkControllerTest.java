@@ -32,7 +32,7 @@ import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.ConfigurationVariables;
+import org.hobbit.utils.HobbitConfiguration;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -90,7 +90,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         // Needed for the generators
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
-    	configVar = new ConfigurationVariables();
+    	configVar = new HobbitConfiguration();
     	configVar.addConfiguration(configurationVar);
     	
 
@@ -214,7 +214,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             super();
             this.sessionId = sessionId;
         }
-        public DummyPlatformController(String sessionId,ConfigurationVariables configVar) {
+        public DummyPlatformController(String sessionId,HobbitConfiguration configVar) {
             this(sessionId);
             this.configVar=configVar;
         }
