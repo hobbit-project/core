@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -31,6 +33,7 @@ import org.hobbit.core.components.dummy.DummyDataCreator;
 import org.hobbit.core.components.dummy.DummyEvalStoreReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,10 +85,6 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         testConfigs.add(new Object[] { 2, 2, 10000, 100 });
         return testConfigs;
     }
-
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
     private List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
     private int dataTerminationCount = 0;
     private int taskTerminationCount = 0;
@@ -106,17 +105,22 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
 
     @Test(timeout = 30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        Configuration configurationVar = new PropertiesConfiguration();
+
+        configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
+        configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
+        configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+
+        configVar = new ConfigurationVariables();
+        configVar.addConfiguration(configurationVar);
+
 
         init();
-
         Thread[] dataGenThreads = new Thread[numberOfDataGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfDataGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages);
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configVar);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -130,7 +134,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         Thread[] taskGenThreads = new Thread[numberOfTaskGenerators];
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfTaskGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            DummyTaskGenerator taskGenerator = new DummyTaskGenerator();
+            DummyTaskGenerator taskGenerator = new DummyTaskGenerator(configVar);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGenerator) {
                 @Override
                 public void run() {
@@ -148,7 +152,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         // Thread systemThread = new Thread(systemExecutor);
         // systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver();
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configVar);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();

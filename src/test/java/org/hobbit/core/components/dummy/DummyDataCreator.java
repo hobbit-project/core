@@ -18,6 +18,7 @@ package org.hobbit.core.components.dummy;
 
 import org.hobbit.core.components.AbstractDataGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Ignore;
 
 @Ignore
@@ -27,6 +28,10 @@ public class DummyDataCreator extends AbstractDataGenerator {
 
     public DummyDataCreator(int dataSize) {
         this.dataSize = dataSize;
+    }
+    public DummyDataCreator(int dataSize, ConfigurationVariables c) {
+        this(dataSize);
+        this.configVar = c;
     }
 
     @Override

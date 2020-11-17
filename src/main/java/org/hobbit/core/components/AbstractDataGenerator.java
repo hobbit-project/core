@@ -24,7 +24,7 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
-import org.hobbit.utils.EnvVariables;
+import org.hobbit.utils.ConfigurationVariables;
 
 public abstract class AbstractDataGenerator extends AbstractPlatformConnectorComponent {
 
@@ -37,13 +37,18 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     public AbstractDataGenerator() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
+    
+    public AbstractDataGenerator(ConfigurationVariables configuration) {
+        this();
+        this.configVar=configuration;
+    }
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY);
-        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
+        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY);
+        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();

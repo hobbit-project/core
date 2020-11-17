@@ -35,7 +35,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.hobbit.vocab.HobbitErrors;
 import org.hobbit.vocab.HobbitExperiments;
@@ -147,9 +146,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
         // Get the benchmark parameter model
-        benchmarkParamModel = EnvVariables.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
+        benchmarkParamModel = configVar.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+        experimentUri = configVar.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
     }
 
     @Override

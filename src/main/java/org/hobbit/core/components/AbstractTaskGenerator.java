@@ -29,7 +29,7 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
+import org.hobbit.utils.ConfigurationVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,12 +119,18 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
-    @Override
+    public AbstractTaskGenerator(ConfigurationVariables configVar) {
+    	this();
+        this.configVar=configVar;
+	}
+
+	@Override
     public void init() throws Exception {
         super.init();
-        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
+
+        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY,LOGGER);
         nextTaskId = generatorId;
-        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
+        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY,LOGGER);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
@@ -147,12 +153,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         startTaskGenMutex.acquire();
         currentlyProcessedMessages.release(maxParallelProcessedMsgs);
         // Wait for message to terminate
+
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
         // make sure that all messages have been delivered (otherwise they might
         // be lost)
         sender2System.closeWhenFinished();
         sender2EvalStore.closeWhenFinished();
+
     }
 
     @Override

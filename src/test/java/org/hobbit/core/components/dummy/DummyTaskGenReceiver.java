@@ -22,12 +22,21 @@ import java.util.List;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.junit.Ignore;
 
 @Ignore
 public class DummyTaskGenReceiver extends AbstractTaskGenerator {
 
     private final List<String> receivedData = Collections.synchronizedList(new ArrayList<String>());
+
+    public DummyTaskGenReceiver(){
+
+    }
+
+    public DummyTaskGenReceiver(ConfigurationVariables c){
+        this.configVar = c;
+    }
 
     @Override
     protected void generateTask(byte[] data) throws Exception {

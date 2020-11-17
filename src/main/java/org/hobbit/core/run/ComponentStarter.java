@@ -20,9 +20,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
+import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.Component;
+import org.hobbit.utils.ConfigurationVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,9 +114,12 @@ public class ComponentStarter {
     private static Component createComponentInstance(String className)
             throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    	ConfigurationVariables configVar = new ConfigurationVariables();
+    	configVar.addConfiguration(new EnvironmentConfiguration());
+    	
         Class<?> componentClass = ClassLoader.getSystemClassLoader().loadClass(className);
-        Constructor<?> constructor = componentClass.getConstructor();
-        return Component.class.cast(constructor.newInstance());
+        Constructor<?> constructor = componentClass.getConstructor(ConfigurationVariables.class);
+        return Component.class.cast(constructor.newInstance(configVar));
     }
 
     private static synchronized void closeComponent() {

@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
@@ -30,11 +32,11 @@ import org.hobbit.core.TestConstants;
 import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.ConfigurationVariables;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -65,8 +67,6 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         return testConfigs;
     }
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private int numberOfDataGenerators;
     private int numberOfTaskGenerators;
@@ -81,16 +81,20 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
 
     @Test
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
-        environmentVariables.set(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
+    	Configuration configurationVar = new PropertiesConfiguration();
+    	configurationVar.setProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, sessionId);
+    	configurationVar.setProperty(Constants.BENCHMARK_PARAMETERS_MODEL_KEY,
                 "{ \"@id\" : \"http://w3id.org/hobbit/experiments#New\", \"@type\" : \"http://w3id.org/hobbit/vocab#Experiment\" }");
-        environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
+    	configurationVar.setProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI(sessionId));
         // Needed for the generators
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
+    	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
+    	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
+    	configVar = new ConfigurationVariables();
+    	configVar.addConfiguration(configurationVar);
+    	
 
-        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId);
+        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configVar);
         try {
             DummyComponentExecutor dummyPlatformExecutor = new DummyComponentExecutor(dummyPlatformController);
             Thread dummyPlatformThread = new Thread(dummyPlatformExecutor);
@@ -210,6 +214,10 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
             super();
             this.sessionId = sessionId;
         }
+        public DummyPlatformController(String sessionId,ConfigurationVariables configVar) {
+            this(sessionId);
+            this.configVar=configVar;
+        }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
             String replyTo = null;
@@ -242,7 +250,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         // Create data generators that are waiting for a random
                         // amount of time and terminate after that
                         DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(
-                                new AbstractDataGenerator() {
+                                new AbstractDataGenerator(configVar) {
                                     @Override
                                     protected void generateData() throws Exception {
                                         LOGGER.debug("Data Generator started...");
@@ -277,7 +285,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         // amount of
                         // time and terminate after that
                         DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(
-                                new AbstractTaskGenerator() {
+                                new AbstractTaskGenerator(configVar) {
                                     @Override
                                     public void run() throws Exception {
                                         LOGGER.debug("Task Generator started...");

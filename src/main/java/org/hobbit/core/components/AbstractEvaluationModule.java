@@ -29,7 +29,6 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
 import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +77,8 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         super.init();
 
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
-
+        experimentUri = configVar.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY,LOGGER);
+        
         evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
         evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()

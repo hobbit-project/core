@@ -32,7 +32,6 @@ import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,8 +112,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
         super.init();
 
         // Get the benchmark parameter model
-        systemParamModel = EnvVariables.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
-                () -> ModelFactory.createDefaultModel(), LOGGER);
+        systemParamModel = configVar.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
+            () -> ModelFactory.createDefaultModel(), LOGGER);
 
         dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
@@ -198,7 +197,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * Starts termination of the main thread of this system adapter. If a cause is
      * given, it will be thrown causing an abortion from the main thread instead of
      * a normal termination.
-     * 
+     *
      * @param cause
      *            the cause for an abortion of the process or {code null} if the
      *            component should terminate in a normal way.
