@@ -22,6 +22,7 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.DataHandler;
 import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
@@ -32,7 +33,6 @@ import org.hobbit.utils.ConfigurationVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -56,7 +56,10 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
     private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-
+    /**
+     * Mutex used to provide control to Benchmark Controller over task generation.
+     */
+    final private Semaphore currentlyProcessedMessages = new Semaphore(0);
     /**
      * Mutex used to wait for the start signal after the component has been started
      * and initialized.
@@ -88,7 +91,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     protected DataSender sender2System;
     protected DataSender sender2EvalStore;
     protected DataReceiver dataGenReceiver;
-
+    @Deprecated
     protected QueueingConsumer consumer;
     protected boolean runFlag;
 
@@ -148,6 +151,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
+        currentlyProcessedMessages.release(maxParallelProcessedMsgs);
         // Wait for message to terminate
 
         terminateMutex.acquire();
@@ -162,9 +166,14 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     @Override
     public void receiveGeneratedData(byte[] data) {
         try {
+            currentlyProcessedMessages.acquire();
             generateTask(data);
         } catch (Exception e) {
             LOGGER.error("Exception while generating task.", e);
+        }
+        finally
+        {
+            currentlyProcessedMessages.release(1);
         }
     }
 

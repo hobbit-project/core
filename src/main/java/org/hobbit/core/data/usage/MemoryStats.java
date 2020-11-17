@@ -7,19 +7,22 @@ public class MemoryStats {
     public MemoryStats() {
     }
 
+    /**
+     * @param usageSum the sum of the memory usage to set (in bytes)
+     */
     public MemoryStats(long usageSum) {
         this.usageSum = usageSum;
     }
 
     /**
-     * @return the usageSum
+     * @return the sum of the memory usage (in bytes)
      */
     public long getUsageSum() {
         return usageSum;
     }
 
     /**
-     * @param usageSum the usageSum to set
+     * @param usageSum the sum of the memory usage to set (in bytes)
      */
     public void setUsageSum(long usageSum) {
         this.usageSum = usageSum;
