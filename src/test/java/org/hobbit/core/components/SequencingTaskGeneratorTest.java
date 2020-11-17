@@ -108,13 +108,13 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
         // Set the acknowledgement flag to true (read by the evaluation storage)
         configurationVar.addProperty(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
 
-        configVar = new HobbitConfiguration();
-        configVar.addConfiguration(configurationVar);
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(configurationVar);
         init();
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configVar);
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configuration);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -125,12 +125,12 @@ public class SequencingTaskGeneratorTest extends AbstractSequencingTaskGenerator
             dataGenThreads[i] = new Thread(dataGenExecutors[i]);
             dataGenThreads[i].start();
         }
-        DummySystem system = new DummySystem(configVar);
+        DummySystem system = new DummySystem(configuration);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configVar);
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configuration);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();

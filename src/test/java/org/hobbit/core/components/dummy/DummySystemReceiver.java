@@ -33,7 +33,7 @@ public class DummySystemReceiver extends AbstractSystemAdapter {
     private final List<String> receivedTasks = Collections.synchronizedList(new ArrayList<String>());
 
     public DummySystemReceiver(HobbitConfiguration c) {
-        this.configVar = c;
+        this.configuration = c;
     }
 
     public DummySystemReceiver(){}

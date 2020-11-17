@@ -35,6 +35,6 @@ public class DummyCommandReceivingComponent extends AbstractCommandReceivingComp
     }
 
     public DummyCommandReceivingComponent(HobbitConfiguration c){
-        this.configVar = c;
+        this.configuration = c;
     }
 }

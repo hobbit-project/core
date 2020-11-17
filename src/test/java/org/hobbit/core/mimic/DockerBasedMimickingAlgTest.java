@@ -58,13 +58,13 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
     	Configuration configurationVar = new PropertiesConfiguration();
     	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
     	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, HOBBIT_SESSION_ID);
-    	configVar = new HobbitConfiguration();
-    	configVar.addConfiguration(configurationVar);
+    	configuration = new HobbitConfiguration();
+    	configuration.addConfiguration(configurationVar);
         outputDir = generateTempDir();
         LOGGER.debug("File will be writte to {}", outputDir.getAbsolutePath());
         // start platform controller
         LOGGER.debug("Creating controller and waiting for it to be ready...");
-        DummyPlatformController platform = new DummyPlatformController(HOBBIT_SESSION_ID,configVar);
+        DummyPlatformController platform = new DummyPlatformController(HOBBIT_SESSION_ID,configuration);
         DummyComponentExecutor platformExecutor = new DummyComponentExecutor(platform);
         Thread platformThread = new Thread(platformExecutor);
         platformThread.start();
@@ -118,7 +118,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
         public DummyPlatformController(String sessionId, HobbitConfiguration c) {
             super();
             addCommandHeaderId(sessionId);
-            configVar = c;
+            configuration = c;
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
@@ -138,7 +138,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
                     if (startCommand.image.equals(MIMICKING_ALGORITHM_DOCKER_IMAGE)) {
                         // Create the mimicking Algorithm
                         mimickingExecutor = new DummyComponentExecutor(
-                                new DummyMimickingAlgorithm(startCommand.environmentVariables, configVar)) {
+                                new DummyMimickingAlgorithm(startCommand.environmentVariables, configuration)) {
                             @Override
                             public void run() {
                                 super.run();
@@ -190,7 +190,7 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
         public DummyMimickingAlgorithm(String[] env, HobbitConfiguration c) {
             super();
             this.env = env;
-            configVar = c;
+            configuration = c;
         }
 
         @Override

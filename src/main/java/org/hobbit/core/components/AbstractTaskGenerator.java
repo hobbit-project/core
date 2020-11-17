@@ -121,16 +121,16 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
 
     public AbstractTaskGenerator(HobbitConfiguration configVar) {
     	this();
-        this.configVar=configVar;
+        this.configuration=configVar;
 	}
 
 	@Override
     public void init() throws Exception {
         super.init();
 
-        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY,LOGGER);
+        generatorId = configuration.getInt(Constants.GENERATOR_ID_KEY,LOGGER);
         nextTaskId = generatorId;
-        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY,LOGGER);
+        numberOfGenerators = configuration.getInt(Constants.GENERATOR_COUNT_KEY,LOGGER);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();

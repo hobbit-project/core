@@ -101,7 +101,7 @@ public class ContainerCreationNoCorrelationTest {
         public DummyPlatformController(String sessionId, HobbitConfiguration configVar) {
             super(false);
             addCommandHeaderId(sessionId);
-            this.configVar = configVar;
+            this.configuration = configVar;
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {

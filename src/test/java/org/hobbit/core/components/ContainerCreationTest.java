@@ -113,7 +113,7 @@ public class ContainerCreationTest {
     protected static class DummyPlatformController extends AbstractDummyPlatformController {
         public DummyPlatformController(String sessionId, HobbitConfiguration configVar) {
             super(true);
-            this.configVar = configVar;
+            this.configuration = configVar;
             addCommandHeaderId(sessionId);
         }
 

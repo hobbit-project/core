@@ -135,6 +135,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      */
     protected String experimentUri;
 
+    /**
+     * Constructor.
+     */
     public AbstractBenchmarkController() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -146,9 +149,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
         // Get the benchmark parameter model
-        benchmarkParamModel = configVar.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
+        benchmarkParamModel = configuration.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
         // Get the experiment URI
-        experimentUri = configVar.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+        experimentUri = configuration.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
     }
 
     @Override

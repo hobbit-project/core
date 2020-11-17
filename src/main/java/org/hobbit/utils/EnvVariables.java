@@ -13,7 +13,7 @@ import org.slf4j.Logger;
  * 
  * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
  * 
- * @deprecated This class should not be used anymore. Instead, 
+ * @deprecated Use {@link org.hobbit.utils.config.HobbitConfiguration} instead.
  *
  */
 @Deprecated

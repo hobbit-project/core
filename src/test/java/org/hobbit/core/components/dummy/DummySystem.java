@@ -28,7 +28,7 @@ public class DummySystem extends DummySystemReceiver {
 
     }
     public DummySystem(HobbitConfiguration c) {
-            this.configVar = c;
+            this.configuration = c;
     }
 
     @Override

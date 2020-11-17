@@ -112,15 +112,15 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
-        configVar = new HobbitConfiguration();
-        configVar.addConfiguration(configurationVar);
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(configurationVar);
 
 
         init();
         Thread[] dataGenThreads = new Thread[numberOfDataGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfDataGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configVar);
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configuration);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -134,7 +134,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         Thread[] taskGenThreads = new Thread[numberOfTaskGenerators];
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfTaskGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            DummyTaskGenerator taskGenerator = new DummyTaskGenerator(configVar);
+            DummyTaskGenerator taskGenerator = new DummyTaskGenerator(configuration);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGenerator) {
                 @Override
                 public void run() {
@@ -152,7 +152,7 @@ public class SystemAdapterTest extends AbstractSystemAdapter {
         // Thread systemThread = new Thread(systemExecutor);
         // systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configVar);
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configuration);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();

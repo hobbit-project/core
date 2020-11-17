@@ -123,7 +123,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
     public void init() throws Exception {
         super.init();
 
-        String queueName = configVar.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        String queueName = configuration.getString(Constants.TASK_GEN_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         taskResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(queueName)).dataHandler(new DataHandler() {
@@ -138,9 +138,9 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = configVar.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        queueName = configuration.getString(Constants.SYSTEM_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
-        final boolean receiveTimeStamp = configVar.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
+        final boolean receiveTimeStamp = configuration.getBoolean(RECEIVE_TIMESTAMP_FOR_SYSTEM_RESULTS_KEY, false,
                 LOGGER);
         final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
         systemResultReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
@@ -166,7 +166,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 }).build();
 
-        queueName = configVar.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
+        queueName = configuration.getString(Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY,
                 Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
         evalModule2EvalStoreQueue = getFactoryForIncomingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(queueName));
@@ -236,7 +236,7 @@ public abstract class AbstractEvaluationStorage extends AbstractPlatformConnecto
                     }
                 });
 
-        boolean sendAcks = configVar.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
+        boolean sendAcks = configuration.getBoolean(Constants.ACKNOWLEDGEMENT_FLAG_KEY, false, LOGGER);
         if (sendAcks) {
             // Create channel for acknowledgements
             ackChannel = getFactoryForOutgoingCmdQueues().getConnection().createChannel();

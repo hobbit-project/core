@@ -35,7 +35,7 @@ public class DummyEvalStoreReceiver extends AbstractEvaluationStorage {
 
     public DummyEvalStoreReceiver(HobbitConfiguration c)
     {
-        this.configVar = c;
+        this.configuration = c;
     }
 
     public DummyEvalStoreReceiver()

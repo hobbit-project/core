@@ -90,11 +90,11 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         // Needed for the generators
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
-    	configVar = new HobbitConfiguration();
-    	configVar.addConfiguration(configurationVar);
+    	configuration = new HobbitConfiguration();
+    	configuration.addConfiguration(configurationVar);
     	
 
-        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configVar);
+        final DummyPlatformController dummyPlatformController = new DummyPlatformController(sessionId,configuration);
         try {
             DummyComponentExecutor dummyPlatformExecutor = new DummyComponentExecutor(dummyPlatformController);
             Thread dummyPlatformThread = new Thread(dummyPlatformExecutor);
@@ -216,7 +216,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
         }
         public DummyPlatformController(String sessionId,HobbitConfiguration configVar) {
             this(sessionId);
-            this.configVar=configVar;
+            this.configuration=configVar;
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
@@ -250,7 +250,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         // Create data generators that are waiting for a random
                         // amount of time and terminate after that
                         DummyComponentExecutor dataGenExecutor = new DummyComponentExecutor(
-                                new AbstractDataGenerator(configVar) {
+                                new AbstractDataGenerator(configuration) {
                                     @Override
                                     protected void generateData() throws Exception {
                                         LOGGER.debug("Data Generator started...");
@@ -285,7 +285,7 @@ public class BenchmarkControllerTest extends AbstractBenchmarkController {
                         // amount of
                         // time and terminate after that
                         DummyComponentExecutor taskGenExecutor = new DummyComponentExecutor(
-                                new AbstractTaskGenerator(configVar) {
+                                new AbstractTaskGenerator(configuration) {
                                     @Override
                                     public void run() throws Exception {
                                         LOGGER.debug("Task Generator started...");

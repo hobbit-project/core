@@ -31,7 +31,7 @@ public class DummyDataCreator extends AbstractDataGenerator {
     }
     public DummyDataCreator(int dataSize, HobbitConfiguration c) {
         this(dataSize);
-        this.configVar = c;
+        this.configuration = c;
     }
 
     @Override

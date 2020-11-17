@@ -115,15 +115,15 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
     	configurationVar.setProperty(Constants.GENERATOR_ID_KEY, "0");
     	configurationVar.setProperty(Constants.GENERATOR_COUNT_KEY, "1");
     	configurationVar.setProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-    	configVar = new HobbitConfiguration(); 
-    	configVar.addConfiguration(configurationVar);
+    	configuration = new HobbitConfiguration(); 
+    	configuration.addConfiguration(configurationVar);
 
         init();
 
         Thread[] dataGenThreads = new Thread[numberOfGenerators];
         DummyComponentExecutor[] dataGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         for (int i = 0; i < dataGenThreads.length; ++i) {
-            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configVar);
+            DummyDataCreator dataGenerator = new DummyDataCreator(numberOfMessages,configuration);
             dataGenExecutors[i] = new DummyComponentExecutor(dataGenerator) {
                 @Override
                 public void run() {
@@ -135,12 +135,12 @@ public class TaskGeneratorTest extends AbstractTaskGenerator {
             dataGenThreads[i].start();
         }
 
-        DummySystemReceiver system = new DummySystemReceiver(configVar);
+        DummySystemReceiver system = new DummySystemReceiver(configuration);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
 
-        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configVar);
+        DummyEvalStoreReceiver evalStore = new DummyEvalStoreReceiver(configuration);
         DummyComponentExecutor evalStoreExecutor = new DummyComponentExecutor(evalStore);
         Thread evalStoreThread = new Thread(evalStoreExecutor);
         evalStoreThread.start();

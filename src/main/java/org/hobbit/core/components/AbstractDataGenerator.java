@@ -40,15 +40,15 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     
     public AbstractDataGenerator(HobbitConfiguration configuration) {
         this();
-        this.configVar=configuration;
+        this.configuration=configuration;
     }
 
     @Override
     public void init() throws Exception {
         super.init();
 
-        generatorId = configVar.getInt(Constants.GENERATOR_ID_KEY);
-        numberOfGenerators = configVar.getInt(Constants.GENERATOR_COUNT_KEY);
+        generatorId = configuration.getInt(Constants.GENERATOR_ID_KEY);
+        numberOfGenerators = configuration.getInt(Constants.GENERATOR_COUNT_KEY);
 
         sender2TaskGen = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();

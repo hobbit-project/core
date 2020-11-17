@@ -30,7 +30,7 @@ public class DummyTaskGenerator extends AbstractTaskGenerator {
     }
     public DummyTaskGenerator(HobbitConfiguration c) {
         this();
-        this.configVar = c;
+        this.configuration = c;
     }
 
     public DummyTaskGenerator(long taskProcessingTime) {

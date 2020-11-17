@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -111,10 +110,18 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     
     private boolean errorLogged = false;
 
+    /**
+     * Constructor.
+     */
     public AbstractCommandReceivingComponent() {
         this(false);
     }
 
+    /**
+     * Constructor.
+     * 
+     * @param execCommandsInParallel flag allowing the processing of commands in parallel
+     */
     public AbstractCommandReceivingComponent(boolean execCommandsInParallel) {
         if (execCommandsInParallel) {
             LOGGER.info("This component will handle received commands in multiple threads.");
@@ -159,7 +166,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         };
         cmdChannel.basicConsume(queueName, true, consumer);
 
-        containerName = configVar.getString(Constants.CONTAINER_NAME_KEY, containerName);
+        containerName = configuration.getString(Constants.CONTAINER_NAME_KEY, containerName);
         if (containerName == null) {
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }

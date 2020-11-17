@@ -97,10 +97,10 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
         configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
         configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        configVar = new HobbitConfiguration();
-        configVar.addConfiguration(configurationVar);
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(configurationVar);
         init();
-        DummySystemReceiver system = new DummySystemReceiver(configVar);
+        DummySystemReceiver system = new DummySystemReceiver(configuration);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
@@ -109,7 +109,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         Thread[] taskGenThreads = new Thread[numberOfGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            taskGens[i] = new DummyTaskGenReceiver(configVar);
+            taskGens[i] = new DummyTaskGenReceiver(configuration);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGens[i]);
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();

@@ -38,6 +38,10 @@ public abstract class AbstractPlatformConnectorComponent extends AbstractCommand
 
     private Map<String, ContainerStateObserver> containerObservers = new HashMap<String, ContainerStateObserver>();
 
+
+    /**
+     * Constructor.
+     */
     public AbstractPlatformConnectorComponent() {
         // We have to add the broadcast command header to receive messages about
         // terminated containers
