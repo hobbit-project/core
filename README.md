@@ -1,15 +1,15 @@
 [![Build Status](https://travis-ci.org/hobbit-project/core.svg?branch=master)](https://travis-ci.org/hobbit-project/core)
 
 # core
-This library offers some main functionalities and utilities for the Hobbit platform project. For more information take a look at the project web page (http://www.project-hobbit.eu) or at the Hobbit platform project on github (https://github.com/hobbit-project/platform).
+This library offers some main functionalities and utilities for the Hobbit platform project. For more information take a look at the project web page (<http://www.project-hobbit.eu>) or at the Hobbit platform project on github (<https://github.com/hobbit-project/platform>).
 
-### Building
+## Building
 
 `test` target needs RabbitMQ running. You may need to set RabbitMQ host in `src/test/java/org/hobbit/core/TestConstants.java`.
 
 Docker container with RabbitMQ can be started using `./start_test_environment.sh` or the one from the HOBBIT platform can be used as well.
 
-### Using it with Maven
+## Using it with Maven
 
 ```xml
   <repositories>
