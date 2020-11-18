@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
@@ -29,10 +31,9 @@ import org.hobbit.core.components.dummy.DummyComponentExecutor;
 import org.hobbit.core.components.dummy.DummySystemReceiver;
 import org.hobbit.core.components.dummy.DummyTaskGenReceiver;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -62,9 +63,6 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         return testConfigs;
     }
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
     private List<String> sentData = new ArrayList<String>();
     private int numberOfGenerators;
     private int numberOfMessages;
@@ -91,14 +89,16 @@ public class DataGeneratorTest extends AbstractDataGenerator {
 
     @Test(timeout=30000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.GENERATOR_ID_KEY, "0");
-        environmentVariables.set(Constants.GENERATOR_COUNT_KEY, "1");
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
 
+        Configuration configurationVar = new PropertiesConfiguration();
+        configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.addProperty(Constants.GENERATOR_ID_KEY, "0");
+        configurationVar.addProperty(Constants.GENERATOR_COUNT_KEY, "1");
+        configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(configurationVar);
         init();
-
-        DummySystemReceiver system = new DummySystemReceiver();
+        DummySystemReceiver system = new DummySystemReceiver(configuration);
         DummyComponentExecutor systemExecutor = new DummyComponentExecutor(system);
         Thread systemThread = new Thread(systemExecutor);
         systemThread.start();
@@ -107,7 +107,7 @@ public class DataGeneratorTest extends AbstractDataGenerator {
         DummyComponentExecutor[] taskGenExecutors = new DummyComponentExecutor[numberOfGenerators];
         Thread[] taskGenThreads = new Thread[numberOfGenerators];
         for (int i = 0; i < taskGenThreads.length; ++i) {
-            taskGens[i] = new DummyTaskGenReceiver();
+            taskGens[i] = new DummyTaskGenReceiver(configuration);
             taskGenExecutors[i] = new DummyComponentExecutor(taskGens[i]);
             taskGenThreads[i] = new Thread(taskGenExecutors[i]);
             taskGenThreads[i].start();

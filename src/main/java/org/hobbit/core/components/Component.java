@@ -18,6 +18,8 @@ package org.hobbit.core.components;
 
 import java.io.Closeable;
 
+import org.hobbit.utils.config.HobbitConfiguration;
+
 /**
  * The basic interface of a hobbit component.
  *
@@ -29,16 +31,21 @@ public interface Component extends Closeable {
     /**
      * This method initializes the component.
      *
-     * @throws Exception
-     *             if an error occurs during the initialization
+     * @throws Exception if an error occurs during the initialization
      */
     public void init() throws Exception;
 
     /**
      * This method executes the component.
      *
-     * @throws Exception
-     *             if an error occurs during the execution
+     * @throws Exception if an error occurs during the execution
      */
     public void run() throws Exception;
+
+    /**
+     * Setter for the configuration that the component should make use of.
+     * 
+     * @param configuration the configuration that is used by this component
+     */
+    public void setConfiguration(HobbitConfiguration configuration);
 }

@@ -18,10 +18,18 @@ package org.hobbit.core.components.dummy;
 
 import java.io.IOException;
 
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore
 public class DummySystem extends DummySystemReceiver {
+
+    public DummySystem() {
+
+    }
+    public DummySystem(HobbitConfiguration c) {
+            this.configuration = c;
+    }
 
     @Override
     public void receiveGeneratedTask(String taskId, byte[] data) {

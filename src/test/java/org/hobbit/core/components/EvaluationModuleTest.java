@@ -25,6 +25,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.Commands;
@@ -35,11 +37,11 @@ import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.hobbit.vocab.HobbitExperiments;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,22 +60,22 @@ public class EvaluationModuleTest extends AbstractEvaluationModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EvaluationModuleTest.class);
 
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
     private Map<String, ResultPairImpl> expectedResults = new HashMap<>();
-    private int numberOfMessages = 30000;
+    private int numberOfMessages = 3000;
     private Set<String> receivedResults = Collections.synchronizedSet(new HashSet<>());
     private Semaphore evalStoreReady = new Semaphore(0);
 
     @Test(timeout = 60000)
     public void test() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
-        environmentVariables.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
-
+    	
+    	Configuration configurationVar = new PropertiesConfiguration();
+    	configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+    	configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+    	configurationVar.addProperty(Constants.HOBBIT_EXPERIMENT_URI_KEY, HobbitExperiments.getExperimentURI("123"));
+    	configuration = new HobbitConfiguration();
+    	configuration.addConfiguration(configurationVar);
         // Create the eval store and add some data
-        InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore();
+        InMemoryEvaluationStore evalStore = new InMemoryEvaluationStore(configuration);
         Random rand = new Random();
 
         String taskId;
