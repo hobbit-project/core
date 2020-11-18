@@ -82,10 +82,9 @@ public class SimpleFileReceiver {
             outputDirectory = outputDirectory + File.separator;
         }
         File outDir = new File(outputDirectory);
-        if (!outDir.exists()) {
-            if (!outDir.mkdirs()) {
+        // Create output directory if it does not exist
+        if (!outDir.exists() && !outDir.mkdirs()) {
                 throw new IOException("Couldn't create \"" + outDir.getAbsolutePath() + "\".");
-            }
         }
         try {
             Delivery delivery = null;

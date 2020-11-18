@@ -551,6 +551,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
             setResultModel(RabbitMQUtils.readModel(data));
             LOGGER.info("model size = " + resultModel.size());
+            break;
         }
         }
         super.receiveCommand(command, data);

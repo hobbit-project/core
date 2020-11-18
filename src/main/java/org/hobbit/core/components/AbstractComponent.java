@@ -113,7 +113,7 @@ public abstract class AbstractComponent implements Component {
         outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
     }
 
-    protected Connection createConnection() throws Exception {
+    protected Connection createConnection() throws IOException {
         Connection connection = null;
         Exception exception = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
@@ -136,7 +136,7 @@ public abstract class AbstractComponent implements Component {
             String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
                     + " retries.";
             LOGGER.error(msg, exception);
-            throw new Exception(msg, exception);
+            throw new IOException(msg, exception);
         }
         return connection;
     }

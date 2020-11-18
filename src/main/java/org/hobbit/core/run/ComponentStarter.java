@@ -127,7 +127,7 @@ public class ComponentStarter {
     }
 
     private static synchronized void closeComponent() {
-        if (closed == false) {
+        if (!closed) {
             IOUtils.closeQuietly(component);
             closed = true;
         }
