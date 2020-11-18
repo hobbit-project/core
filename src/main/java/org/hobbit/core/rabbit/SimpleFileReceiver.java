@@ -36,8 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.ShutdownSignalException;
 
 /**
@@ -51,6 +50,8 @@ public class SimpleFileReceiver {
 
     protected static final long DEFAULT_TIMEOUT = 1000;
 
+    protected QueueingConsumer consumer;
+    
     public static SimpleFileReceiver create(RabbitQueueFactory factory, String queueName) throws IOException {
         return create(factory.createDefaultRabbitQueue(queueName));
     }
@@ -63,7 +64,7 @@ public class SimpleFileReceiver {
     }
 
     protected RabbitQueue queue;
-    protected QueueingConsumer consumer;
+    
     protected Map<String, FileReceiveState> fileStates = new HashMap<>();
     protected boolean terminated = false;
     protected int errorCount = 0;
@@ -81,17 +82,16 @@ public class SimpleFileReceiver {
             outputDirectory = outputDirectory + File.separator;
         }
         File outDir = new File(outputDirectory);
-        if (!outDir.exists()) {
-            if (!outDir.mkdirs()) {
+        // Create output directory if it does not exist
+        if (!outDir.exists() && !outDir.mkdirs()) {
                 throw new IOException("Couldn't create \"" + outDir.getAbsolutePath() + "\".");
-            }
         }
         try {
             Delivery delivery = null;
             // while the receiver should not terminate, the last delivery was
             // not empty or there are still deliveries in the (servers) queue
             while ((!terminated) || (delivery != null) || (queue.channel.messageCount(queue.name) > 0)) {
-                delivery = consumer.nextDelivery(waitingForMsgTimeout);
+                delivery = consumer.getDeliveryQueue().poll(waitingForMsgTimeout, TimeUnit.MILLISECONDS);
                 if (delivery != null) {
                     executor.execute(new MessageProcessing(this, outputDirectory, delivery.getBody()));
                 }

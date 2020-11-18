@@ -19,7 +19,7 @@ package org.hobbit.core.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -27,14 +27,14 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.data.RabbitQueue;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.Delivery;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -63,6 +63,10 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * The URI of the experiment.
      */
     protected String experimentUri;
+    /**
+     * Timeout parameter for delivery queue message poll.
+     */
+    private static final int QUEUEPOLLTIMEOUT=600000; 
 
     public AbstractEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -73,8 +77,8 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         super.init();
 
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
-
+        experimentUri = configuration.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY,LOGGER);
+        
         evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
                 .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
         evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
@@ -115,9 +119,19 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             // request next response pair
             props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
             evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            //Wait for delivery message
+            Delivery delivery = consumer.getDeliveryQueue().poll(QUEUEPOLLTIMEOUT, TimeUnit.MILLISECONDS);
             // parse the response
-            buffer = ByteBuffer.wrap(delivery.getBody());
+            if (delivery == null)
+            {
+            	LOGGER.error("No Message Received after waiting for ten minutes");
+            	return;
+            }
+
+            	buffer = ByteBuffer.wrap(delivery.getBody());
+            
+            
+            
             // if the response is empty
             if (buffer.remaining() == 0) {
                 LOGGER.error("Got a completely empty response from the evaluation storage.");
@@ -137,7 +151,9 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
             receivedData = RabbitMQUtils.readByteArray(buffer);
 
+
             evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+            
         }
     }
 

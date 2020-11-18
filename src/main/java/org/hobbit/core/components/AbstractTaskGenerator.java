@@ -27,12 +27,11 @@ import org.hobbit.core.rabbit.DataReceiver;
 import org.hobbit.core.rabbit.DataReceiverImpl;
 import org.hobbit.core.rabbit.DataSender;
 import org.hobbit.core.rabbit.DataSenderImpl;
+import org.hobbit.core.rabbit.QueueingConsumer;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * This abstract class implements basic functions that can be used to implement
@@ -56,7 +55,10 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
      * Default value of the {@link #maxParallelProcessedMsgs} attribute.
      */
     private static final int DEFAULT_MAX_PARALLEL_PROCESSED_MESSAGES = 1;
-
+    /**
+     * Mutex used to provide control to Benchmark Controller over task generation.
+     */
+    final private Semaphore currentlyProcessedMessages = new Semaphore(0);
     /**
      * Mutex used to wait for the start signal after the component has been started
      * and initialized.
@@ -88,7 +90,7 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
     protected DataSender sender2System;
     protected DataSender sender2EvalStore;
     protected DataReceiver dataGenReceiver;
-
+    @Deprecated
     protected QueueingConsumer consumer;
     protected boolean runFlag;
 
@@ -116,13 +118,13 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
 
-    @Override
+	@Override
     public void init() throws Exception {
         super.init();
 
-        generatorId = EnvVariables.getInt(Constants.GENERATOR_ID_KEY, LOGGER);
+        generatorId = configuration.getInt(Constants.GENERATOR_ID_KEY,LOGGER);
         nextTaskId = generatorId;
-        numberOfGenerators = EnvVariables.getInt(Constants.GENERATOR_COUNT_KEY);
+        numberOfGenerators = configuration.getInt(Constants.GENERATOR_COUNT_KEY,LOGGER);
 
         sender2System = DataSenderImpl.builder().queue(getFactoryForOutgoingDataQueues(),
                 generateSessionQueueName(Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME)).build();
@@ -143,21 +145,29 @@ public abstract class AbstractTaskGenerator extends AbstractPlatformConnectorCom
         sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
         // Wait for the start message
         startTaskGenMutex.acquire();
+        currentlyProcessedMessages.release(maxParallelProcessedMsgs);
         // Wait for message to terminate
+
         terminateMutex.acquire();
         dataGenReceiver.closeWhenFinished();
         // make sure that all messages have been delivered (otherwise they might
         // be lost)
         sender2System.closeWhenFinished();
         sender2EvalStore.closeWhenFinished();
+
     }
 
     @Override
     public void receiveGeneratedData(byte[] data) {
         try {
+            currentlyProcessedMessages.acquire();
             generateTask(data);
         } catch (Exception e) {
             LOGGER.error("Exception while generating task.", e);
+        }
+        finally
+        {
+            currentlyProcessedMessages.release(1);
         }
     }
 

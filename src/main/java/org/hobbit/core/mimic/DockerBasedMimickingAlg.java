@@ -16,6 +16,7 @@
  */
 package org.hobbit.core.mimic;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +61,8 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
         this.dockerImage = dockerImage;
         this.connector = connector;
     }
+    
+    
 
     @Override
     public void generateData(String outputDirectory, String[] envVariables) throws Exception {
@@ -79,7 +82,7 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
             // create the container
             containerName = connector.createContainer(dockerImage, envVariables, this);
             if (containerName == null) {
-                throw new Exception("Couldn't create container with image \"" + dockerImage + "\".");
+                throw new IOException("Couldn't create container with image \"" + dockerImage + "\".");
             }
             try {
                 // Add the created container to the internal mapping
@@ -97,7 +100,7 @@ public class DockerBasedMimickingAlg implements MimickingAlgorithmManager, Conta
                 receiver.receiveData(outputDirectory);
                 // Check whether error occured
                 if (receiver.getErrorCount() > 0) {
-                    throw new Exception(
+                    throw new IOException(
                             receiver.getErrorCount() + " errors occured during the receiving of created files.");
                 }
             } finally {

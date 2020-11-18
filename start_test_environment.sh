@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # This file is part of core.
 #

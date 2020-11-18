@@ -16,22 +16,21 @@
  */
 package org.hobbit.core.components;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -42,7 +41,6 @@ import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
-import org.hobbit.utils.EnvVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,11 +107,21 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
     protected long cmdResponseTimeout = DEFAULT_CMD_RESPONSE_TIMEOUT;
 
     private ExecutorService cmdThreadPool;
+    
+    private boolean errorLogged = false;
 
+    /**
+     * Constructor.
+     */
     public AbstractCommandReceivingComponent() {
         this(false);
     }
 
+    /**
+     * Constructor.
+     * 
+     * @param execCommandsInParallel flag allowing the processing of commands in parallel
+     */
     public AbstractCommandReceivingComponent(boolean execCommandsInParallel) {
         if (execCommandsInParallel) {
             LOGGER.info("This component will handle received commands in multiple threads.");
@@ -145,7 +153,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
                         try {
                             handleCmd(body, properties);
                         } catch (Exception e) {
-                            LOGGER.error("Exception while trying to handle incoming command.", e);
+                            if(errorLogged) {
+                                LOGGER.error("Exception while trying to handle incoming command. {}", e.getMessage());
+                            } else {
+                                LOGGER.error("Exception while trying to handle incoming command.", e);
+                                errorLogged = true;
+                            }
                         }
                     }
                 });
@@ -153,7 +166,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         };
         cmdChannel.basicConsume(queueName, true, consumer);
 
-        containerName = EnvVariables.getString(Constants.CONTAINER_NAME_KEY, containerName);
+        containerName = configuration.getString(Constants.CONTAINER_NAME_KEY, containerName);
         if (containerName == null) {
             LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
         }

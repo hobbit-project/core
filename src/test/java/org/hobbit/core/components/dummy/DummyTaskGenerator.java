@@ -17,15 +17,20 @@
 package org.hobbit.core.components.dummy;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Ignore;
 
 @Ignore
 public class DummyTaskGenerator extends AbstractTaskGenerator {
-    
+
     private final long taskProcessingTime;
-    
+
     public DummyTaskGenerator() {
         this(0L);
+    }
+    public DummyTaskGenerator(HobbitConfiguration c) {
+        this();
+        this.configuration = c;
     }
 
     public DummyTaskGenerator(long taskProcessingTime) {

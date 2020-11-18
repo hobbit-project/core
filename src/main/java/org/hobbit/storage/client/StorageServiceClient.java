@@ -141,10 +141,10 @@ public class StorageServiceClient implements Closeable {
             try {
                 return Boolean.parseBoolean(RabbitMQUtils.readString(response));
             } catch (Exception e) {
-                throw new Exception("Couldn't parse boolean value from response. Returning false.", e);
+                throw new IOException("Couldn't parse boolean value from response. Returning false.", e);
             }
         }
-        throw new Exception("Couldn't get response for query.");
+        throw new IOException("Couldn't get response for query.");
     }
 
     /**

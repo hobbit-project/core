@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.data.RabbitQueue;
@@ -154,6 +155,8 @@ public class RabbitRpcClient implements Closeable {
             requestQueue.channel.basicPublish("", requestQueue.name, props, data);
 
             response = request.get(maxWaitingTime, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            LOGGER.error("Timeout while sending query. Returning null.");
         } catch (Exception e) {
             LOGGER.error("Exception while sending query. Returning null.", e);
         }
