@@ -329,7 +329,7 @@ public class RdfHelper {
                 }
             }
         }
-        return null;
+        return result;
     }
 
     /**
