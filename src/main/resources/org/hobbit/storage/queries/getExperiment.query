@@ -12,6 +12,7 @@ CONSTRUCT {
     ?resultProp a hobbit:KPI .
     ?resultProp ?resultPropProp ?resultPropObject .
     %EXPERIMENT_URI% ?parameterProp ?parameterValue .
+    ?parameterValue ?parameterValueProp ?parameterValueObject .
     ?parameterProp a ?parameterType .
     ?parameterProp ?parameterPropProp ?parameterPropObject .
     ?benchmark ?benchmarkProp ?benchmarkObject .
@@ -79,6 +80,7 @@ WHERE {
             ?parameterProp a ?parameterType .
             {?parameterProp a hobbit:Parameter} UNION {?parameterProp a hobbit:ConfigurableParameter} UNION {?parameterProp a hobbit:FeatureParameter}.
             OPTIONAL { ?parameterProp ?parameterPropProp ?parameterPropObject . }
+            OPTIONAL { ?parameterValue ?parameterValueProp ?parameterValueObject . }
         }
     }
     UNION
