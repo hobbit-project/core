@@ -88,7 +88,7 @@ public abstract class AbstractComponent implements Component {
      * </pre>
      */
     public AbstractComponent() {
-        HobbitConfiguration configuration = new HobbitConfiguration();
+        configuration = new HobbitConfiguration();
         configuration.addConfiguration(new EnvironmentConfiguration());
     }
 
