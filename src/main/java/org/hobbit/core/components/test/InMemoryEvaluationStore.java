@@ -24,6 +24,7 @@ import java.util.Map;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
+import org.hobbit.utils.config.HobbitConfiguration;
 
 /**
  * Simple in-memory implementation of an evaluation storage that can be used for
@@ -33,6 +34,19 @@ import org.hobbit.core.data.ResultPair;
  *
  */
 public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
+
+    /**
+     * Constructor.
+     */
+    public InMemoryEvaluationStore() {
+    }
+
+    /**
+     * Constructor to assign configuration object.
+     */
+    public InMemoryEvaluationStore(HobbitConfiguration configuration) {
+        setConfiguration(configuration);
+    }
 
     /**
      * Map containing a mapping from task Ids to result pairs.
@@ -52,15 +66,11 @@ public class InMemoryEvaluationStore extends AbstractEvaluationStorage {
     /**
      * Adds the given result to the map of results.
      *
-     * @param isExpectedResult
-     *            true if the result has been received from a task generator,
-     *            i.e., is the expected result for a task
-     * @param taskId
-     *            id of the task
-     * @param timestamp
-     *            time stamp for the task result
-     * @param data
-     *            the result
+     * @param isExpectedResult true if the result has been received from a task
+     *                         generator, i.e., is the expected result for a task
+     * @param taskId           id of the task
+     * @param timestamp        time stamp for the task result
+     * @param data             the result
      */
     public synchronized void putResult(boolean isExpectedResult, String taskId, long timestamp, byte[] data) {
         ResultPairImpl pair;

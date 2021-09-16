@@ -38,7 +38,6 @@ import org.hobbit.core.containerservice.ContainerCreation;
 import org.hobbit.core.containerservice.ContainerCreationFactory;
 import org.hobbit.core.containerservice.RabbitMQContainerCreator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.EnvVariables;
 import org.hobbit.vocab.HOBBIT;
 import org.hobbit.vocab.HobbitErrors;
 import org.hobbit.vocab.HobbitExperiments;
@@ -55,7 +54,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmarkController.class);
 
-    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "hobbitproject/defaultevaluationstorage:1.0.8";
+    protected static final String DEFAULT_EVAL_STORAGE_IMAGE = "hobbitproject/defaultevaluationstorage:1.0.9";
     protected static final String[] DEFAULT_EVAL_STORAGE_PARAMETERS = new String[] { "HOBBIT_RIAK_NODES=1" };
 
     /**
@@ -143,6 +142,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      */
     protected ContainerCreation containerCreation;
 
+    /**
+     * Constructor.
+     */
     public AbstractBenchmarkController() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
@@ -155,9 +157,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         addCommandHeaderId(Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS);
 
         // Get the benchmark parameter model
-        benchmarkParamModel = EnvVariables.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
+        benchmarkParamModel = configuration.getModel(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, LOGGER);
         // Get the experiment URI
-        experimentUri = EnvVariables.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+        experimentUri = configuration.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
     }
 
     @Override
@@ -558,6 +560,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
             setResultModel(RabbitMQUtils.readModel(data));
             LOGGER.info("model size = " + resultModel.size());
+            break;
         }
         }
         super.receiveCommand(command, data);

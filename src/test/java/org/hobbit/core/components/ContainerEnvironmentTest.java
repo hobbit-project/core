@@ -18,12 +18,15 @@ package org.hobbit.core.components;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -34,7 +37,6 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class ContainerEnvironmentTest {
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private AbstractCommandReceivingComponent component;
 
@@ -110,10 +112,13 @@ public class ContainerEnvironmentTest {
 
     @Before
     public void setUp() throws Exception {
-        environmentVariables.set(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
-        environmentVariables.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        Configuration configurationVar = new PropertiesConfiguration();
 
-        component = new DummyCommandReceivingComponent();
+        configurationVar.addProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, TestConstants.RABBIT_HOST);
+        configurationVar.addProperty(Constants.HOBBIT_SESSION_ID_KEY, "0");
+        HobbitConfiguration configVar = new HobbitConfiguration();
+        configVar.addConfiguration(configurationVar);
+        component = new DummyCommandReceivingComponent(configVar);
         component.init();
     }
 

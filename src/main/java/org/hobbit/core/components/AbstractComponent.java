@@ -18,11 +18,12 @@ package org.hobbit.core.components;
 
 import java.io.IOException;
 
+import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitQueueFactory;
 import org.hobbit.core.rabbit.RabbitQueueFactoryImpl;
-import org.hobbit.utils.EnvVariables;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,19 +70,41 @@ public abstract class AbstractComponent implements Component {
      * {@link #outgoingDataQueuefactory} objects.
      */
     protected ConnectionFactory connectionFactory;
+    /**
+     * Configuration that is used by this component.
+     */
+    protected HobbitConfiguration configuration;
+
+    /**
+     * Default constructor. It will create a configuration object that is solely
+     * relying on environment variables. This is the same as using the following
+     * lines of code:
+     * 
+     * <pre>
+     * HobbitConfiguration configuration = new HobbitConfiguration();
+     * configuration.addConfiguration(new EnvironmentConfiguration());
+     * AbstractComponent component = new AbstractComponent();
+     * component.setConfiguration(configuration);
+     * </pre>
+     */
+    public AbstractComponent() {
+        configuration = new HobbitConfiguration();
+        configuration.addConfiguration(new EnvironmentConfiguration());
+    }
 
     @Override
     public void init() throws Exception {
-        hobbitSessionId = EnvVariables.getString(Constants.HOBBIT_SESSION_ID_KEY,
+        hobbitSessionId = configuration.getString(Constants.HOBBIT_SESSION_ID_KEY,
                 Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
-
-        rabbitMQHostName = EnvVariables.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        if (rabbitMQHostName == null) {
+            rabbitMQHostName = configuration.getString(Constants.RABBIT_MQ_HOST_NAME_KEY, LOGGER);
+        }
         connectionFactory = new ConnectionFactory();
-        if(rabbitMQHostName.contains(":")){
+        if (rabbitMQHostName.contains(":")) {
             String[] splitted = rabbitMQHostName.split(":");
             connectionFactory.setHost(splitted[0]);
             connectionFactory.setPort(Integer.parseInt(splitted[1]));
-        }else
+        } else
             connectionFactory.setHost(rabbitMQHostName);
         connectionFactory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds
@@ -90,7 +113,7 @@ public abstract class AbstractComponent implements Component {
         outgoingDataQueuefactory = new RabbitQueueFactoryImpl(createConnection());
     }
 
-    protected Connection createConnection() throws Exception {
+    protected Connection createConnection() throws IOException {
         Connection connection = null;
         Exception exception = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
@@ -113,7 +136,7 @@ public abstract class AbstractComponent implements Component {
             String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
                     + " retries.";
             LOGGER.error(msg, exception);
-            throw new Exception(msg, exception);
+            throw new IOException(msg, exception);
         }
         return connection;
     }
@@ -130,6 +153,21 @@ public abstract class AbstractComponent implements Component {
 
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
+    }
+
+    /**
+     * @return the configuration
+     */
+    public HobbitConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    /**
+     * @param configuration the configuration that is used by this component
+     */
+    @Override
+    public void setConfiguration(HobbitConfiguration configuration) {
+        this.configuration = configuration;
     }
 
 }
