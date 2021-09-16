@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.MessageProperties;
 
 /**
  * This is a test that simulates the workflow of the
@@ -122,6 +124,11 @@ public class DockerBasedMimickingAlgTest extends AbstractPlatformConnectorCompon
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+            createComponent(command, data, sessionId, props);
+        }
+
+        @Override
+        public void createComponent(byte command, byte[] data, String sessionId, BasicProperties props) {
             String replyTo = null;
             if (props != null) {
                 replyTo = props.getReplyTo();

@@ -21,6 +21,9 @@ import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.hobbit.core.components.dummy.DummyComponentExecutor;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.MessageProperties;
+
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.utils.config.HobbitConfiguration;
 
@@ -115,6 +118,12 @@ public class ContainerCreationTest {
         }
 
         public void receiveCommand(byte command, byte[] data, String sessionId, AMQP.BasicProperties props) {
+            createComponent(command, data, sessionId, props);
+        }
+
+        @Override
+        public void createComponent(byte command, byte[] data, String sessionId, BasicProperties props) {
+            // TODO Auto-generated method stub
             if (command == Commands.DOCKER_CONTAINER_START) {
                 String[] envVars = gson.fromJson(RabbitMQUtils.readString(data), StartCommandData.class).getEnvironmentVariables();
                 String containerId = Stream.of(envVars).filter(kv -> kv.startsWith("ID=")).findAny().get().split("=", 2)[1];

@@ -67,12 +67,12 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * Name of the queue that is used to receive responses for messages that are
      * sent via the command queue and for which an answer is expected.
      */
-    private String responseQueueName = null;
+    protected String responseQueueName = null;
     /**
      * Mapping of RabbitMQ's correlationIDs to Future objects corresponding
      * to that RPC call.
      */
-    private Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new LinkedHashMap<>());
+    protected Map<String, SettableFuture<String>> responseFutures = Collections.synchronizedMap(new LinkedHashMap<>());
     /**
      * Consumer of the queue that is used to receive responses for messages that
      * are sent via the command queue and for which an answer is expected.
@@ -304,7 +304,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            user-provided array of environment variables
      * @return the extended array of environment variables
      */
-    protected String[] extendContainerEnvVariables(String[] envVariables) {
+    public String[] extendContainerEnvVariables(String[] envVariables) {
         if (envVariables == null) {
             envVariables = new String[0];
         }
@@ -347,7 +347,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      *            container
      * @return the name of the container instance or null if an error occurred
      */
-    protected String createContainer(String imageName, String containerType, String[] envVariables) {
+    public String createContainer(String imageName, String containerType, String[] envVariables) {
         return createContainer(imageName, containerType, envVariables, null);
     }
 
@@ -474,7 +474,15 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         return null;
     }
 
-    /**
+    public Map<String, SettableFuture<String>> getResponseFutures() {
+		return responseFutures;
+	}
+
+	public String getResponseQueueName() {
+		return responseQueueName;
+	}
+
+	/**
      * This method sends a {@link Commands#DOCKER_CONTAINER_STOP} command to
      * stop the container with the given id.
      *
@@ -497,7 +505,7 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
      * @throws IOException
      *             if a communication problem occurs
      */
-    private void initResponseQueue() throws IOException {
+    public void initResponseQueue() throws IOException {
         if (responseQueueName == null) {
             responseQueueName = cmdChannel.queueDeclare().getQueue();
         }
@@ -567,5 +575,24 @@ public abstract class AbstractCommandReceivingComponent extends AbstractComponen
         }
         super.close();
     }
+    
+    public String getContainerName() {
+		return containerName;
+	}
+
+	public void setContainerName(String containerName) {
+		this.containerName = containerName;
+	}
+	
+	public Gson getGson() {
+		return gson;
+	}
+
+	public void setGson(Gson gson) {
+		this.gson = gson;
+	}
+
+
+	
 
 }
