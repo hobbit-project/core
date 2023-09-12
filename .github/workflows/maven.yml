@@ -27,8 +27,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: setup-docker
-      uses: docker-practice/actions-setup-docker@v1
     - name: Compile project
       run: mvn clean compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
     - name: Set up test environment
