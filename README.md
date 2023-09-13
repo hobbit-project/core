@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/hobbit-project/core.svg?branch=master)](https://travis-ci.org/hobbit-project/core)
+[![Java CI with Maven](https://github.com/hobbit-project/core/actions/workflows/maven.yml/badge.svg)](https://github.com/hobbit-project/core/actions/workflows/maven.yml)[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cb81b2831ce84a4287ff588e83881b0a)](https://app.codacy.com/gh/hobbit-project/core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/cb81b2831ce84a4287ff588e83881b0a)](https://app.codacy.com/gh/hobbit-project/core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 
 # core
 This library offers some main functionalities and utilities for the Hobbit platform project. For more information take a look at the project web page (http://www.project-hobbit.eu) or at the Hobbit platform project on github (https://github.com/hobbit-project/platform).
