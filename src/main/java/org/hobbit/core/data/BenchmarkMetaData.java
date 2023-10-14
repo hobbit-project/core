@@ -16,13 +16,11 @@
  */
 package org.hobbit.core.data;
 
-import java.util.Map;
 import java.util.Set;
 
 public class BenchmarkMetaData extends ImageMetaData {
 
     public Set<String> definedApis;
-    protected Map<String, Object> systemHardwareConstraints = null;
 
     public BenchmarkMetaData() {
     }
@@ -30,19 +28,10 @@ public class BenchmarkMetaData extends ImageMetaData {
     public BenchmarkMetaData(BenchmarkMetaData other) {
         super(other);
         this.definedApis = other.definedApis;
-        this.systemHardwareConstraints = other.systemHardwareConstraints;
     }
 
     @Override
     public Object clone() {
         return new BenchmarkMetaData(this);
-    }
-
-    public Map<String, Object> getSystemHardwareConstraints() {
-        return systemHardwareConstraints;
-    }
-
-    public void setSystemHardwareConstraints(Map<String, Object> systemHardwareConstraints) {
-        this.systemHardwareConstraints = systemHardwareConstraints;
     }
 }

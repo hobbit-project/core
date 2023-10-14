@@ -122,7 +122,7 @@ public final class Commands {
      * @return the name of the command or its id if the name is not known
      */
     public static String toString(byte command) {
-        Byte commandObject = new Byte(command);
+        Byte commandObject = Byte.valueOf(command);
         if (Commands.ID_TO_COMMAND_NAME_MAP.containsKey(commandObject)) {
             return ID_TO_COMMAND_NAME_MAP.get(commandObject);
         } else {

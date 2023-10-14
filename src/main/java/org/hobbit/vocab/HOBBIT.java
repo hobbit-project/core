@@ -100,6 +100,8 @@ public class HOBBIT {
     public static final Property involvesSystemInstance = property("involvesSystemInstance");
     public static final Property isPartOf = property("isPartOf");
     public static final Property isTaskOf = property("isTaskOf");
+    public static final Property maxHardware = property("maxHardware");
+    public static final Property minHardware = property("minHardware");
     public static final Property measuresKPI = property("measuresKPI");
     public static final Property organizer = property("organizer");
     public static final Property publicationDate = property("publicationDate");

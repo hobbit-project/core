@@ -16,8 +16,6 @@
  */
 package org.hobbit.utils.docker;
 
-import org.hobbit.utils.docker.DockerHelper;
-
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
