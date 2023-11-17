@@ -114,7 +114,7 @@ public class ComponentStarter {
             throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Class<?> componentClass = ClassLoader.getSystemClassLoader().loadClass(className);
-        Constructor<?> constructor = componentClass.getConstructor(HobbitConfiguration.class);
+        Constructor<?> constructor = componentClass.getConstructor();
         return Component.class.cast(constructor.newInstance());
     }
 
