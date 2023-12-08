@@ -37,10 +37,11 @@ public class GsonUtils {
     /**
      * Deserialize a Java data object that was received as JSON with a command.
      * First, the given byte array will be transformed into a String using the
-     * {@link RabbitMQUtils} class, before it will be deserialized using the
-     * controller's {@link #gson} object.
+     * {@link RabbitMQUtils} class, before it will be deserialized using the given
+     * {@link Gson} object.
      * 
      * @param <T>   The class that the data object should have.
+     * @param gson  The Gson instance used to deserialize the JSON object.
      * @param data  The byte array that has been received.
      * @param clazz The class that the data object should have.
      * @return The deserialized object or null if an error occurred

@@ -13,7 +13,7 @@ import com.rabbitmq.client.Envelope;
  * with blocking semantics. The class provides a linked blocking queue
  * of {@link Delivery} class to fetch the next delivery message.
  * 
- * @author Altaf & Sourabh
+ * @author Altaf &amp; Sourabh
  *
  */
 public class QueueingConsumer extends DefaultConsumer {
