@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.AbstractCommandReceivingComponent;
 import org.hobbit.core.components.Component;
 import org.hobbit.utils.config.HobbitConfiguration;
 import org.slf4j.Logger;
@@ -66,6 +67,7 @@ public class ComponentStarter {
             component.run();
         } catch (Throwable t) {
             LOGGER.error("Exception while executing component. Exiting with error code.", t);
+            reportErrorIfPossible(t);
             success = false;
         } finally {
             closeComponent();
@@ -122,7 +124,7 @@ public class ComponentStarter {
         HobbitConfiguration configuration = new HobbitConfiguration();
         configuration.addConfiguration(new EnvironmentConfiguration());
         // Add more configurations if necessary
-        
+
         component.setConfiguration(configuration);
     }
 
@@ -153,5 +155,12 @@ public class ComponentStarter {
             }
         }
         return false;
+    }
+
+    private static void reportErrorIfPossible(Throwable t) {
+        if (component instanceof AbstractCommandReceivingComponent && t instanceof Exception) {
+            AbstractCommandReceivingComponent crComponent = (AbstractCommandReceivingComponent) component;
+            crComponent.reportUnhandledExceptionSavely((Exception) t);
+        }
     }
 }

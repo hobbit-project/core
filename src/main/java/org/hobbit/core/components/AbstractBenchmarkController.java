@@ -156,24 +156,25 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     @Override
     public void run() throws Exception {
-        sendToCmdQueue(Commands.BENCHMARK_READY_SIGNAL);
-        // wait for the start signal
-        startBenchmarkMutex.acquire();
-        executeBenchmark();
+        try {
+            sendToCmdQueue(Commands.BENCHMARK_READY_SIGNAL);
+            // wait for the start signal
+            startBenchmarkMutex.acquire();
+            executeBenchmark();
+        } catch (Exception e) {
+            throw reportAndWrap(e);
+        }
     }
 
     protected abstract void executeBenchmark() throws Exception;
 
     /**
-     * Creates the given number of data generators using the given image name
-     * and environment variables.
+     * Creates the given number of data generators using the given image name and
+     * environment variables.
      *
-     * @param dataGeneratorImageName
-     *            name of the data generator Docker image
-     * @param numberOfDataGenerators
-     *            number of generators that should be created
-     * @param envVariables
-     *            environment variables for the data generators
+     * @param dataGeneratorImageName name of the data generator Docker image
+     * @param numberOfDataGenerators number of generators that should be created
+     * @param envVariables           environment variables for the data generators
      */
     protected void createDataGenerators(String dataGeneratorImageName, int numberOfDataGenerators,
             String[] envVariables) {
@@ -181,15 +182,12 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * Creates the given number of task generators using the given image name
-     * and environment variables.
+     * Creates the given number of task generators using the given image name and
+     * environment variables.
      *
-     * @param taskGeneratorImageName
-     *            name of the task generator Docker image
-     * @param numberOfTaskGenerators
-     *            number of generators that should be created
-     * @param envVariables
-     *            environment variables for the task generators
+     * @param taskGeneratorImageName name of the task generator Docker image
+     * @param numberOfTaskGenerators number of generators that should be created
+     * @param envVariables           environment variables for the task generators
      */
     protected void createTaskGenerators(String taskGeneratorImageName, int numberOfTaskGenerators,
             String[] envVariables) {
@@ -199,14 +197,10 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Internal method for creating generator components.
      *
-     * @param generatorImageName
-     *            name of the generator Docker image
-     * @param numberOfGenerators
-     *            number of generators that should be created
-     * @param envVariables
-     *            environment variables for the task generators
-     * @param generatorIds
-     *            set of generator container names
+     * @param generatorImageName name of the generator Docker image
+     * @param numberOfGenerators number of generators that should be created
+     * @param envVariables       environment variables for the task generators
+     * @param generatorIds       set of generator container names
      */
     private void createGenerator(String generatorImageName, int numberOfGenerators, String[] envVariables,
             Set<String> generatorIds) {
@@ -216,7 +210,8 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         // NOTE: Count only includes generators created within this method call.
         variables[variables.length - 2] = Constants.GENERATOR_COUNT_KEY + "=" + numberOfGenerators;
         for (int i = 0; i < numberOfGenerators; ++i) {
-            // At the start generatorIds is empty, and new generators are added to it immediately.
+            // At the start generatorIds is empty, and new generators are added to it
+            // immediately.
             // Current size of that set is used to make IDs for new generators.
             variables[variables.length - 1] = Constants.GENERATOR_ID_KEY + "=" + generatorIds.size();
             containerId = createContainer(generatorImageName, variables);
@@ -234,10 +229,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * Creates the evaluate module using the given image name and environment
      * variables.
      *
-     * @param evalModuleImageName
-     *            name of the evaluation module image
-     * @param envVariables
-     *            environment variables that should be given to the module
+     * @param evalModuleImageName name of the evaluation module image
+     * @param envVariables        environment variables that should be given to the
+     *                            module
      */
     protected void createEvaluationModule(String evalModuleImageName, String[] envVariables) {
         envVariables = ArrayUtils.add(envVariables, Constants.HOBBIT_EXPERIMENT_URI_KEY + "=" + experimentUri);
@@ -263,10 +257,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * Creates the evaluate storage using the given image name and environment
      * variables.
      *
-     * @param evalStorageImageName
-     *            name of the evaluation storage image
-     * @param envVariables
-     *            environment variables that should be given to the component
+     * @param evalStorageImageName name of the evaluation storage image
+     * @param envVariables         environment variables that should be given to the
+     *                             component
      */
     protected void createEvaluationStorage(String evalStorageImageName, String[] envVariables) {
         evalStoreContainerId = createContainer(evalStorageImageName, Constants.CONTAINER_TYPE_DATABASE, envVariables);
@@ -353,13 +346,12 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * This method waits for the benchmarked system to terminate or times out
-     * after the given amount of time (in milliseconds).
+     * This method waits for the benchmarked system to terminate or times out after
+     * the given amount of time (in milliseconds).
      *
-     * @param maxWaitingTime
-     *            maximum waiting time in milliseconds
-     * @return {@code true} if the system has been terminated or {@code false}
-     *         if the method timed out
+     * @param maxWaitingTime maximum waiting time in milliseconds
+     * @return {@code true} if the system has been terminated or {@code false} if
+     *         the method timed out
      */
     protected boolean waitForSystemToFinish(long maxWaitingTime) {
         LOGGER.debug("Waiting for the benchmarked system to finish.");
@@ -422,8 +414,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
      * Uses the given model as result model if the result model is
      * <code>null</code>. Else, the two models are merged.
      *
-     * @param resultModel
-     *            the new result model
+     * @param resultModel the new result model
      */
     protected void setResultModel(Model resultModel) {
         try {
@@ -445,9 +436,9 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
 
     /**
      * Generates a default model containing an error code and the benchmark
-     * parameters if no result model has been received from the evaluation
-     * module until now. If the model already has been received, the error is
-     * added to the existing model.
+     * parameters if no result model has been received from the evaluation module
+     * until now. If the model already has been received, the error is added to the
+     * existing model.
      */
     protected void generateErrorResultModel() {
         try {
@@ -469,8 +460,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * Adds the {@link #benchmarkParamModel} triples to the {@link #resultModel}
-     * .
+     * Adds the {@link #benchmarkParamModel} triples to the {@link #resultModel} .
      */
     protected void addParametersToResultModel() {
         try {
@@ -480,8 +470,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
         }
         try {
             Resource experimentResource = resultModel.getResource(experimentUri);
-            StmtIterator iterator = benchmarkParamModel.listStatements(
-                    HobbitExperiments.New, null, (RDFNode) null);
+            StmtIterator iterator = benchmarkParamModel.listStatements(HobbitExperiments.New, null, (RDFNode) null);
             Statement statement;
             while (iterator.hasNext()) {
                 statement = iterator.next();
@@ -495,8 +484,7 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     /**
      * Sends the result RDF model to the platform controller.
      *
-     * @param model
-     *            model containing the results
+     * @param model model containing the results
      */
     protected void sendResultModel(Model model) {
         try {
@@ -558,14 +546,12 @@ public abstract class AbstractBenchmarkController extends AbstractPlatformConnec
     }
 
     /**
-     * This method handles messages from the command bus containing the
-     * information that a container terminated. It checks whether the container
-     * belongs to the current benchmark and whether it has to react.
+     * This method handles messages from the command bus containing the information
+     * that a container terminated. It checks whether the container belongs to the
+     * current benchmark and whether it has to react.
      *
-     * @param containerName
-     *            the name of the terminated container
-     * @param exitCode
-     *            the exit code of the terminated container
+     * @param containerName the name of the terminated container
+     * @param exitCode      the exit code of the terminated container
      */
     protected void containerTerminated(String containerName, int exitCode) {
         if (dataGenContainerIds.contains(containerName)) {

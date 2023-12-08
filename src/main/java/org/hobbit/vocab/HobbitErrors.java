@@ -57,4 +57,6 @@ public class HobbitErrors {
     public static final Resource TerminatedByUser = resource("TerminatedByUser");
     public static final Resource UnexpectedError = resource("UnexpectedError");
     public static final Resource ClusterNotHealthy = resource("ClusterNotHealthy");
+    public static final Resource UnhandledException = resource("UnhandledException");
+    public static final Resource UnspecifiedError = resource("UnspecifiedError");
 }

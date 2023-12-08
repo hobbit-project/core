@@ -98,9 +98,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
     /**
      * Constructor setting the maximum number of messages processed in parallel.
      *
-     * @param maxParallelProcessedMsgs
-     *            The maximum number of incoming messages of a single queue that are
-     *            processed in parallel. Additional messages have to wait.
+     * @param maxParallelProcessedMsgs The maximum number of incoming messages of a
+     *                                 single queue that are processed in parallel.
+     *                                 Additional messages have to wait.
      */
     public AbstractSystemAdapter(int maxParallelProcessedMsgs) {
         this.maxParallelProcessedMsgs = maxParallelProcessedMsgs;
@@ -113,7 +113,7 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
         // Get the benchmark parameter model
         systemParamModel = configuration.getModel(Constants.SYSTEM_PARAMETERS_MODEL_KEY,
-            () -> ModelFactory.createDefaultModel(), LOGGER);
+                () -> ModelFactory.createDefaultModel(), LOGGER);
 
         dataGenReceiver = DataReceiverImpl.builder().maxParallelProcessedMsgs(maxParallelProcessedMsgs)
                 .queue(incomingDataQueueFactory, generateSessionQueueName(Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME))
@@ -142,22 +142,26 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
 
     @Override
     public void run() throws Exception {
-        sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
-
-        terminateMutex.acquire();
-        // Check whether the system should abort
         try {
-            causeMutex.acquire();
-            if (cause != null) {
-                throw cause;
+            sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
+
+            terminateMutex.acquire();
+            // Check whether the system should abort
+            try {
+                causeMutex.acquire();
+                if (cause != null) {
+                    throw cause;
+                }
+                causeMutex.release();
+            } catch (InterruptedException e) {
+                LOGGER.error("Interrupted while waiting to set the termination cause.");
             }
-            causeMutex.release();
-        } catch (InterruptedException e) {
-            LOGGER.error("Interrupted while waiting to set the termination cause.");
+            // Close receivers as soon as all messages have been received
+            dataGenReceiver.closeWhenFinished();
+            taskGenReceiver.closeWhenFinished();
+        } catch (Exception e) {
+            throw reportAndWrap(e);
         }
-        // Close receivers as soon as all messages have been received
-        dataGenReceiver.closeWhenFinished();
-        taskGenReceiver.closeWhenFinished();
     }
 
     @Override
@@ -173,12 +177,9 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * This method sends the given result data for the task with the given task id
      * to the evaluation storage.
      *
-     * @param taskIdString
-     *            the id of the task
-     * @param data
-     *            the data of the task
-     * @throws IOException
-     *             if there is an error during the sending
+     * @param taskIdString the id of the task
+     * @param data         the data of the task
+     * @throws IOException if there is an error during the sending
      */
     protected void sendResultToEvalStorage(String taskIdString, byte[] data) throws IOException {
         byte[] taskIdBytes = taskIdString.getBytes(Charsets.UTF_8);
@@ -198,9 +199,8 @@ public abstract class AbstractSystemAdapter extends AbstractPlatformConnectorCom
      * given, it will be thrown causing an abortion from the main thread instead of
      * a normal termination.
      *
-     * @param cause
-     *            the cause for an abortion of the process or {code null} if the
-     *            component should terminate in a normal way.
+     * @param cause the cause for an abortion of the process or {code null} if the
+     *              component should terminate in a normal way.
      */
     protected synchronized void terminate(Exception cause) {
         if (cause != null) {
