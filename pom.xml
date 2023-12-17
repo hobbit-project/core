@@ -12,7 +12,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hobbit</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.22-SNAPSHOT</version>
+    <version>1.0.22</version>
 
     <!-- LICENSE -->
     <licenses>
@@ -30,7 +30,6 @@
         <slf4j.version>1.7.15</slf4j.version>
         <junit.version>4.13.1</junit.version>
     </properties>
-    <!-- TODO Add license -->
 
     <dependencies>
         <dependency>
