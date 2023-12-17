@@ -12,7 +12,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hobbit</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.21-SNAPSHOT</version>
+    <version>1.0.23-SNAPSHOT</version>
 
     <!-- LICENSE -->
     <licenses>
@@ -175,7 +175,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.8.7</version>
                 <executions>
                     <execution>
                         <id>default-prepare-agent</id>
@@ -193,4 +193,16 @@
             </plugin>
         </plugins>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>org.aksw.maven.internal</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/internal</url>
+        </repository>
+        <snapshotRepository>
+            <id>org.aksw.maven.snapshots</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
