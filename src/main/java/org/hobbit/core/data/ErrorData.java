@@ -23,19 +23,14 @@ public class ErrorData {
     protected String errorType;
     /**
      * A string that can be used as short label of an error (optional, the error
-     * type label will be used as default)
+     * type label might be used as default)
      */
     protected String label;
     /**
      * A string that can be used as a short description of an error (optional, the
-     * error type description will be used as default).
+     * error type description might be used as default).
      */
     protected String description;
-    /**
-     * A string that contains details about the error, e.g., a stack trace
-     * (optional).
-     */
-    protected String details;
 
     /**
      * @return the containerId
@@ -93,27 +88,12 @@ public class ErrorData {
         this.description = description;
     }
 
-    /**
-     * @return the details
-     */
-    public String getDetails() {
-        return details;
-    }
-
-    /**
-     * @param details the details to set
-     */
-    public void setDetails(String details) {
-        this.details = details;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((containerName == null) ? 0 : containerName.hashCode());
         result = prime * result + ((description == null) ? 0 : description.hashCode());
-        result = prime * result + ((details == null) ? 0 : details.hashCode());
         result = prime * result + ((errorType == null) ? 0 : errorType.hashCode());
         result = prime * result + ((label == null) ? 0 : label.hashCode());
         return result;
@@ -137,11 +117,6 @@ public class ErrorData {
             if (other.description != null)
                 return false;
         } else if (!description.equals(other.description))
-            return false;
-        if (details == null) {
-            if (other.details != null)
-                return false;
-        } else if (!details.equals(other.details))
             return false;
         if (errorType == null) {
             if (other.errorType != null)
@@ -172,14 +147,13 @@ public class ErrorData {
         ErrorData result = new ErrorData();
         result.containerName = containerName;
         result.errorType = HobbitErrors.UnhandledException.getURI();
-        result.label = e.getClass().getName();
-        result.description = e.getMessage();
+        result.label = e.getMessage();
         // Get the full stack trace
         StringWriter writer = new StringWriter();
         PrintWriter pwriter = new PrintWriter(writer);
         e.printStackTrace(pwriter);
         pwriter.flush();
-        result.details = writer.toString();
+        result.description = writer.toString();
         pwriter.close();
 
         return result;

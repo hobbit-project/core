@@ -22,7 +22,6 @@ public class Algorithm {
     public static final Resource Result = resource("Result");
 
     // Properties sorted alphabetically
-    public static final Property errorDetails = property("errorDetails");
     public static final Property instanceOf = property("instanceOf");
     public static final Property parameter = property("parameter");
     public static final Property produces = property("produces");

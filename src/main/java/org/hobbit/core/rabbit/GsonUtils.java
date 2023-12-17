@@ -1,5 +1,7 @@
 package org.hobbit.core.rabbit;
 
+import java.nio.ByteBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,21 +42,54 @@ public class GsonUtils {
      * {@link RabbitMQUtils} class, before it will be deserialized using the given
      * {@link Gson} object.
      * 
-     * @param <T>   The class that the data object should have.
-     * @param gson  The Gson instance used to deserialize the JSON object.
-     * @param data  The byte array that has been received.
-     * @param clazz The class that the data object should have.
+     * @param <T>            The class that the data object should have.
+     * @param gson           The Gson instance used to deserialize the JSON object.
+     * @param data           The byte array that has been received.
+     * @param clazz          The class that the data object should have.
+     * @param containsLength This flag indicates whether the given byte array
+     *                       contains the data with a preceeded int value containing
+     *                       the length of the next piece of data
      * @return The deserialized object or null if an error occurred
      */
-    public static <T> T deserializeObjectWithGson(Gson gson, byte[] data, Class<? extends T> clazz) {
+    public static <T> T deserializeObjectWithGson(Gson gson, byte[] data, Class<? extends T> clazz,
+            boolean containsLength) {
         if (data != null) {
-            String dataString = RabbitMQUtils.readString(data);
-            try {
-                return gson.fromJson(dataString, clazz);
-            } catch (Exception e) {
-                LOGGER.error("Error while parsing JSON data. Returning null.");
+            if (containsLength) {
+                return deserializeObjectWithGson(gson, ByteBuffer.wrap(data), clazz);
+            } else {
+                String dataString = RabbitMQUtils.readString(data);
+                return deserializeObjectWithGson(gson, dataString, clazz);
             }
         }
         return null;
+    }
+
+    /**
+     * Deserialize a Java data object that was received as JSON with a command.
+     * First, the given byte array will be transformed into a String using the
+     * {@link RabbitMQUtils} class, before it will be deserialized using the given
+     * {@link Gson} object.
+     * 
+     * @param <T>   The class that the data object should have.
+     * @param gson  The Gson instance used to deserialize the JSON object.
+     * @param data  A ByteBuffer containing the data and the length of the data.
+     * @param clazz The class that the data object should have.
+     * @return The deserialized object or null if an error occurred
+     */
+    public static <T> T deserializeObjectWithGson(Gson gson, ByteBuffer data, Class<? extends T> clazz) {
+        if (data != null) {
+            String dataString = RabbitMQUtils.readString(data);
+            return deserializeObjectWithGson(gson, dataString, clazz);
+        }
+        return null;
+    }
+
+    protected static <T> T deserializeObjectWithGson(Gson gson, String dataString, Class<? extends T> clazz) {
+        try {
+            return gson.fromJson(dataString, clazz);
+        } catch (Exception e) {
+            LOGGER.error("Error while parsing JSON data form String \"" + dataString + "\". Returning null.", e);
+            return null;
+        }
     }
 }
