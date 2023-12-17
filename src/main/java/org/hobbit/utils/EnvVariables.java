@@ -129,8 +129,6 @@ public class EnvVariables {
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an
      *            error occurs.
-     * @param logger
-     *            the {@link Logger} which will be used to log errors if they occur.
      * @return the variable value or the default value if an error occurred and a
      *         default value is available.
      */
@@ -200,10 +198,6 @@ public class EnvVariables {
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValue
      *            the default value which will be returned if the variable can not
      *            be found or if an error occurs.
@@ -228,14 +222,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the conversion function before calling
-     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValueFactory
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an
@@ -369,10 +359,6 @@ public class EnvVariables {
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValue
      *            the default value which will be returned if the variable can not
      *            be found or if an error occurs.
@@ -397,14 +383,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the conversion function before calling
-     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValueFactory
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an
@@ -538,10 +520,6 @@ public class EnvVariables {
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValue
      *            the default value which will be returned if the variable can not
      *            be found or if an error occurs.
@@ -567,14 +545,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the conversion function before calling
-     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValueFactory
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an
@@ -704,14 +678,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the default value factory function before calling
-     * {@link #getLongValue(String, Supplier, Logger, boolean)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValue
      *            the default value which will be returned if the variable can not
      *            be found or if an error occurs.
@@ -737,14 +707,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the conversion function before calling
-     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValueFactory
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an
@@ -878,10 +844,6 @@ public class EnvVariables {
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValue
      *            the default value which will be returned if the variable can not
      *            be found or if an error occurs.
@@ -906,14 +868,10 @@ public class EnvVariables {
 
     /**
      * Internal method defining the conversion function before calling
-     * {@link #getVariableValue(String, Function, Object, Logger)}.
+     * {@link #getVariableValue(String, Function, Supplier, Logger, boolean)}.
      * 
      * @param name
      *            name of the environmental variable which should be accessed
-     * @param conversion
-     *            the function which is used to convert the {@link String} of the
-     *            variable value into the expected value type. It is assumed that
-     *            this function will throw an exception if an error occurs.
      * @param defaultValueFactory
      *            A factory method which can be used to generate a default value
      *            which will be returned if the variable can not be found or if an

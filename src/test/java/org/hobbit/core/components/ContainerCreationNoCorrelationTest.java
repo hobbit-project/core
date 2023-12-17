@@ -16,35 +16,32 @@
  */
 package org.hobbit.core.components;
 
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.hobbit.core.components.dummy.DummyComponentExecutor;
-import java.util.Random;
-
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.MessageProperties;
-import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.utils.config.HobbitConfiguration;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import org.hobbit.core.Commands;
-import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
-import org.hobbit.core.data.StartCommandData;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.TestConstants;
+import org.hobbit.core.components.dummy.AbstractDummyPlatformController;
+import org.hobbit.core.components.dummy.DummyCommandReceivingComponent;
+import org.hobbit.core.components.dummy.DummyComponentExecutor;
+import org.hobbit.core.data.StartCommandData;
+import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.Stopwatch;
-import static org.junit.Assert.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.rabbitmq.client.AMQP;
 
 
 public class ContainerCreationNoCorrelationTest {

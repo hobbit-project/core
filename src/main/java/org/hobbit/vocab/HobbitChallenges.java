@@ -55,7 +55,7 @@ public class HobbitChallenges {
     /**
      * returns the URI of a challenge resource given its ID
      *
-     * @param experimentId the challenge ID
+     * @param challengeId the challenge ID
      * @return the URI of challenge
      */
     public static String getChallengeURI(String challengeId) {

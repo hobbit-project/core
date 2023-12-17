@@ -36,7 +36,7 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
     public AbstractDataGenerator() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
     }
-    
+
     @Override
     public void init() throws Exception {
         super.init();
@@ -52,15 +52,19 @@ public abstract class AbstractDataGenerator extends AbstractPlatformConnectorCom
 
     @Override
     public void run() throws Exception {
-        sendToCmdQueue(Commands.DATA_GENERATOR_READY_SIGNAL);
-        // Wait for the start message
-        startDataGenMutex.acquire();
+        try {
+            sendToCmdQueue(Commands.DATA_GENERATOR_READY_SIGNAL);
+            // Wait for the start message
+            startDataGenMutex.acquire();
 
-        generateData();
+            generateData();
 
-        // We have to wait until all messages are consumed
-        sender2TaskGen.closeWhenFinished();
-        sender2System.closeWhenFinished();
+            // We have to wait until all messages are consumed
+            sender2TaskGen.closeWhenFinished();
+            sender2System.closeWhenFinished();
+        } catch (Exception e) {
+            throw reportAndWrap(e);
+        }
     }
 
     protected abstract void generateData() throws Exception;

@@ -107,8 +107,6 @@ public class SparqlQueries {
      * Returns a SPARQL CONSTRUCT query for getting the analysis results of all
      * systems for a certain benchmark.
      *
-     * @param benchmarkUri
-     *            URI of the benchmark
      * @param graphUri
      *            URI of the graph the experiment is stored. <code>null</code> works
      *            like a wildcard.

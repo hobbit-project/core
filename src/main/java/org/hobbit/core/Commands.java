@@ -33,8 +33,8 @@ public final class Commands {
      */
     public static final byte SYSTEM_READY_SIGNAL = 1;
     /**
-     * The signal sent by the benchmark controller to indicate that the
-     * benchmark is ready.
+     * The signal sent by the benchmark controller to indicate that the benchmark is
+     * ready.
      */
     public static final byte BENCHMARK_READY_SIGNAL = 2;
     /**
@@ -64,11 +64,9 @@ public final class Commands {
 
     public static final byte BENCHMARK_FINISHED_SIGNAL = 11;
     /**
-     * Command used to ask a docker managing component to start a certain
-     * container.
+     * Command used to ask a docker managing component to start a certain container.
      * <p>
-     * The command is followed by a String containing the following JSON data:
-     * <br>
+     * The command is followed by a String containing the following JSON data: <br>
      * <code>
      * {<br>"image": "image-to-run",<br> "type": "system|benchmark",<br> "parent":"parent-container-id"<br>}
      * </code>
@@ -76,11 +74,9 @@ public final class Commands {
      */
     public static final byte DOCKER_CONTAINER_START = 12;
     /**
-     * Command used to ask a docker managing component to stop a certain
-     * container.
+     * Command used to ask a docker managing component to stop a certain container.
      * <p>
-     * The command is followed by a String containing the following JSON data:
-     * <br>
+     * The command is followed by a String containing the following JSON data: <br>
      * <code>
      * {<br>"containerId": "container-to-stop"<br>}
      * </code>
@@ -95,8 +91,27 @@ public final class Commands {
     public static final byte DOCKER_CONTAINER_TERMINATED = 16;
 
     public static final byte START_BENCHMARK_SIGNAL = 17;
-    
+
     public static final byte REQUEST_SYSTEM_RESOURCES_USAGE = 18;
+    /**
+     * Command used to report an error that should be persisted as part of the
+     * experiment result data.
+     * <p>
+     * The command is followed by a String containing the following JSON data: <br>
+     * <code>
+     * {<br>"containerId": "container reporting the error",
+     * <br>"errorType": "IRI of the error type (optional)",
+     * <br>"label": "A string that can be used as short label of an error (optional, the error type label will be used as default)"
+     * <br>"description": "A string that can be used as a short description of an error (optional, the error type description will be used as default)"
+     * <br>"details": "A string that contains details about the error, e.g., a stack trace (optional)."
+     *   <br>}
+     * </code>
+     * </p>
+     * <p>
+     * The {@link org.hobbit.core.data.ErrorData} class can be used to represent
+     * this data as Java object.</p>
+     */
+    public static final byte REPORT_ERROR = 19;
 
     private static final ImmutableMap<Byte, String> ID_TO_COMMAND_NAME_MAP = generateMap();
 
@@ -116,13 +131,14 @@ public final class Commands {
     }
 
     /**
-     * Returns the name of the command if it is defined inside the {@link Commands} class or its id as String.
+     * Returns the name of the command if it is defined inside the {@link Commands}
+     * class or its id as String.
      *
      * @param command the command that should be transformed into a String
      * @return the name of the command or its id if the name is not known
      */
     public static String toString(byte command) {
-        Byte commandObject = new Byte(command);
+        Byte commandObject = Byte.valueOf(command);
         if (Commands.ID_TO_COMMAND_NAME_MAP.containsKey(commandObject)) {
             return ID_TO_COMMAND_NAME_MAP.get(commandObject);
         } else {

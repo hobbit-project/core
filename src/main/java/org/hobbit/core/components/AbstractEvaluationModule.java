@@ -66,7 +66,7 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
     /**
      * Timeout parameter for delivery queue message poll.
      */
-    private static final int QUEUEPOLLTIMEOUT=600000; 
+    private static final int QUEUEPOLLTIMEOUT = 600000;
 
     public AbstractEvaluationModule() {
         defaultContainerType = Constants.CONTAINER_TYPE_BENCHMARK;
@@ -77,12 +77,12 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
         super.init();
 
         // Get the experiment URI
-        experimentUri = configuration.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY,LOGGER);
-        
-        evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
-        evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues()
-                .createDefaultRabbitQueue(generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
+        experimentUri = configuration.getString(Constants.HOBBIT_EXPERIMENT_URI_KEY, LOGGER);
+
+        evalModule2EvalStoreQueue = getFactoryForOutgoingDataQueues().createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME));
+        evalStore2EvalModuleQueue = getFactoryForIncomingDataQueues().createDefaultRabbitQueue(
+                generateSessionQueueName(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME));
 
         consumer = new QueueingConsumer(evalStore2EvalModuleQueue.channel);
         evalStore2EvalModuleQueue.channel.basicConsume(evalStore2EvalModuleQueue.name, consumer);
@@ -90,20 +90,23 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
 
     @Override
     public void run() throws Exception {
-        sendToCmdQueue(Commands.EVAL_MODULE_READY_SIGNAL);
-        collectResponses();
-        Model model = summarizeEvaluation();
-        LOGGER.info("The result model has " + model.size() + " triples.");
-        sendResultModel(model);
+        try {
+            sendToCmdQueue(Commands.EVAL_MODULE_READY_SIGNAL);
+            collectResponses();
+            Model model = summarizeEvaluation();
+            LOGGER.info("The result model has " + model.size() + " triples.");
+            sendResultModel(model);
+        } catch (Exception e) {
+            throw reportAndWrap(e);
+        }
     }
 
     /**
-     * This method communicates with the evaluation storage to collect all
-     * response pairs. For every pair the
+     * This method communicates with the evaluation storage to collect all response
+     * pairs. For every pair the
      * {@link #evaluateResponse(byte[], byte[], long, long)} method is called.
      *
-     * @throws Exception
-     *             if a communication error occurs.
+     * @throws Exception if a communication error occurs.
      */
     protected void collectResponses() throws Exception {
         byte[] expectedData;
@@ -119,19 +122,16 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             // request next response pair
             props = new BasicProperties.Builder().deliveryMode(2).replyTo(evalStore2EvalModuleQueue.name).build();
             evalModule2EvalStoreQueue.channel.basicPublish("", evalModule2EvalStoreQueue.name, props, requestBody);
-            //Wait for delivery message
+            // Wait for delivery message
             Delivery delivery = consumer.getDeliveryQueue().poll(QUEUEPOLLTIMEOUT, TimeUnit.MILLISECONDS);
             // parse the response
-            if (delivery == null)
-            {
-            	LOGGER.error("No Message Received after waiting for ten minutes");
-            	return;
+            if (delivery == null) {
+                LOGGER.error("No Message Received after waiting for ten minutes");
+                return;
             }
 
-            	buffer = ByteBuffer.wrap(delivery.getBody());
-            
-            
-            
+            buffer = ByteBuffer.wrap(delivery.getBody());
+
             // if the response is empty
             if (buffer.remaining() == 0) {
                 LOGGER.error("Got a completely empty response from the evaluation storage.");
@@ -151,26 +151,22 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
             responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
             receivedData = RabbitMQUtils.readByteArray(buffer);
 
-
             evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-            
+
         }
     }
 
     /**
      * Evaluates the given response pair.
      *
-     * @param expectedData
-     *            the data that has been expected
-     * @param receivedData
-     *            the data that has been received from the system
-     * @param taskSentTimestamp
-     *            the time at which the task has been sent to the system
-     * @param responseReceivedTimestamp
-     *            the time at which the response has been received from the
-     *            system
-     * @throws Exception
-     *             if an error occurs during the evaluation
+     * @param expectedData              the data that has been expected
+     * @param receivedData              the data that has been received from the
+     *                                  system
+     * @param taskSentTimestamp         the time at which the task has been sent to
+     *                                  the system
+     * @param responseReceivedTimestamp the time at which the response has been
+     *                                  received from the system
+     * @throws Exception if an error occurs during the evaluation
      */
     protected abstract void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
             long responseReceivedTimestamp) throws Exception;
@@ -180,18 +176,15 @@ public abstract class AbstractEvaluationModule extends AbstractPlatformConnector
      * evaluation results.
      *
      * @return an RDF model containing the evaluation results
-     * @throws Exception
-     *             if a sever error occurs
+     * @throws Exception if a sever error occurs
      */
     protected abstract Model summarizeEvaluation() throws Exception;
 
     /**
      * Sends the model to the benchmark controller.
      *
-     * @param model
-     *            the model that should be sent
-     * @throws IOException
-     *             if an error occurs during the commmunication
+     * @param model the model that should be sent
+     * @throws IOException if an error occurs during the commmunication
      */
     private void sendResultModel(Model model) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
