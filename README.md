@@ -31,7 +31,7 @@ Docker container with RabbitMQ can be started using `./start_test_environment.sh
     <dependency>
       <groupId>org.hobbit</groupId>
       <artifactId>core</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.22</version>
     </dependency>
     ...
   </dependencies>
