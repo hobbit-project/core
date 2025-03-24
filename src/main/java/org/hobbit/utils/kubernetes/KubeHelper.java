@@ -13,10 +13,9 @@ public class KubeHelper {
      *
      * @return plain hostname (or address)
      */
-    public static String getDnsFriendlyIP(String namespace) {
-        if(namespace == null) {
-            namespace = "default";
-        }
+    public static String getDnsFriendlyIP() {
+        String namespace = System.getenv("POD_NAMESPACE");
+
         String ip =  getPodIP();
         if(!ip.equals("unknown")&&ip!=null) {
             String dnsFriendlyIp = ip.replace(".","-")+namespace+".pod.cluster.local";
@@ -32,9 +31,8 @@ public class KubeHelper {
             InetAddress ip = InetAddress.getLocalHost();
             return ip.getHostAddress();
         } catch (UnknownHostException e) {
-            // Handle the exception, e.g., log an error or return a default value.
             LOGGER.error("Error getting pod IP: " + e.getMessage());
-            return "unknown"; // Or throw a RuntimeException, etc.
+            return "unknown";
         }
     }
 }
