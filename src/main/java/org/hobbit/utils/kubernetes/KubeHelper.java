@@ -22,7 +22,7 @@ public class KubeHelper {
             return dnsFriendlyIp;
         }else {
             LOGGER.error("Error getting pod IP: {} namespace: {}", ip, namespace);
-            return "unknown";
+            throw new RuntimeException("Error getting pod IP: " + ip + " namespace: " + namespace);
         }
     }
 
@@ -31,7 +31,6 @@ public class KubeHelper {
             InetAddress ip = InetAddress.getLocalHost();
             return ip.getHostAddress();
         } catch (UnknownHostException e) {
-            LOGGER.error("Error getting pod IP: " + e.getMessage());
             return "unknown";
         }
     }
