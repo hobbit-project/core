@@ -5,33 +5,64 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Optional;
 
 public class KubeHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(KubeHelper.class);
+    private static final String DEFAULT_IP = "unknown";
+    private static final String DOMAIN_SUFFIX = ".pod.cluster.local";
+
     /**
-     * Gets dns friendly ip
+     * Gets a DNS-friendly IP for the pod.
      *
-     * @return plain hostname (or address)
+     * @return DNS-friendly hostname (or IP address if not available).
      */
     public static String getDnsFriendlyIP() {
-        String namespace = System.getenv("POD_NAMESPACE");
+        String namespace = getEnvVariable("POD_NAMESPACE");
+        String ip = getPodIP();
 
-        String ip =  getPodIP();
-        if(!ip.equals("unknown")&&ip!=null) {
-            String dnsFriendlyIp = ip.replace(".","-")+namespace+".pod.cluster.local";
-            return dnsFriendlyIp;
-        }else {
-            LOGGER.error("Error getting pod IP: {} namespace: {}", ip, namespace);
-            throw new RuntimeException("Error getting pod IP: " + ip + " namespace: " + namespace);
+        if (!DEFAULT_IP.equals(ip)) {
+            String valueToReturn = formatDnsFriendlyIp(ip, namespace);
+            LOGGER.info("dns friendly version for {} in namespace {} is {}", ip, namespace, valueToReturn);
+            return valueToReturn;
+        } else {
+            LOGGER.error("Error getting pod IP: {} in namespace: {}", ip, namespace);
+            throw new IllegalStateException("Error getting pod IP: " + ip + " in namespace: " + namespace);
         }
     }
 
+    /**
+     * Retrieves the pod's IP address.
+     *
+     * @return The IP address of the pod, or "unknown" if retrieval fails.
+     */
     public static String getPodIP() {
         try {
-            InetAddress ip = InetAddress.getLocalHost();
-            return ip.getHostAddress();
+            return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            return "unknown";
+            LOGGER.warn("Failed to retrieve pod IP, returning default value: {}", DEFAULT_IP, e);
+            return DEFAULT_IP;
         }
+    }
+
+    /**
+     * Retrieves an environment variable, ensuring a non-null value.
+     *
+     * @param key The environment variable key.
+     * @return The value of the environment variable or an empty string if not found.
+     */
+    private static String getEnvVariable(String key) {
+        return Optional.ofNullable(System.getenv(key)).orElse("").trim();
+    }
+
+    /**
+     * Formats the IP into a DNS-friendly format for Kubernetes.
+     *
+     * @param ip        The pod's IP address.
+     * @param namespace The namespace in which the pod is running.
+     * @return A DNS-friendly hostname.
+     */
+    private static String formatDnsFriendlyIp(String ip, String namespace) {
+        return String.format("%s-%s%s", ip.replace(".", "-"), namespace, DOMAIN_SUFFIX);
     }
 }
