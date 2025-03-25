@@ -19,6 +19,10 @@ public class KubeHelper {
      */
     public static String getDnsFriendlyIP() {
         String namespace = getEnvVariable("POD_NAMESPACE");
+        if(namespace == null || "".equals(namespace)) {
+            LOGGER.warn("No pod namespace found in environment variable POD_NAMESPACE use default");
+            namespace = "default";
+        }
         String ip = getPodIP();
 
         if (!DEFAULT_IP.equals(ip)) {
@@ -51,7 +55,7 @@ public class KubeHelper {
      * @param key The environment variable key.
      * @return The value of the environment variable or an empty string if not found.
      */
-    private static String getEnvVariable(String key) {
+    protected static String getEnvVariable(String key) {
         return Optional.ofNullable(System.getenv(key)).orElse("").trim();
     }
 
@@ -63,6 +67,6 @@ public class KubeHelper {
      * @return A DNS-friendly hostname.
      */
     private static String formatDnsFriendlyIp(String ip, String namespace) {
-        return String.format("%s-%s%s", ip.replace(".", "-"), namespace, DOMAIN_SUFFIX);
+        return String.format("%s.%s%s", ip.replace(".", "-"), namespace, DOMAIN_SUFFIX);
     }
 }
