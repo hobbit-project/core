@@ -17,8 +17,8 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         run: |
-          LATEST_VERSION="$(curl -Ls https://api.bintray.com/packages/codacy/Binaries/codacy-coverage-reporter/versions/_latest | jq -r .name)"
-          curl -Ls -o codacy-coverage-reporter "https://dl.bintray.com/codacy/Binaries/${LATEST_VERSION}/codacy-coverage-reporter-linux"
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .tag_name)
+          wget -qO codacy-coverage-reporter "https://github.com/codacy/codacy-coverage-reporter/releases/download/$LATEST_VERSION/codacy-coverage-reporter-linux"
           chmod +x codacy-coverage-reporter
-          ./codacy-coverage-reporter report -l Java -r target/site/jacoco/jacoco.xml
+          ./codacy-coverage-reporter report -l Java --coverage-report coverage.xml
 
