@@ -1,5 +1,6 @@
 package org.hobbit.utils.kubernetes;
 
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -16,10 +17,8 @@ public class KubeHelperTest {
     public void testGetDnsFriendlyIP() {
         // Ensure getPodIP() returns something valid before testing
         String podIP = KubeHelper.getPodIP();
-        String namespace = KubeHelper.getEnvVariable("POD_NAMESPACE");
-        if(namespace == null || "".equals(namespace)) {
-            namespace = "default";
-        }
+        HobbitConfiguration HC = new HobbitConfiguration();
+        String namespace = HC.getString("POD_NAMESPACE","default");
         if (!podIP.equals("unknown")) {
             String dnsFriendlyIP = KubeHelper.getDnsFriendlyIP();
             assertTrue(dnsFriendlyIP.contains(namespace));  // Must include the namespace

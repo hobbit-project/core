@@ -1,5 +1,6 @@
 package org.hobbit.utils.kubernetes;
 
+import org.hobbit.utils.config.HobbitConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,17 +12,16 @@ public class KubeHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(KubeHelper.class);
     private static final String DEFAULT_IP = "unknown";
     private static final String DOMAIN_SUFFIX = ".pod.cluster.local";
-
+    private static final HobbitConfiguration HC = new HobbitConfiguration();
     /**
      * Gets a DNS-friendly IP for the pod.
      *
      * @return DNS-friendly hostname (or IP address if not available).
      */
     public static String getDnsFriendlyIP() {
-        String namespace = getEnvVariable("POD_NAMESPACE");
-        if(namespace == null || "".equals(namespace)) {
+        String namespace = HC.getString("POD_NAMESPACE","default");
+        if(namespace.equals("default") ) {
             LOGGER.warn("No pod namespace found in environment variable POD_NAMESPACE use default");
-            namespace = "default";
         }
         String ip = getPodIP();
 
@@ -49,15 +49,6 @@ public class KubeHelper {
         }
     }
 
-    /**
-     * Retrieves an environment variable, ensuring a non-null value.
-     *
-     * @param key The environment variable key.
-     * @return The value of the environment variable or an empty string if not found.
-     */
-    protected static String getEnvVariable(String key) {
-        return Optional.ofNullable(System.getenv(key)).orElse("").trim();
-    }
 
     /**
      * Formats the IP into a DNS-friendly format for Kubernetes.
