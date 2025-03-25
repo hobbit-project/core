@@ -6,11 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Optional;
 
 public class KubeHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(KubeHelper.class);
-    private static final String DEFAULT_IP = "unknown";
     private static final String DOMAIN_SUFFIX = ".pod.cluster.local";
     private static final HobbitConfiguration HC = new HobbitConfiguration();
     /**
@@ -20,19 +18,16 @@ public class KubeHelper {
      */
     public static String getDnsFriendlyIP() {
         String namespace = HC.getString("POD_NAMESPACE","default");
+
         if(namespace.equals("default") ) {
             LOGGER.warn("No pod namespace found in environment variable POD_NAMESPACE use default");
         }
+
         String ip = getPodIP();
 
-        if (!DEFAULT_IP.equals(ip)) {
-            String valueToReturn = formatDnsFriendlyIp(ip, namespace);
-            LOGGER.info("dns friendly version for {} in namespace {} is {}", ip, namespace, valueToReturn);
-            return valueToReturn;
-        } else {
-            LOGGER.error("Error getting pod IP: {} in namespace: {}", ip, namespace);
-            throw new IllegalStateException("Error getting pod IP: " + ip + " in namespace: " + namespace);
-        }
+        String valueToReturn = formatDnsFriendlyIp(ip, namespace);
+        LOGGER.info("dns friendly version for {} in namespace {} is {}", ip, namespace, valueToReturn);
+        return valueToReturn;
     }
 
     /**
@@ -44,8 +39,8 @@ public class KubeHelper {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            LOGGER.warn("Failed to retrieve pod IP, returning default value: {}", DEFAULT_IP, e);
-            return DEFAULT_IP;
+            LOGGER.error("Failed to retrieve pod IP", e);
+            throw new IllegalStateException("Failed to retrieve pod IP", e);
         }
     }
 

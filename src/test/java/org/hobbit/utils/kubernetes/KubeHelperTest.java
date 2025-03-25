@@ -19,7 +19,7 @@ public class KubeHelperTest {
         String podIP = KubeHelper.getPodIP();
         HobbitConfiguration HC = new HobbitConfiguration();
         String namespace = HC.getString("POD_NAMESPACE","default");
-        if (!podIP.equals("unknown")) {
+        if (podIP != null) {
             String dnsFriendlyIP = KubeHelper.getDnsFriendlyIP();
             assertTrue(dnsFriendlyIP.contains(namespace));  // Must include the namespace
             assertTrue(dnsFriendlyIP.contains("-"));  // IP should be hyphenated
